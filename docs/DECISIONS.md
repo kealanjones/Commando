@@ -2,11 +2,16 @@
 
 Design and architecture calls for the work register.
 
-Revised after the first design checkpoint, which was rejected as overcrowded, too
-maximalist and not intuitive. The superseded first pass is in
-`docs/DECISIONS-v1.md`. The single most useful piece of that feedback: every
-section of v1 carried an explanatory caption, and a caption is proof the section
-was not self-evident. All of them are gone.
+Revised twice at the design checkpoint stage.
+
+- **v1** was rejected as overcrowded, too maximalist and not intuitive. Kept in
+  `docs/DECISIONS-v1.md`. Its most useful lesson: every section carried an
+  explanatory caption, and a caption is proof the section was not self-evident.
+- **v2** stripped it back to a dark, near-monochrome register with two typefaces.
+  Structurally right, aesthetically wrong.
+- **v3, current** — a bright, soft, playful light theme, set by a mobile
+  task-app reference the user supplied. The structure and the computed signals
+  from v2 all survive; only the register changed.
 
 ## Structure — three destinations
 
@@ -26,23 +31,38 @@ The whole screen, in order:
    than a morning. The three shown are the ones with real pressure behind them —
    a date, a departing flight, a queue of blocked work. The remaining fifteen are
    one tap away behind a plain line of text.
-3. **Last touched.** Five rows, one per stream.
+3. **The stream card row.** Five bright cards, each with a count and a recency
+   dial. Horizontally scrollable on phone, a five-up grid on desktop.
+4. **One nudge line.** "1 of 190 items has a date" with an action to fix it. The
+   single most useful fact about the register, stated once.
 
 Nothing else. No captions.
 
-## Last touched — answering "what is falling behind"
+The greeting header ("Hi, Kealan", the date, an avatar, an add button) comes from
+the reference and earns its place — it makes the tool feel personal rather than
+administrative, which matters for something opened at 7am.
 
-One bar per stream. It runs from the left and ends at the last time that stream
-was touched; the right-hand edge is today. Long bar, you are on top of it. Short
-bar, you are not. A day count sits at the right in mono.
+## The recency dial — answering "what is falling behind"
 
-There is nothing to learn and no legend. The v1 version of this — activity marks,
-hatched silence regions, a lit live edge, an axis and a paragraph explaining all
-of it — was the single densest thing on the page and needed the most explaining.
-Same idea, one line.
+Each stream is a bright rounded card carrying its own colour. On it sits a dark
+circular badge with the stream's open count, and **around that badge runs a ring
+showing recency**: full when the stream was touched today, emptying as it goes
+quiet, against a 21-day scale. A short line underneath says it in words — "quiet
+11 days", "touched today".
 
-A stream with no data renders as a dashed rule rather than a short bar, since a
-short bar would falsely read as a long silence.
+This is the third attempt at the same idea and the first one that needs no
+explanation. v1 drew activity marks, hatched silence and a live edge on a
+28-day axis. v2 reduced that to a bar ending where activity stopped. v3 folds it
+into the count badge itself, so one glance at the card row answers both "how big
+is this" and "am I on top of it".
+
+The ring has no denominator problem — it measures time since last contact, not
+completion. That matters because ISODP cannot be "completed" and any
+percentage-done metric would be fiction. Progress bars, health scores and gauges
+stay rejected for that reason.
+
+A stream with no data yet renders as a pale tinted card with a dashed ring and an
+em dash, which is visually distinct from a stream that had activity and stopped.
 
 Rejected alternatives remain rejected: progress bars, percentage complete, health
 scores and gauges all need a denominator, and ISODP cannot be "completed".
@@ -50,38 +70,62 @@ Recency of contact is the only honest signal available.
 
 ## Doing versus remembering
 
-Separated by destination, not by decoration. Tasks live in Today and Streams and
-carry a checkbox. Periphery items have no checkbox at all — a checkbox is a
-demand, and these items are not permitted to make demands. Promoting one moves it
-into its stream, and that move is the one piece of motion in the app that is
-allowed to be noticeable.
+Separated by destination and by surface treatment. Tasks are solid white cards
+with a soft shadow and a round checkbox. Periphery items — shown as **Keeping an
+eye on** — are dashed-border, tinted-fill, shadowless, and carry **no checkbox at
+all**. A checkbox is a demand, and these items are not permitted to make demands.
+
+*Make a task* is the only way out of the periphery. The conversion is the one
+piece of motion in the app allowed to be noticeable: the card pops, its border
+goes solid, it gains a shadow and the text steps up to full weight.
 
 ## Colour
 
-Dark, committed — not a toggle. Ground `#0F1315`.
+Light, committed — not a toggle. Ground `#F2F4F9`, a warm-cool off-white rather
+than grey. Cards `#FFFFFF`. Ink `#16181F`.
 
-| Stream | Hex |
-|---|---|
-| `cttl` Commonwealth | `#D9A04A` |
-| `isodp` ISODP 2027 | `#4FA8C0` |
-| `dir` Directorate | `#8A8FD4` |
-| `career` Career | `#D97A97` |
-| `per` Personal | `#6BB48F` |
+Each stream carries three tokens: a bright fill, a deep variant for text on
+tints, and a pale tint for pills and hover states.
 
-The hue appears **once per row** — the checkbox in a list, the bar in Last
-touched. In v1 it drove six things at once, which is what made the screen shout.
-Five streams stay distinguishable; nothing competes.
+| Stream | Fill | Deep | Tint |
+|---|---|---|---|
+| `cttl` Commonwealth | `#FFB84D` | `#9A5A00` | `#FFF1DC` |
+| `isodp` ISODP 2027 | `#7FA6F5` | `#26499F` | `#E6EDFE` |
+| `dir` Directorate | `#B49BF0` | `#54309E` | `#EFE9FE` |
+| `career` Career | `#FF9BBE` | `#A81E52` | `#FFE8F0` |
+| `per` Personal | `#6FDCB0` | `#0B6A48` | `#E0F8EE` |
+
+The fills are pitched light enough that dark ink sits on them legibly, which is
+what keeps the palette soft rather than shouty. Contrast comes from the near-black
+count badges, not from the colour.
+
+The colour is **structural, not accent**: a whole stream card takes the hue, and
+the same token drives that card, the task checkbox, the stream pill, the
+periphery border and the focus ring. Five identities rather than one blue accent
+is the main thing separating this from the template look the brief warned against.
 
 ## Type — two faces, two jobs
 
-- **Newsreader** (serif) — task titles and headings. They are sentences a person
-  wrote, and a serif says so. Also stops the tool reading as a form.
-- **IBM Plex Mono**, tabular figures — every date, count, name-waited-on and
-  label.
+- **Plus Jakarta Sans** — everything read as language. Geometric and friendly at
+  400–600, genuinely chunky at 800 for the greeting, section heads and the count
+  badges.
+- **DM Mono** — every date, count, code, label and name-waited-on. Softer than
+  Plex Mono, which suits the register.
 
-The brief asked for reading text and data to look different. Serif against mono
-is the crispest available version of that: they are distinguishable without
-reading either.
+The brief asked for reading text and data to look different. Rounded geometric
+sans against a soft mono keeps that distinction while staying in the bright,
+playful world.
+
+## Motion
+
+Four moments, all meaningful, all disabled under `prefers-reduced-motion`:
+
+1. Stream cards rise and fade in on load, staggered.
+2. Each recency ring sweeps to its value after the cards land.
+3. Completing a task pops the checkbox and settles the card back.
+4. Promoting a periphery item pops the card and resolves its dashed border.
+
+No ambient decoration.
 
 ## Computed rather than tracked
 
