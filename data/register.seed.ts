@@ -40,12 +40,17 @@ export interface Section {
 
 const P = (t: string, o?: ItemOpts): Item => ({ t, ...o });
 
+/**
+ * title — the full name, used on the stream page and in screen-reader labels
+ * short — the display name, used wherever space is tight (cards, headers)
+ * code  — the pill on a task row
+ */
 export const STREAMS = {
-  cttl:   { title: 'Commonwealth Tribute to Life', short: 'CTtL' },
-  isodp:  { title: 'ISODP 2027',                   short: 'ISODP' },
-  dir:    { title: 'Directorate',                  short: 'Directorate' },
-  career: { title: 'Career',                       short: 'Career' },
-  per:    { title: 'Personal',                     short: 'Personal' },
+  cttl:   { title: 'Commonwealth Tribute to Life', short: 'Commonwealth', code: 'CTtL' },
+  isodp:  { title: 'ISODP 2027',                   short: 'ISODP 2027',   code: 'ISODP' },
+  dir:    { title: 'Directorate',                  short: 'Directorate',  code: 'Dir' },
+  career: { title: 'Career',                       short: 'Career',       code: 'Career' },
+  per:    { title: 'Personal',                     short: 'Personal',     code: 'Per' },
 } as const;
 
 export const SECTIONS: Section[] = [

@@ -1,0 +1,59 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Design tokens.
+
+   Light, committed — no theme toggle. Colour is structural: each stream
+   owns a fill, a deep variant for text on tints, and a pale tint. One
+   token set drives the stream card, the checkbox, the pill, the periphery
+   border and the focus ring, so a stream is recognisable before you read.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+
+  --bg:      #F2F4F9;
+  --card:    #FFFFFF;
+  --ink:     #16181F;
+  --ink-2:   #5E6473;
+  --ink-3:   #9AA0B0;
+  --hair:    #E4E7F0;
+  --hair-2:  #EDEFF6;
+
+  --cttl:        #FFB84D;  --cttl-deep:   #9A5A00;  --cttl-tint:   #FFF1DC;
+  --isodp:       #7FA6F5;  --isodp-deep:  #26499F;  --isodp-tint:  #E6EDFE;
+  --dir:         #B49BF0;  --dir-deep:    #54309E;  --dir-tint:    #EFE9FE;
+  --career:      #FF9BBE;  --career-deep: #A81E52;  --career-tint: #FFE8F0;
+  --per:         #6FDCB0;  --per-deep:    #0B6A48;  --per-tint:    #E0F8EE;
+
+  --danger:      #D6455F;
+  --danger-tint: #FDE8EC;
+
+  --ui:   'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --data: 'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --r-card:  20px;
+  --r-panel: 26px;
+  --r-pill:  999px;
+
+  --soft:   0 8px 24px -12px rgba(22, 24, 31, .16);
+  --softer: 0 3px 12px -6px rgba(22, 24, 31, .12);
+  --lift:   0 14px 34px -14px rgba(22, 24, 31, .26);
+
+  --ease: cubic-bezier(.2, .9, .3, 1);
+  --pop:  cubic-bezier(.34, 1.5, .5, 1);
+
+  /* Safe areas, so nothing hides behind the home indicator. */
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+
+  /* Height of the fixed bottom nav, used as list padding so the last
+     item in a list is never covered. */
+  --nav-h: calc(66px + var(--safe-b));
+}
+
+/* Per-stream token block. Applied with data-stream="cttl" etc, which is
+   the single hook every coloured element in the app reads. */
+[data-stream='cttl']   { --s: var(--cttl);   --s-deep: var(--cttl-deep);   --s-tint: var(--cttl-tint); }
+[data-stream='isodp']  { --s: var(--isodp);  --s-deep: var(--isodp-deep);  --s-tint: var(--isodp-tint); }
+[data-stream='dir']    { --s: var(--dir);    --s-deep: var(--dir-deep);    --s-tint: var(--dir-tint); }
+[data-stream='career'] { --s: var(--career); --s-deep: var(--career-deep); --s-tint: var(--career-tint); }
+[data-stream='per']    { --s: var(--per);    --s-deep: var(--per-deep);    --s-tint: var(--per-tint); }
