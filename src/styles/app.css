@@ -100,7 +100,7 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
 }
 
 .scard {
-  flex: none; width: 146px; scroll-snap-align: start;
+  flex: none; width: 158px; scroll-snap-align: start;
   border-radius: var(--r-panel); background: var(--s);
   padding: 16px; border: 0; text-align: left; cursor: pointer;
   display: flex; flex-direction: column; gap: 14px;
@@ -119,7 +119,9 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
 .scard__name {
   display: block; font-size: 14px; font-weight: 700;
   letter-spacing: -.02em; line-height: 1.25;
-  overflow-wrap: anywhere;
+  /* break-word, not anywhere: a long stream name may wrap between words
+     but must never split mid-word into "Commonwealt / h". */
+  overflow-wrap: break-word; hyphens: none;
 }
 .scard--empty .scard__name { color: var(--s-deep); }
 .scard__q {
