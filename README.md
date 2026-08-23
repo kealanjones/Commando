@@ -84,6 +84,7 @@ treat it as you would any other document with your work in it.
 | `npm run seed:dry` | Report what a seed would change, write nothing |
 | `npm run build:demo` + `npm run serve:dist` | Build and serve fixture mode |
 | `npm run test:ui` | Browser interaction checks (needs `serve:dist` running) |
+| `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |
 | `npm run test:shots` | Screenshot every route at 375px and 1280px |
 | `npm run build:preview` | Fold the app into one self-contained `preview.html` for sharing |
 
@@ -148,6 +149,12 @@ SEED_OWNER_EMAIL=you@example.com npm run seed
 RLS is **enabled and forced** on all seven tables. Forced matters: it applies
 policies to the table owner too, so a mistake in a `security definer` function
 cannot quietly read everything.
+
+None of that is asserted on trust. `./tests/rls.sh` applies the migrations to a
+real Postgres and runs seventeen checks — a second user sees nothing, an
+anonymous caller holding the anon key gets nothing, sharing one stream grants
+exactly that stream and no more, a hard delete is refused, and every table
+reports RLS both enabled and forced. It runs in CI on every push.
 
 Access is granted through two helpers, `can_read_stream` and `can_write_stream`,
 which resolve to *you own it* **or** *someone shared that stream with you*.
@@ -302,7 +309,7 @@ src/styles/tokens.css     the design system: colour, type, radii, motion
 src/styles/fonts.css      self-hosted @font-face (scripts/fetch-fonts.sh)
 vercel.json netlify.toml  SPA rewrites, security headers, cache policy
 DEPLOY.md                 the deployment runbook
-tests/                    browser interaction and screenshot checks
+tests/                    browser checks, plus the RLS proof (rls.sql)
 docs/DECISIONS.md         why it looks and works the way it does
 docs/DATA-GAP.md          what is missing from the seed data
 ```

@@ -13,6 +13,7 @@ import { NotConfigured, SignIn } from '@/routes/SignIn';
 
 import { configured, supabase } from '@/lib/supabase';
 import { DEMO } from '@/lib/demo';
+import { ensureProfile } from '@/lib/profile';
 import {
   useCreateTask, useRealtime, useSections, useSoftDelete, useStreams, useUpdateTask,
 } from '@/data/store';
@@ -24,8 +25,19 @@ export default function App() {
 
   useEffect(() => {
     if (DEMO || !configured) { setReady(true); return; }
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setReady(true); });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (data.session?.user) {
+        await ensureProfile(data.session.user.id, data.session.user.email ?? '');
+      }
+      setSession(data.session);
+      setReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'SIGNED_IN' && s?.user) {
+        void ensureProfile(s.user.id, s.user.email ?? '');
+      }
+      setSession(s);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 

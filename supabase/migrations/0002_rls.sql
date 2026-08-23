@@ -27,11 +27,15 @@ alter table public.task_people    force row level security;
 -- ── helpers ────────────────────────────────────────────────────────
 -- Can the caller see this owner's stream? Either they own it, or someone
 -- shared it with them.
+--
+-- Security INVOKER, not definer. stream_members already exposes exactly the
+-- row this needs through its own stream_members_self_read policy, so there is
+-- nothing to elevate for — and a definer function against a FORCE-RLS table
+-- has subtle enough semantics that it is not worth relying on.
 create or replace function public.can_read_stream(p_owner uuid, p_stream text)
 returns boolean
 language sql
 stable
-security definer
 set search_path = public, pg_temp
 as $$
   select p_owner = auth.uid()
@@ -47,7 +51,6 @@ create or replace function public.can_write_stream(p_owner uuid, p_stream text)
 returns boolean
 language sql
 stable
-security definer
 set search_path = public, pg_temp
 as $$
   select p_owner = auth.uid()
@@ -154,6 +157,18 @@ create policy task_people_owner on public.task_people
   for all to authenticated
   using (owner_id = auth.uid())
   with check (owner_id = auth.uid());
+
+-- ── grants ─────────────────────────────────────────────────────────
+-- Supabase's default privileges usually cover this, but relying on them is
+-- fragile: state them. RLS is what restricts rows; these grants only decide
+-- which roles may reach the tables at all.
+grant usage on schema public to authenticated;
+grant select, insert, update on all tables in schema public to authenticated;
+grant usage, select on all sequences in schema public to authenticated;
+
+-- No DELETE for anyone. Deletion is soft, via deleted_at, so undo always
+-- works and a fat-fingered tap on a phone loses nothing.
+revoke delete on all tables in schema public from authenticated;
 
 -- ── nothing for anon ───────────────────────────────────────────────
 revoke all on all tables in schema public from anon;

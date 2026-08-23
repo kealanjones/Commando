@@ -69,9 +69,13 @@ async function main() {
   const owner = await ownerId();
   console.log(`${DRY ? 'DRY RUN — ' : ''}seeding as ${EMAIL} (${owner})\n`);
 
-  // Make sure a profile row exists even if the auth trigger predates this user.
+  // Every owned table has a foreign key to profiles, and there is no auth
+  // trigger creating it (see 0001_schema.sql), so the seed creates it here.
   if (!DRY) {
-    await db.from('profiles').upsert({ id: owner, email: EMAIL }, { onConflict: 'id' });
+    const { error } = await db
+      .from('profiles')
+      .upsert({ id: owner, email: EMAIL, display_name: EMAIL!.split('@')[0] }, { onConflict: 'id' });
+    if (error) throw error;
   }
 
   // ── streams ──────────────────────────────────────────────────────

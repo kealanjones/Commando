@@ -43,6 +43,12 @@ npx supabase link --project-ref <your-ref>
 npx supabase db push
 ```
 
+These three migrations are applied to a throwaway Postgres and their policies
+proved on every CI run — see `tests/rls.sql`. Seventeen assertions, including
+that a second user sees nothing, that an anonymous caller with the anon key gets
+nothing, that sharing one stream grants exactly that stream, and that a hard
+delete is refused.
+
 **Confirm RLS is actually on** before going further. In the SQL editor:
 
 ```sql
@@ -165,7 +171,8 @@ every browser — RLS gives it nothing.
 - **Re-seeding** after editing `data/register.seed.ts` is `npm run seed`, and it
   never destroys your own edits. Details in the README.
 - **CI** (`.github/workflows/ci.yml`) typechecks, builds, and runs the browser
-  interaction suite on every push. A second job asserts the production build
+  interaction suite on every push. A second job applies the migrations to a real
+  Postgres and proves the RLS policies. A third asserts the production build
   still refuses to run without credentials.
 
 ## If something goes wrong

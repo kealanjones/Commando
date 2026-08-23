@@ -16,25 +16,19 @@ create table if not exists public.profiles (
   created_at   timestamptz not null default now()
 );
 
--- New auth users get a profile automatically.
-create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-begin
-  insert into public.profiles (id, email, display_name)
-  values (new.id, new.email, split_part(new.email, '@', 1))
-  on conflict (id) do nothing;
-  return new;
-end;
-$$;
-
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
+-- There is deliberately no on_auth_user_created trigger here.
+--
+-- The obvious version is a security-definer trigger that inserts a profile
+-- row. It does not work against this schema: profiles has FORCE row level
+-- security (0002), which applies policies to the table owner too, and at the
+-- moment the auth service creates a user there is no auth.uid() for the
+-- profiles_self policy to match — so the insert is refused and account
+-- creation fails.
+--
+-- Rather than weaken FORCE or special-case a role, the profile row is created
+-- where a session already exists: the seed script upserts it with the service
+-- role, and the app upserts it on sign-in (ensureProfile) where auth.uid() is
+-- present and the ordinary policy applies.
 
 -- ── streams ────────────────────────────────────────────────────────
 -- Natural text ids ('cttl', 'isodp', …) so the seed file stays readable
@@ -122,9 +116,15 @@ create table if not exists public.tasks (
   foreign key (owner_id, section_id) references public.sections(owner_id, id) on delete cascade
 );
 
+-- Deliberately NOT a partial index. PostgREST emits
+--   ON CONFLICT (owner_id, natural_key)
+-- with no WHERE clause, and Postgres will not infer a partial index from
+-- that — the seed would fail with "no unique or exclusion constraint
+-- matching the ON CONFLICT specification". A plain unique index works
+-- because NULLs are distinct by default, so the many user-created rows
+-- with a null natural_key never collide.
 create unique index if not exists tasks_natural_key_uniq
-  on public.tasks (owner_id, natural_key)
-  where natural_key is not null;
+  on public.tasks (owner_id, natural_key);
 
 create index if not exists tasks_owner_live_idx
   on public.tasks (owner_id, stream_id, done)
