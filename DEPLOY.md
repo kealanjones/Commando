@@ -1,0 +1,180 @@
+# Deploying
+
+Everything that can be prepared in advance is done. What is left needs your
+Supabase and hosting accounts, so it has to be run by you. It is about fifteen
+minutes end to end.
+
+Work through it in order — step 4 depends on step 3, and step 6 depends on
+knowing the production URL.
+
+---
+
+## 1. Create the Supabase project
+
+At [supabase.com](https://supabase.com), create a project. Pick **London
+(eu-west-2)** as the region: the data is NHS work and there is no reason for it
+to sit outside the UK.
+
+From **Project Settings → API**, take three values:
+
+| Value | Goes where |
+|---|---|
+| Project URL | `VITE_SUPABASE_URL` — hosting env vars and your local `.env` |
+| `anon` key | `VITE_SUPABASE_ANON_KEY` — same |
+| `service_role` key | `SUPABASE_SERVICE_ROLE_KEY` — your local `.env` only |
+
+The `anon` key ships inside the JavaScript bundle. That is expected and safe
+**because RLS is enabled and forced on every table**. The `service_role` key
+bypasses RLS entirely — it never goes into hosting env vars, never into the
+repo, and never gets a `VITE_` prefix.
+
+## 2. Run the migrations
+
+Paste each file into **SQL Editor**, in order, and run it:
+
+1. `supabase/migrations/0001_schema.sql`
+2. `supabase/migrations/0002_rls.sql`
+3. `supabase/migrations/0003_realtime.sql`
+
+Or, with the CLI:
+
+```bash
+npx supabase link --project-ref <your-ref>
+npx supabase db push
+```
+
+**Confirm RLS is actually on** before going further. In the SQL editor:
+
+```sql
+select tablename, rowsecurity, relforcerowsecurity
+from pg_tables t
+join pg_class c on c.relname = t.tablename
+where schemaname = 'public';
+```
+
+Every row must show `true` in both columns. If any does not, stop and re-run
+`0002_rls.sql`.
+
+## 3. Create your account — and close the door behind you
+
+**Authentication → Users → Add user → Send invitation**, to your own address.
+
+Then **Authentication → Providers → Email**: turn **"Enable email signups" off**.
+
+This matters. The anon key is readable by anyone who views source on the
+deployed site. With signups enabled, a stranger could create themselves an
+account inside your project. RLS means they would see none of your data, but
+they should not be able to get in at all. The app already sends
+`shouldCreateUser: false`, so this is the second of two locks.
+
+Under **Authentication → URL Configuration**, set:
+
+- **Site URL** — your production URL (fill in after step 5, then come back)
+- **Redirect URLs** — add `http://localhost:5173` for local development
+
+## 4. Seed the register
+
+Locally, with `.env` filled in:
+
+```bash
+npm run seed:dry    # shows what would change, writes nothing
+npm run seed        # apply
+```
+
+The dry run prints insert / update / frozen / retire counts. Read them before
+applying. Re-running later is safe and non-destructive — see the re-seeding
+table in the README.
+
+## 5. Deploy the frontend
+
+Either host works; the config for both is committed.
+
+### Vercel
+
+```bash
+npx vercel link
+npx vercel env add VITE_SUPABASE_URL production
+npx vercel env add VITE_SUPABASE_ANON_KEY production
+npx vercel --prod
+```
+
+### Netlify
+
+```bash
+npx netlify link
+npx netlify env:set VITE_SUPABASE_URL "https://…"
+npx netlify env:set VITE_SUPABASE_ANON_KEY "…"
+npx netlify deploy --prod
+```
+
+`vercel.json` and `netlify.toml` already carry the SPA rewrite, the security
+headers, and the cache rules — hashed assets and fonts immutable for a year,
+`index.html` and `sw.js` never cached. That last part is not cosmetic: if the
+shell is cached, a deploy never reaches a phone that already has the app
+installed.
+
+**The build fails deliberately if the two env vars are missing.** A deploy that
+silently ships an app which cannot reach its database is worse than a red build.
+
+## 6. Close the loop
+
+Back in Supabase → **Authentication → URL Configuration**, set **Site URL** to
+the production URL. Without this the magic link mails you back to localhost.
+
+## 7. Add it to your home screen
+
+Open the production URL in Safari on your iPhone → Share → **Add to Home
+Screen**. It opens full screen with no browser chrome; the manifest and iOS meta
+tags are already in place.
+
+---
+
+## Check it actually works
+
+In order, on the real deployment:
+
+- [ ] Sign in by magic link.
+- [ ] All seeded items are present. `select count(*) from tasks where deleted_at is null;`
+- [ ] Open it on your phone and your laptop at once. Tick something on one; it
+      appears on the other within a second or two.
+- [ ] Type a note. The whole sentence lands, not the first character.
+- [ ] Complete something, then undo. Delete something, then undo.
+- [ ] Turn on aeroplane mode, tick something — the header shows the queued
+      count — then turn it off and watch it flush.
+- [ ] Try signing in with an address you have not invited. It should be refused.
+
+### Prove the anon key is harmless
+
+Worth doing once, so you know rather than assume:
+
+```bash
+curl -s "https://<ref>.supabase.co/rest/v1/tasks?select=*" \
+  -H "apikey: <your-anon-key>"
+```
+
+Must return `[]`. That is an unauthenticated request with the key that ships to
+every browser — RLS gives it nothing.
+
+---
+
+## Ongoing
+
+- **Backups.** Supabase's free tier keeps daily backups for 7 days; Pro extends
+  that. For a directorate's coordination record, consider `pg_dump` on a
+  schedule as well.
+- **Re-seeding** after editing `data/register.seed.ts` is `npm run seed`, and it
+  never destroys your own edits. Details in the README.
+- **CI** (`.github/workflows/ci.yml`) typechecks, builds, and runs the browser
+  interaction suite on every push. A second job asserts the production build
+  still refuses to run without credentials.
+
+## If something goes wrong
+
+| Symptom | Cause |
+|---|---|
+| "Almost there" setup screen in production | Env vars not set on the host, or set without a redeploy |
+| Magic link opens localhost | Site URL not set in Supabase (step 6) |
+| Signed in but no data | Seed ran against a different account — check `SEED_OWNER_EMAIL` |
+| Changes do not sync between devices | `0003_realtime.sql` not run |
+| A deploy does not reach an installed phone app | `index.html` being cached — check the host is honouring the committed cache headers |
+| Console: blocked `connect-src` | App built with a different `VITE_SUPABASE_URL` than it is calling; the CSP is generated from that variable at build time |

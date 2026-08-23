@@ -2,8 +2,16 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 /**
- * Magic link. Single user, so there is nothing to gain from passwords —
- * and RLS, not the sign-in screen, is what actually protects the data.
+ * Magic link, with `shouldCreateUser: false`.
+ *
+ * That flag is the important one. Left at its default, anyone who reads the
+ * anon key out of the JS bundle could sign themselves up and create an
+ * account inside the project. With it off, only accounts invited from the
+ * Supabase dashboard can ever sign in, and an unknown address gets a clean
+ * refusal instead of a mailbox.
+ *
+ * RLS, not this screen, is what protects the data — but there is no reason
+ * to let strangers through the door either.
  */
 export function SignIn() {
   const [email, setEmail] = useState('');
@@ -17,11 +25,18 @@ export function SignIn() {
     setError(null);
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: window.location.origin, shouldCreateUser: false },
     });
     setBusy(false);
-    if (error) setError(error.message);
-    else setSent(true);
+    if (error) {
+      setError(
+        /signups not allowed|not found|invalid/i.test(error.message)
+          ? 'That address is not on this register. Invite it from the Supabase dashboard first.'
+          : error.message,
+      );
+    } else {
+      setSent(true);
+    }
   };
 
   return (

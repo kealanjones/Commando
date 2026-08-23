@@ -89,6 +89,12 @@ treat it as you would any other document with your work in it.
 
 ---
 
+## Deploying
+
+See **[DEPLOY.md](DEPLOY.md)** for the full runbook: Supabase project, migrations,
+locking down sign-ups, seeding, hosting, and the checks to run against the live
+deployment.
+
 ## Supabase setup
 
 ### 1. Create the project
@@ -118,12 +124,16 @@ supabase db push
 
 ### 3. Sign in once
 
-Magic link, so there is no password to manage. Start the app, enter your email,
-click the link. That creates the auth user and, via a trigger, the profile row
-the seed needs.
+Invite yourself from **Authentication → Users → Add user**, then turn **email
+signups off** under Authentication → Providers → Email.
 
-In **Authentication → URL Configuration**, add your dev and production origins to
-the redirect allow-list.
+The app signs in with `shouldCreateUser: false`, so only invited addresses can
+ever get in. This matters because the anon key is readable in the shipped
+bundle — RLS would keep a stranger's account empty, but there is no reason to
+let them create one.
+
+In **Authentication → URL Configuration**, set the Site URL to your production
+URL and add `http://localhost:5173` to the redirect allow-list.
 
 ### 4. Seed
 
@@ -230,7 +240,8 @@ its section, and re-seed.
 
 The app is expected to be used on the Underground.
 
-- The shell is precached by a service worker, so it opens with no signal.
+- The shell — including the fonts, which are self-hosted rather than pulled
+  from a CDN — is precached by a service worker, so it opens with no signal.
 - Reads come from the TanStack Query cache (`networkMode: 'offlineFirst'`).
 - Every write is applied to the cache immediately and appended to a durable
   queue in `localStorage`, which flushes on reconnect, on tab focus, and on
@@ -288,6 +299,9 @@ src/data/store.ts         queries, optimistic mutations, derived signals
 src/components/           dial, cards, sheets, toasts
 src/routes/               Today, Streams, Periphery, sign-in
 src/styles/tokens.css     the design system: colour, type, radii, motion
+src/styles/fonts.css      self-hosted @font-face (scripts/fetch-fonts.sh)
+vercel.json netlify.toml  SPA rewrites, security headers, cache policy
+DEPLOY.md                 the deployment runbook
 tests/                    browser interaction and screenshot checks
 docs/DECISIONS.md         why it looks and works the way it does
 docs/DATA-GAP.md          what is missing from the seed data

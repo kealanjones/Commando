@@ -14,12 +14,13 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
-    />
+    <!-- Fonts are self-hosted: no third-party request, and the first load
+         works with no signal. Only the two faces used above the fold are
+         preloaded. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          href="/fonts/plus-jakarta-sans-800-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          href="/fonts/plus-jakarta-sans-600-latin.woff2" />
   </head>
   <body>
     <div id="root"></div>

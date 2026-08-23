@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Built in demo mode so CI needs no Supabase credentials. The env
+      # validation that guards the real build is exercised separately below.
+      - name: Build
+        run: npm run build:demo
+
+      - name: Browser checks
+        run: |
+          npx playwright install chromium --with-deps
+          node tests/serve.mjs &
+          npx wait-on http://127.0.0.1:4173 -t 30000
+          npm run test:ui
+
+  guard:
+    name: Build fails without credentials
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Production build must refuse to ship without Supabase env
+        run: |
+          if npm run build > /dev/null 2>&1; then
+            echo "::error::Build succeeded with no VITE_SUPABASE_URL — the env guard is not working."
+            exit 1
+          fi
+          echo "Build correctly refused."

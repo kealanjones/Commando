@@ -10,7 +10,7 @@
     "typecheck": "tsc -b --noEmit",
     "seed": "tsx scripts/seed.ts",
     "seed:dry": "tsx scripts/seed.ts --dry-run",
-    "build:demo": "vite build --mode demo",
+    "build:demo": "vite build --mode demo --outDir dist",
     "serve:dist": "node tests/serve.mjs",
     "test:ui": "node tests/interactions.mjs",
     "test:shots": "node tests/screenshots.mjs",
@@ -33,6 +33,7 @@
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
     "vite": "^5.4.8",
-    "vite-plugin-pwa": "^0.20.5"
+    "vite-plugin-pwa": "^0.20.5",
+    "wait-on": "^8.0.1"
   }
 }

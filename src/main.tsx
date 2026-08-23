@@ -7,6 +7,7 @@ import App from './App';
 import { DEMO, demoSections, demoStreams, demoTasks } from './lib/demo';
 import { keys } from './data/store';
 import { ToastProvider } from './components/Toasts';
+import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/app.css';
 
