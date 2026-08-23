@@ -172,6 +172,10 @@ SEED_OWNER_EMAIL=you@example.com npm run seed
 
 ---
 
+A pre-deployment security review is in
+[`docs/SECURITY-REVIEW.md`](docs/SECURITY-REVIEW.md), covering what was checked,
+what was fixed, and what is accepted and why.
+
 ## Information governance
 
 **Intake sends the text you paste to Anthropic's API.** Everything else in this

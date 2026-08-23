@@ -138,11 +138,16 @@ the frontend env vars, because those are compiled into the bundle. The Supabase
 anon key is safe there because RLS bounds it; an LLM provider key is bounded by
 nothing.
 
-Optionally pin the browser origin allowed to call it:
+Pin the origin allowed to call it. Left unset it accepts any origin, which is
+fine locally and not what you want in production:
 
 ```bash
 npx supabase secrets set ALLOWED_ORIGIN=https://your-production-url
 ```
+
+The function caps extractions at 40 per account per rolling 24 hours, so a
+leaked session cannot run it in a loop and spend against your API key. Change it
+with `DAILY_INTAKE_LIMIT` if that is wrong for you.
 
 **Before you turn this on, read the information governance note in the README.**
 Pasting a meeting record sends that text to Anthropic's API. That is a decision
