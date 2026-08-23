@@ -34,9 +34,16 @@ export function demoTasks(): Task[] {
   const now = new Date().toISOString();
   const out: Task[] = [];
 
-  // Plausible recent activity so the dials have something to show. Real
-  // installs start with touched_at null and fill in as they are used.
-  const touchedDaysAgo: Partial<Record<StreamId, number>> = { isodp: 0, cttl: 11 };
+  // Illustrative activity so all five dials have something to show. A real
+  // install starts with touched_at null on every row and fills in as it is
+  // used — nothing here is inferred from the seed data.
+  const touchedDaysAgo: Partial<Record<StreamId, number>> = {
+    isodp: 0,   // worked today
+    dir: 3,
+    cttl: 11,   // drifting, with a flight in three weeks
+    career: 19, // the one you avoid
+    per: 26,    // past the 21-day scale: ring fully empty
+  };
 
   for (const s of SECTIONS) {
     const add = (raw: string | { t: string; p?: 1; due?: string; note?: string }, kind: Task['kind'], idx: number) => {

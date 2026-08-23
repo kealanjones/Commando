@@ -9,11 +9,9 @@
  * Every item gets a stable natural key derived from `${sectionId}:${slug(title)}`
  * so re-seeding is idempotent.
  *
- * STATUS: INCOMPLETE — see docs/DATA-GAP.md
- * The appendix supplied in the brief was truncated mid-way through
- * section `isodp-accred`. Sections after that point, the whole of the
- * `dir`, `career` and `per` streams, and the entire WATCH block are
- * not yet present. Placeholders below mark where they go.
+ * Built from the Master Work Action List. `items` are things to do;
+ * `watch` is the KEEP TABS material — visible, but never on Today and
+ * never tickable.
  */
 
 export type StreamId = 'cttl' | 'isodp' | 'dir' | 'career' | 'per';
@@ -54,18 +52,27 @@ export const STREAMS = {
 } as const;
 
 export const SECTIONS: Section[] = [
+
+// ═══ COMMONWEALTH TRIBUTE TO LIFE ══════════════════════════════════
 {id:'cttl-gov',stream:'cttl',title:'Governance and meetings',items:[
  P("Send formal invitations for the Custodian Board meeting",{p:1,note:"9 October, 1-2pm. Agenda to follow."}),
  P("Compile confirmed Custodian Board member list",{p:1}),
  "Set up Regional Coordinator meeting",
  "Answer and follow up with Serbian contacts",
- "Locate and share latest logo use and event recognition governance document"]},
+ "Locate and share latest logo use and event recognition governance document"],
+ watch:[
+ "Custodian Board attendance",
+ "Regional Coordinator meeting"]},
+
 {id:'cttl-fell',stream:'cttl',title:'Fellowship',items:[
  P("Update CTtL website with Fellowship information",{p:1}),
  P("Add placeholder for the Fellowship application form",{p:1}),
  P("Formulate and circulate the Fellowship timeline",{p:1,note:"Advertise by / applications by / interview dates / intended appointment and start"}),
  "Forward Fellowship document and agenda email to Dale",
- "Send original Fellowship submission document to Matty"]},
+ "Send original Fellowship submission document to Matty"],
+ watch:[
+ "Fellowship timetable"]},
+
 {id:'cttl-aus',stream:'cttl',title:'Australia and Sydney',items:[
  P("Check with Steph that Satya's proposed flights can be booked through NHSBT",{p:1,note:"Emirates. Birmingham to Sydney outbound 14 September, return 25 September via Singapore to Manchester."}),
  P("Speak to Steph first, then have Steph contact Satya directly about travel",{p:1}),
@@ -77,12 +84,18 @@ export const SECTIONS: Section[] = [
  "Calculate exact number of signatory countries",
  "Calculate exact percentage of Commonwealth population covered",
  "Calculate exact number of organisations involved in CTtL",
- "Arrange to share Satya's taxi to the hotel on Wednesday morning"]},
+ "Arrange to share Satya's taxi to the hotel on Wednesday morning"],
+ watch:[
+ "Satya contract",
+ "Satya Australia travel",
+ "Australia collateral"]},
+
 {id:'cttl-read',stream:'cttl',title:'Reading and development',items:[
  "Read and AI-analyse Journey to Equity, Dale and Gurch material",
  "Review ARC Discovery slides and data",
  "Pull out practical implications for CTtL, equity and donation strategy rather than just reading them"]},
 
+// ═══ ISODP 2027 ════════════════════════════════════════════════════
 {id:'isodp-spons',stream:'isodp',title:'Sponsorship — overall management',items:[
  P("Send Anthony the short priority sponsor list",{p:1,note:"Quad, MVTA, transplant-related leads, TransMedics"}),
  "Schedule time with Anthony to go through the sponsor outreach spreadsheet",
@@ -95,13 +108,23 @@ export const SECTIONS: Section[] = [
  "Share sponsor list with Derek",
  "Follow up Matt Weis regarding sponsor outreach",
  "Touch base with Jeff on Board member sponsorship activity",
- "Continue seeking strong UK-based sponsors"]},
+ "Continue seeking strong UK-based sponsors"],
+ watch:[
+ "Jeff's Board outreach",
+ "Emma's outreach",
+ "Derek's outreach",
+ "Matt Weis outreach",
+ "UK sponsor pipeline"]},
+
 {id:'isodp-organox',stream:'isodp',title:'Sponsorship — OrganOx',items:[
  "Follow up the OrganOx UK marketing manager",
  "Set up a call including Anthony",
  "Speak to Derek about senior escalation through Peter",
  "Provide Derek with the sponsorship pack",
- "Keep Dale's intelligence on Peter's current OrganOx involvement in view"]},
+ "Keep Dale's intelligence on Peter's current OrganOx involvement in view"],
+ watch:[
+ "OrganOx"]},
+
 {id:'isodp-china',stream:'isodp',title:'Sponsorship — Chinese and TransNovo',items:[
  P("Clarify exactly what they want",{p:1,note:"Platinum sponsorship, pre-Congress workshop, speaking slot, or a combination"}),
  P("Clarify the actual sponsoring entity",{p:1,note:"TransNovo, COTDF or another associated company"}),
@@ -111,7 +134,10 @@ export const SECTIONS: Section[] = [
  "Check reputational and governance implications",
  "Check with Anthony and DHSC if necessary",
  "Establish sensible cancellation and non-refundable sponsorship terms",
- "Aim to collect major sponsorship funds early"]},
+ "Aim to collect major sponsorship funds early"],
+ watch:[
+ "Chinese and TransNovo"]},
+
 {id:'isodp-leads',stream:'isodp',title:'Sponsorship — other leads',items:[
  P("Convert the Getinge pencilled commitment into formal confirmation",{p:1}),
  P("Get European outreach underway before Sydney",{p:1}),
@@ -125,7 +151,16 @@ export const SECTIONS: Section[] = [
  "Brief Dale on Beatrice and Marty sponsor conversations in Sydney",
  "Review Ara's sponsorship proposal and take it to LOC",
  "Put together the BA sponsorship proposal against BA criteria",
- "Ask Kirsty, Head of Charity, to support the BA sponsorship application"]},
+ "Ask Kirsty, Head of Charity, to support the BA sponsorship application"],
+ watch:[
+ "Getinge",
+ "Invita",
+ "Global Transplant Solutions",
+ "Organ Recovery Systems",
+ "Fusion Fluids",
+ "BA sponsorship",
+ "European and Spanish pipeline"]},
+
 {id:'isodp-coll',stream:'isodp',title:'Sponsorship — collateral',items:[
  "Ensure Emma has the final sponsorship brochure",
  "Ensure Emma has sponsor contacts assigned to her",
@@ -136,6 +171,7 @@ export const SECTIONS: Section[] = [
  "Send the final brochure to Congress Board",
  "Summarise the sponsorship discussion by email when useful",
  "Send the congress graphic and video file to Lauren for the website"]},
+
 {id:'isodp-pay',stream:'isodp',title:'Finance — sponsor payment process',items:[
  P("Clarify the end-to-end process for sponsors paying NHSBT",{p:1}),
  P("Draft escalation email for Anthony to send to Mark Taylor",{p:1,note:"Make clear sponsors are ready to pay but currently lack a workable payment route."}),
@@ -151,34 +187,63 @@ export const SECTIONS: Section[] = [
  "Ask Suzanne how currency and international payments were handled at previous Congresses",
  "Confirm with Oxford Abstracts how they handle multi-currency payments",
  "Re-run registration cost numbers with Isaac",
- P("Dig into the old budget sheet and confirm speaker policy",{note:"Flights, accommodation, registration"})]},
+ P("Dig into the old budget sheet and confirm speaker policy",{note:"Flights, accommodation, registration"})],
+ watch:[
+ "Sponsor payment mechanism",
+ "VAT treatment",
+ "International currency process",
+ "Stripe or invoicing solution",
+ "Registration cost modelling"]},
+
 {id:'isodp-mystery',stream:'isodp',title:'Finance — the unexplained payment',items:[
  P("Investigate the unexplained €1,085 payment",{note:"Approximately £910"}),
  "Identify the sender",
  "Establish why it was paid",
  "Establish how the sender obtained ISODP payment details",
  "Confirm the correct accounting treatment",
- "Check with Suzanne and TTS whether it originated through them"]},
+ "Check with Suzanne and TTS whether it originated through them"],
+ watch:[
+ "Mystery £910 payment"]},
+
 {id:'isodp-budget',stream:'isodp',title:'Finance — budget management',items:[
  "Add a forecast of major expenditure to the budget tracker",
  "Upload the budget tracking document to SharePoint"]},
+
 {id:'isodp-abs',stream:'isodp',title:'Programme — abstracts',items:[
  "Find the number of accepted oral abstracts at Kyoto",
  "Speak to Suzanne about abstract categories, awards and submission rules",
  "Chase Matt and Dale for final abstract categories and awards information",
  "Tell Candy and the Oxford team they can build around the working 13 categories",
  "Update the system if the final SPC decision changes the categories",
- "Track SPC decisions on invited speakers, oral abstracts, mini abstracts and abstract-only sessions"]},
+ "Track SPC decisions on invited speakers, oral abstracts, mini abstracts and abstract-only sessions"],
+ watch:[
+ "Final abstract categories",
+ "SPC parallel-session structure"]},
+
 {id:'isodp-awards',stream:'isodp',title:'Programme — awards',items:[
  "Get existing award details from Suzanne",
  "Feed award details into the Oxford and website build",
  "Track Executive Council decisions on top abstract and poster awards",
  "Track decisions on travel scholarships and speaker support",
  "Track decisions on young investigator and emerging economy awards",
- "Incorporate final decisions into website, abstract platform, communications and budget"]},
+ "Incorporate final decisions into website, abstract platform, communications and budget"],
+ watch:[
+ "Awards decision"]},
+
 {id:'isodp-prog',stream:'isodp',title:'Programme — development',items:[
  "Keep Dr Koval and Ukraine plenary participation on the radar",
- "Ensure programme information needed for website and accreditation is captured as it firms up"]},
+ "Ensure programme information needed for website and accreditation is captured as it firms up"],
+ watch:[
+ "Dr Koval"]},
+
+{id:'isodp-accred',stream:'isodp',title:'Accreditation',items:[
+ "Have Dale speak to Sylvia Paris regarding CME and accreditation needs",
+ "Clarify whether College of Intensive Care Medicine accreditation is sufficient",
+ "Determine whether ABTC or non-physician accreditation is worthwhile",
+ P("Have Anthony pursue UK accreditation once programme and speakers are sufficiently developed",{note:"Keep moving through Dale."})],
+ watch:[
+ "CME and ABTC accreditation"]},
+
 {id:'isodp-web',stream:'isodp',title:'Website',items:[
  "Review Lauren and Candy's initial website build",
  "Respond with consolidated feedback",
@@ -189,7 +254,10 @@ export const SECTIONS: Section[] = [
  "Ensure clear sections for accommodation, sponsorship and venue",
  "Review IPDA and other TTS Congress sites as reference models",
  "Ensure the latest sponsorship brochure and confirmed sponsors are reflected",
- "Ensure the congress graphic and video is incorporated"]},
+ "Ensure the congress graphic and video is incorporated"],
+ watch:[
+ "Website progress"]},
+
 {id:'isodp-hotels',stream:'isodp',title:'Hotels and accommodation',items:[
  P("Start accommodation work now",{p:1}),
  "Contact the QEII Centre about preferred hotel relationships and rates",
@@ -200,23 +268,135 @@ export const SECTIONS: Section[] = [
  "Consider a hotel suitable for Executive and Council, speakers and organising team",
  "Explore group and room-block booking",
  "Determine how speaker accommodation should be managed",
- "Bring actual hotel options and indicative rates to LOC rather than only discussing the concept"]},
+ "Bring actual hotel options and indicative rates to LOC rather than only discussing the concept"],
+ watch:[
+ "HotelMap",
+ "Headquarters hotel",
+ "Room block"]},
+
 {id:'isodp-social',stream:'isodp',title:'Social events and logistics',items:[
  "Develop 007 gala dinner ideas in the shared LOC folder",
  P("Follow up Houses of Parliament dinner possibilities",{note:"Capacity, regulations, costs, practical feasibility"}),
  "Contact the aquarium venue about the President's Dinner",
  "Contact OXO Tower about the President's Dinner",
- "Review LOC meeting notes and provide feedback"]},
+ "Review LOC meeting notes and provide feedback"],
+ watch:[
+ "President's Dinner",
+ "Gala Dinner"]},
 
-// ─────────────────────────────────────────────────────────────────────
-// TRUNCATION POINT. The brief's appendix was cut off here, mid-section,
-// at:  {id:'isodp-accred',stream:'isodp',title:'Accre…
-// Everything below this line is missing from the source material:
-//   • the remainder of `isodp-accred` and any later isodp sections
-//   • the entire `dir` (Directorate) stream
-//   • the entire `career` stream
-//   • the entire `per` (Personal) stream
-//   • the entire WATCH block (~50 "needs remembering" items)
-// See docs/DATA-GAP.md.
-// ─────────────────────────────────────────────────────────────────────
+// ═══ DIRECTORATE ═══════════════════════════════════════════════════
+{id:'dir-smt',stream:'dir',title:'Senior Management Team',items:[
+ "Do the SMT summary",
+ "Arrange follow-up discussion about restructuring the SMT agenda format",
+ "Develop a more useful future SMT agenda structure"]},
+
+{id:'dir-crib',stream:'dir',title:'CRIB presentation',items:[
+ "Schedule follow-up with Mike on CRIB",
+ "Update and consolidate the presentation following Mike's walkthrough",
+ P("Combine and streamline the slides",{note:"Programme overview, consent rate, family approach, marketing strategy, corneas"}),
+ "Add clearer labels where needed",
+ "Move narrative text into speaker notes so it is not visible to the audience"]},
+
+{id:'dir-people',stream:'dir',title:'People compliance',items:[
+ P("Draft and send the PDPR compliance email to non-compliant staff",{p:1,note:"Make clear that managers are responsible for arranging PDPRs."}),
+ P("Review Anthony's previous Conflicts of Interest email",{p:1}),
+ "Check outstanding Conflicts of Interest declarations",
+ "Chase remaining individuals directly where necessary"],
+ watch:[
+ "PDPR rate",
+ "Conflict of Interest compliance"]},
+
+{id:'dir-steph',stream:'dir',title:'Steph',items:[
+ "Finalise Steph's PDPR",
+ "Try to arrange Steph's Blood Donation visit"]},
+
+{id:'dir-office',stream:'dir',title:'Office',items:[
+ "Ask the Heads of Office group for a workaround to the Team Talk recording-access issue",
+ "Sort Satya's honorary contract",
+ "Chase Satya's contract through an alternative route if stalled"]},
+
+{id:'dir-restructure',stream:'dir',title:'OTDT and Clinical Services restructure',monitor:true,items:[],
+ watch:[
+ "Communications timeline for Clinical Services changes",
+ "September announcement",
+ "Anthony and Bilal discussion on interim versus substantive Director",
+ "Likely interim Director of OTDT solution",
+ "Consequent AD backfill requirements",
+ "Emerging reporting lines across OTDT, Clinical Services, Chief Nurse, Transformation and Digital",
+ "Deloitte operating-model work",
+ "Communications and staff engagement risks",
+ "Anthony's own position and appetite for the future role"]},
+
+{id:'dir-digital',stream:'dir',title:'Digital referral discovery',items:[
+ P("Speak to Anthony about splitting your time so you can begin working with Laura",{p:1}),
+ "Start involvement in digital referral discovery",
+ "Find the Texas digital referral case study paper",
+ "Send the Texas paper to Laura",
+ P("Connect ARC Discovery findings with referral pathways, equity, digital opportunities and operational feasibility")],
+ watch:[
+ "Digital referral discovery"]},
+
+{id:'dir-perf',stream:'dir',title:'Donation programme and performance',items:[
+ "Speak to Anthony about whether the organ donation session should be postponed until better prepared",
+ "Review the Organ Donation Week script",
+ "Review the Organ Donation Week slides",
+ "Confirm Organ Donation Week content is ready and appropriate",
+ "Double-check whether Kanak needs anything else ahead of the Accenture workshop",
+ P("Respond to Kanak's workshop email with the right contacts",{note:"Alex Hudson for registration, Laura for matching and allocation, plus the relevant process-improvement contact"})],
+ watch:[
+ "Current donation performance pressures when planning transformation activity",
+ "Donation performance"]},
+
+{id:'dir-session',stream:'dir',title:'Session design and engagement',items:[
+ "Test Mentimeter",
+ "Confirm Mentimeter works as expected",
+ "Consider Menti or an equivalent interactive platform for the SDG session",
+ "Think through what the SDG session should look like",
+ "Send SDG session ideas ahead of the follow-up call",
+ "Think through which leadership capabilities should underpin session design",
+ "Find and share notes containing Anthony's brainstorming ideas",
+ "Reach out to Kate or Mark Taylor's team if required regarding SDG planning"]},
+
+{id:'dir-events',stream:'dir',title:'Events and communications',items:[
+ "Contact the NHSBT filming and recording team to pencil them in for the donor recognition event",
+ "Prepare Anthony's speaking notes for the partner and stakeholder webinar",
+ "Set up a Teams channel for the relevant three participants",
+ "Send a joint email to presenters who still owe presentations",
+ "Reach out to the digital team for a Teams link for the international session",
+ "Pass the Teams link to the relevant organiser"]},
+
+{id:'dir-honours',stream:'dir',title:'Honours — Lisa Burnham',items:[
+ P("Draft the honours nomination for Lisa Burnham",{p:1}),
+ P("Pull together supporting evidence for the nomination",{p:1}),
+ P("Confirm the evidence is accurate",{note:"Career impact, international work, committee roles, charity involvement, living kidney donation history"}),
+ "Speak to Derek for evidence and context",
+ "Identify supporting letter writers",
+ P("Obtain supporting letters",{note:"Anthony, Derek, the relevant charity, an external or international partner"}),
+ P("Submit the nomination internally to Kate Thomas and Wayne Norleigh",{p:1,due:"2026-08-28"})]},
+
+// ═══ CAREER ════════════════════════════════════════════════════════
+{id:'career-decision',stream:'career',title:'The decision',items:[
+ "Apply for the Head of Organ Donation Partnerships role when it opens",
+ "Keep both that and the Product opportunity alive until you have a genuine choice",
+ "Decide between the Product role and the Partnerships secondment",
+ "Speak to the relevant people once the decision point arrives",
+ "Speak to Sinead before she proceeds too far with internal recruitment if your intentions materially affect it",
+ "Keep Laura informed appropriately",
+ P("Begin Head of Office backfill planning if you move",{note:"Identify handover needs and agree timing with Anthony."})],
+ watch:[
+ "Product role",
+ "Partnerships role",
+ "Possible Head of Office backfill"]},
+
+// ═══ PERSONAL ══════════════════════════════════════════════════════
+{id:'per-grassroot',stream:'per',title:'Grassroot',items:[
+ "Send price breakdowns per unit for DTC, kegs and cans",
+ P("Create a benchmark reference-product package",{note:"Including Cruzcampo Radler and ginger examples"}),
+ "Note what you like about sweetness, citrus and ginger heat",
+ "Check bottles from the pilot batch for the clumping issue",
+ "Confirm whether the affected batch appears safe and stable",
+ "Send fresh samples to Hannah if the current batch is problematic"]},
+
+{id:'per-property',stream:'per',title:'Property',items:[
+ "Send Tony links to any property you are seriously considering before making an offer"]},
 ];

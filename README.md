@@ -274,13 +274,16 @@ reads as *old item gone, new item arrived*: the old row is soft-deleted and a ne
 one inserted. If you want to keep its history, rename it in the app instead — that
 sets `user_edited` and freezes the seed out of that row.
 
-### Adding the rest of the register
+### What is in the register
 
-See [`docs/DATA-GAP.md`](docs/DATA-GAP.md). The appendix this was built from was
-truncated in transmission at `isodp-accred`, so `data/register.seed.ts` currently
-holds **134 items across 18 sections** rather than the full ~190. Paste the
-remaining sections into the array, add `WATCH` material as a `watch: []` array on
-its section, and re-seed.
+**255 items across 33 sections** — 201 tasks and 54 watch items — built from the
+Master Work Action List. 24 flagged *do now*; exactly one carries a date.
+
+How the list was mapped, and the judgement calls made along the way, are in
+[`docs/DATA-MAPPING.md`](docs/DATA-MAPPING.md).
+
+To add more: put tasks in a section's `items` array and anything that only needs
+remembering in its `watch` array, then re-seed.
 
 ```ts
 {
