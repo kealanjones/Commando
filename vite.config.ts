@@ -3,10 +3,17 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
+/**
+ * ARTIFACT=1 produces a single self-contained page with no service worker,
+ * for sharing a clickable preview. It is not the deployable build.
+ */
+const artifact = process.env.ARTIFACT === '1';
+
 export default defineConfig({
+  base: artifact ? './' : '/',
   plugins: [
     react(),
-    VitePWA({
+    !artifact && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
@@ -42,7 +49,7 @@ export default defineConfig({
         ],
       },
     }),
-  ],
+  ].filter(Boolean),
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

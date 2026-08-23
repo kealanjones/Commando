@@ -12,3 +12,6 @@ dev-dist
 dist-demo
 dist-real
 .env.demo
+dist-artifact
+preview.html
+.env.artifact

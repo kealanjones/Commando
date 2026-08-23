@@ -62,6 +62,17 @@ Fixture mode renders the whole app from `data/register.seed.ts` with no Supabase
 connection and no sign-in. Writes stay in memory and are discarded on reload.
 Useful for looking at layout against the real volume of items.
 
+### A shareable single file
+
+```bash
+npm run build:preview
+```
+
+Builds fixture mode into one self-contained `preview.html` — every script and
+stylesheet inlined, no service worker, hash routing so it works with no server.
+Open it directly or send it to someone. It carries the real register content, so
+treat it as you would any other document with your work in it.
+
 ### Scripts
 
 | | |
@@ -74,6 +85,7 @@ Useful for looking at layout against the real volume of items.
 | `npm run build:demo` + `npm run serve:dist` | Build and serve fixture mode |
 | `npm run test:ui` | Browser interaction checks (needs `serve:dist` running) |
 | `npm run test:shots` | Screenshot every route at 375px and 1280px |
+| `npm run build:preview` | Fold the app into one self-contained `preview.html` for sharing |
 
 ---
 
