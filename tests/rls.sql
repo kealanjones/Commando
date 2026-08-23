@@ -131,6 +131,33 @@ select assert((select days_quiet from public.stream_health where stream_id = 'is
 select assert((select days_quiet from public.stream_health where stream_id = 'cttl') is null,
   'an untouched stream reports no recency rather than a wrong one');
 
+-- ── intake is personal, even where a stream is shared ──────────────
+reset role;
+insert into public.intakes (id, owner_id, label, source_text, status)
+values ('33333333-3333-3333-3333-333333333333',
+        '11111111-1111-1111-1111-111111111111', 'SMT, 14 August',
+        'Anthony asked about the ISODP payment route.', 'ready');
+
+insert into public.intake_items (intake_id, owner_id, title, kind, stream_id, section_id, evidence)
+values ('33333333-3333-3333-3333-333333333333',
+        '11111111-1111-1111-1111-111111111111',
+        'Send Isaac the revised registration numbers', 'task', 'isodp', 'isodp-spons',
+        'Isaac needs the revised numbers.');
+
+set role authenticated;
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+select assert((select count(*) from public.intakes) = 1, 'owner sees their own intake');
+select assert((select count(*) from public.intake_items) = 1, 'owner sees their own proposals');
+
+-- Steph is an editor on isodp. She must still not see the transcript the
+-- proposals came from: a meeting record routinely covers more than the one
+-- stream someone was given.
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+select assert((select count(*) from public.intakes) = 0,
+  'a shared-stream collaborator cannot read the transcript');
+select assert((select count(*) from public.intake_items) = 0,
+  'a shared-stream collaborator cannot read the proposals');
+
 -- ── RLS is on and forced everywhere ────────────────────────────────
 select assert(
   (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace

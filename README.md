@@ -20,6 +20,7 @@ Three destinations.
 | **Today** | Five stream cards, one nudge, and three tasks. Nothing else. |
 | **Streams** | Everything, by stream and section, with filters including who you are waiting on. |
 | **Periphery** | The remembering register. Nothing here can be ticked. |
+| **Intake** | Paste a meeting record; review what it proposes; accept what is real. |
 
 ### The recency dial
 
@@ -30,6 +31,32 @@ touched today, emptying as it goes quiet, against a 21-day scale.
 It measures time since last contact, not completion. That is deliberate: a
 congress has no denominator, so any percentage-done figure would be fiction.
 Staleness is computed from `touched_at` and never entered by hand.
+
+### Intake
+
+Paste notes, a transcript or an email chain. It comes back as a list of proposed
+items, each routed into one of your real sections, each carrying **the verbatim
+quote it came from** so a proposal can be checked in two seconds rather than by
+re-reading the transcript.
+
+Three things it deliberately does not do:
+
+- **It does not write to the register.** Proposals land in `intake_items` and
+  stay there until you accept them. An LLM reading a transcript is a good first
+  pass and a bad final authority.
+- **It does not invent placement.** If nothing fits, the item comes back
+  unplaced and is excluded from the ready count until you choose a section.
+  A guess routed into the wrong stream is worse than an obvious gap.
+- **It leans towards watching, not doing.** The prompt says so explicitly: a
+  false task nags every morning, a false watch item is merely quiet. That
+  asymmetry is the whole point of the register, so extraction inherits it.
+
+It also checks proposals against your existing open items and flags anything
+that restates one, because half of what comes out of a meeting is already on
+the list.
+
+The extraction runs in a Supabase Edge Function (`supabase/functions/extract`),
+never in the browser — see Information governance below.
 
 ### Doing versus remembering
 
@@ -84,6 +111,7 @@ treat it as you would any other document with your work in it.
 | `npm run seed:dry` | Report what a seed would change, write nothing |
 | `npm run build:demo` + `npm run serve:dist` | Build and serve fixture mode |
 | `npm run test:ui` | Browser interaction checks (needs `serve:dist` running) |
+| `npm run test:intake` | End-to-end paste → triage → commit checks |
 | `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |
 | `npm run test:shots` | Screenshot every route at 375px and 1280px |
 | `npm run build:preview` | Fold the app into one self-contained `preview.html` for sharing |
@@ -143,6 +171,30 @@ SEED_OWNER_EMAIL=you@example.com npm run seed
 ```
 
 ---
+
+## Information governance
+
+**Intake sends the text you paste to Anthropic's API.** Everything else in this
+app stays between your browser and your Supabase project.
+
+That is a decision about NHS information, not a technical detail, so it is made
+deliberately and it is reversible:
+
+- Intake is **opt-in per deployment**. Without `ANTHROPIC_API_KEY` set as a
+  function secret, the feature reports that it is not configured and the rest of
+  the app is unaffected. Not deploying the function at all removes it entirely.
+- Nothing is sent in the background. Text leaves only when you press **Read it**,
+  and the screen says so before you do.
+- The pasted text is stored against your account in `intakes` so each item can
+  show where it came from. It is subject to the same RLS as everything else,
+  and — unlike a task — it is **never** visible to someone you share a stream
+  with, because a meeting record routinely covers more than the one workstream
+  they were given.
+- The Anthropic key exists only as a Supabase function secret. It is never in
+  the repo and never in the frontend bundle.
+
+Whether that trade is acceptable for a given meeting is your call, meeting by
+meeting. The app makes it visible rather than making it for you.
 
 ## Security
 
@@ -304,7 +356,9 @@ scripts/seed.ts           idempotent reconciling seeder
 src/lib/                  supabase client, offline queue, types, slug
 src/data/store.ts         queries, optimistic mutations, derived signals
 src/components/           dial, cards, sheets, toasts
-src/routes/               Today, Streams, Periphery, sign-in
+src/routes/               Today, Streams, Periphery, Intake, sign-in
+src/data/intake.ts        extraction call and triage state
+supabase/functions/       the extract Edge Function (holds the Anthropic key)
 src/styles/tokens.css     the design system: colour, type, radii, motion
 src/styles/fonts.css      self-hosted @font-face (scripts/fetch-fonts.sh)
 vercel.json netlify.toml  SPA rewrites, security headers, cache policy

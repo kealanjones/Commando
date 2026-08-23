@@ -14,7 +14,8 @@
     "serve:dist": "node tests/serve.mjs",
     "test:ui": "node tests/interactions.mjs",
     "test:shots": "node tests/screenshots.mjs",
-    "build:preview": "ARTIFACT=1 vite build --mode artifact --outDir dist-artifact && node scripts/inline.mjs dist-artifact preview.html"
+    "build:preview": "ARTIFACT=1 vite build --mode artifact --outDir dist-artifact && node scripts/inline.mjs dist-artifact preview.html",
+    "test:intake": "node tests/intake.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

@@ -46,6 +46,7 @@ export function Nav() {
       <NavLink to="/" end>Today</NavLink>
       <NavLink to="/streams">Streams</NavLink>
       <NavLink to="/periphery">Periphery</NavLink>
+      <NavLink to="/intake">Intake</NavLink>
     </nav>
   );
 }

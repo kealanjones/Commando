@@ -122,12 +122,38 @@ installed.
 **The build fails deliberately if the two env vars are missing.** A deploy that
 silently ships an app which cannot reach its database is worse than a red build.
 
-## 6. Close the loop
+## 6. Deploy the intake function (optional)
+
+Intake — pasting a meeting record and having it proposed as register items —
+runs in a Supabase Edge Function. Skip this and the rest of the app works
+normally; the Intake screen just reports that extraction is not configured.
+
+```bash
+npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+npx supabase functions deploy extract
+```
+
+The Anthropic key lives **only** as a function secret. It must never appear in
+the frontend env vars, because those are compiled into the bundle. The Supabase
+anon key is safe there because RLS bounds it; an LLM provider key is bounded by
+nothing.
+
+Optionally pin the browser origin allowed to call it:
+
+```bash
+npx supabase secrets set ALLOWED_ORIGIN=https://your-production-url
+```
+
+**Before you turn this on, read the information governance note in the README.**
+Pasting a meeting record sends that text to Anthropic's API. That is a decision
+about NHS information, not a technical detail, and it is yours to make.
+
+## 7. Close the loop
 
 Back in Supabase → **Authentication → URL Configuration**, set **Site URL** to
 the production URL. Without this the magic link mails you back to localhost.
 
-## 7. Add it to your home screen
+## 8. Add it to your home screen
 
 Open the production URL in Safari on your iPhone → Share → **Add to Home
 Screen**. It opens full screen with no browser chrome; the manifest and iOS meta
@@ -148,6 +174,9 @@ In order, on the real deployment:
 - [ ] Turn on aeroplane mode, tick something — the header shows the queued
       count — then turn it off and watch it flush.
 - [ ] Try signing in with an address you have not invited. It should be refused.
+- [ ] If you deployed intake: paste a short set of notes, check the proposals
+      carry a quote you recognise, discard one, and confirm only what you
+      accepted reached the register.
 
 ### Prove the anon key is harmless
 

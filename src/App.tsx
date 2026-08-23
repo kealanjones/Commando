@@ -9,6 +9,7 @@ import { useToast } from '@/components/Toasts';
 import { Today } from '@/routes/Today';
 import { Streams } from '@/routes/Streams';
 import { Periphery } from '@/routes/Periphery';
+import { Intake } from '@/routes/Intake';
 import { NotConfigured, SignIn } from '@/routes/SignIn';
 
 import { configured, supabase } from '@/lib/supabase';
@@ -160,6 +161,7 @@ function Register({ email }: { email: string }) {
             path="/periphery"
             element={<Periphery onOpen={setEditing} onPromote={onPromote} />}
           />
+          <Route path="/intake" element={<Intake />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

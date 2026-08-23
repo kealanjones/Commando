@@ -58,3 +58,44 @@ export interface StreamHealth extends Stream {
   lastTouchedAt: string | null;
   daysQuiet: number | null;
 }
+
+export type IntakeStatus = 'pending' | 'extracting' | 'ready' | 'failed';
+export type Confidence = 'high' | 'medium' | 'low';
+
+export interface Intake {
+  id: string;
+  owner_id: string;
+  label: string | null;
+  source_text: string;
+  summary: string | null;
+  status: IntakeStatus;
+  error: string | null;
+  model: string | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  created_at: string;
+  processed_at: string | null;
+  deleted_at: string | null;
+}
+
+/** A proposal. Nothing here is in the register until it is accepted. */
+export interface IntakeItem {
+  id: string;
+  intake_id: string;
+  owner_id: string;
+  title: string;
+  kind: Kind;
+  context: string | null;
+  stream_id: StreamId | null;
+  section_id: string | null;
+  do_now: boolean;
+  due: string | null;
+  waiting_on: string[];
+  evidence: string | null;
+  confidence: Confidence;
+  duplicate_of: string | null;
+  status: 'pending' | 'accepted' | 'rejected';
+  task_id: string | null;
+  position: number;
+  created_at: string;
+}

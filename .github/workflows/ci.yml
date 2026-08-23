@@ -32,6 +32,7 @@ jobs:
           node tests/serve.mjs &
           npx wait-on http://127.0.0.1:4173 -t 30000
           npm run test:ui
+          npm run test:intake
 
   database:
     name: Migrations and RLS

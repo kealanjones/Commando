@@ -158,3 +158,67 @@ separate `task_person` relation.
   so phone and laptop agree. Idempotent seed keyed on `section_id:slug(title)` so
   the seed file can be edited and re-run without destroying user edits.
 - **Soft delete** throughout, so undo works.
+
+## Intake — reading a meeting record into the register
+
+Added after the first deployment pass. Paste notes or a transcript; get proposed
+items; accept what is real.
+
+### Where it runs, and why that is not negotiable
+
+In a Supabase Edge Function, never the browser. The Supabase anon key ships in
+the bundle and is safe because RLS bounds what it can reach. An Anthropic API
+key is bounded by nothing — anyone who reads it can spend against it. So it
+lives as a function secret and the browser never sees it.
+
+The function forwards the caller's own JWT to PostgREST rather than using the
+service role, so every read and write it performs is bounded by exactly the same
+policies as the app itself.
+
+### Extraction proposes, the user disposes
+
+Nothing extracted is written to `tasks`. Candidates go to `intake_items` and stay
+there until accepted. This is not caution for its own sake: the register exists
+because a list where everything looks equally urgent is useless, and the fastest
+way to rebuild that problem would be to let a model add forty items a week
+unsupervised.
+
+Three consequences in the design:
+
+1. **Unplaceable items stay unplaced.** If the model cannot route something into
+   a real section, it comes back marked and is excluded from the ready count. A
+   confident guess into the wrong stream is worse than a visible gap.
+2. **Every proposal carries its evidence** — a verbatim quote from the source.
+   That turns review into a two-second check rather than a re-read. The prompt
+   refuses to extract anything it cannot quote.
+3. **The routing is validated server-side.** A section id the model invented is
+   discarded and the item treated as unplaced, rather than written into a column
+   with a foreign key.
+
+### The bias is towards watching
+
+The prompt states the asymmetry explicitly: a false task nags every morning, a
+false watch item is merely quiet. When the model is unsure whether something is
+work or context, it must choose watch. This is the doing-versus-remembering
+distinction from the original brief, applied to extraction — the feature would
+undermine the register if it defaulted the other way.
+
+### Duplicates
+
+Existing open titles are passed as grounding and the model flags anything that
+restates one. Half of what comes out of a meeting is already on the list, and
+silently adding a second copy is how a register stops being trusted.
+
+### Prompt caching
+
+The system prompt and the grounding block (streams, sections, open titles) are
+stable between runs and carry cache breakpoints; the transcript goes last, after
+them. Ordinary practice, but it matters here because the grounding block grows
+with the register.
+
+### Privacy of the source
+
+`intakes` and `intake_items` are owner-only, with no share path at all — unlike
+tasks, which a stream member can see. A meeting record routinely covers more
+than the one workstream a collaborator was given access to, so the transcript
+must not travel with the stream.
