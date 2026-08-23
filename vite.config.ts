@@ -118,12 +118,16 @@ export default defineConfig(({ mode }) => {
   build: {
     sourcemap: false,
     rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          supabase: ['@supabase/supabase-js'],
-        },
-      },
+      output: artifact
+        ? // The single-file preview must be exactly one script, or the
+          // inliner leaves chunk imports pointing at files that do not exist.
+          { inlineDynamicImports: true, manualChunks: undefined }
+        : {
+            manualChunks: {
+              vendor: ['react', 'react-dom', 'react-router-dom'],
+              supabase: ['@supabase/supabase-js'],
+            },
+          },
     },
   },
   };

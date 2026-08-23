@@ -13,11 +13,20 @@ const out = process.argv[3] ?? 'preview.html';
 
 let html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 
+/** Fonts have no /fonts path in a single file — embed them. */
+function embedFonts(css) {
+  return css.replace(/url\(['"]?(?:\.\.?\/)*fonts\/([^'")]+)['"]?\)/g, (m, name) => {
+    const file = path.join(dist, 'fonts', name);
+    if (!fs.existsSync(file)) return m;
+    return `url(data:font/woff2;base64,${fs.readFileSync(file).toString('base64')})`;
+  });
+}
+
 // Inline stylesheets
 html = html.replace(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"[^>]*>/g, (m, href) => {
-  if (href.startsWith('http')) return m;               // Google Fonts stays a link
+  if (href.startsWith('http')) return m;
   const css = fs.readFileSync(path.join(dist, href.replace(/^\.?\//, '')), 'utf8');
-  return `<style>\n${css}\n</style>`;
+  return `<style>\n${embedFonts(css)}\n</style>`;
 });
 
 // Inline module scripts. `</script>` inside a string literal would close the
@@ -40,8 +49,25 @@ html = html
   .replace(/<\/?body[^>]*>\s*/gi, '')
   .replace(/<meta charset[^>]*>\s*/i, '')
   .replace(/<meta name="viewport"[^>]*>\s*/i, '')
-  // Icons and manifest are not shipped with a single-file preview.
-  .replace(/<link[^>]+rel="(apple-touch-icon|icon|manifest)"[^>]*>\s*/gi, '');
+  // Icons, manifest and font preloads have no path in a single-file preview.
+  .replace(/<link[^>]+rel="(apple-touch-icon|icon|manifest|preload)"[^>]*>\s*/gi, '');
+
+// A code-split build would leave chunk imports pointing at files that do not
+// exist inside a single page. Fail here rather than shipping a blank preview.
+// Chunk imports appear as siblings ("./vendor-x.js") or under assets/,
+// depending on `base` — catch any relative .js import left in the page.
+const dangling = [...html.matchAll(/(?:\bfrom|\bimport)\s*["'](\.{0,2}\/[^"']+\.js)["']/g)].map((m) => m[1]);
+if (dangling.length) {
+  console.error(
+    `Unresolved chunk imports: ${[...new Set(dangling)].join(', ')}\n` +
+      'Build with ARTIFACT=1 so rollup emits a single chunk.',
+  );
+  process.exit(1);
+}
+if (/(?:src|href)="(?:\.{0,2}\/)?assets\//.test(html)) {
+  console.error('Unresolved asset reference left in the page.');
+  process.exit(1);
+}
 
 fs.writeFileSync(out, html);
 console.log(`${out}  ${(fs.statSync(out).size / 1024).toFixed(0)} KB`);
