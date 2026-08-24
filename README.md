@@ -108,6 +108,7 @@ treat it as you would any other document with your work in it.
 | `npm run build` | Production build |
 | `npm run typecheck` | TypeScript, no emit |
 | `npm run seed` | Seed or re-seed the database |
+| `npm run seed:sql` | Regenerate `supabase/seed.sql` for pasting into the dashboard |
 | `npm run seed:dry` | Report what a seed would change, write nothing |
 | `npm run build:demo` + `npm run serve:dist` | Build and serve fixture mode |
 | `npm run test:ui` | Browser interaction checks (needs `serve:dist` running) |
@@ -120,9 +121,13 @@ treat it as you would any other document with your work in it.
 
 ## Deploying
 
-See **[DEPLOY.md](DEPLOY.md)** for the full runbook: Supabase project, migrations,
-locking down sign-ups, seeding, hosting, and the checks to run against the live
-deployment.
+See **[DEPLOY.md](DEPLOY.md)**. There are two routes:
+
+- **In the browser only** — no terminal, no clone, and the secret key is never
+  needed. Migrations and `supabase/seed.sql` are pasted into the Supabase SQL
+  editor, the app is deployed from Vercel's web interface. Use this unless you
+  want to develop the app.
+- **Locally** — the usual `.env` and `npm run seed` route, for development.
 
 ## Supabase setup
 

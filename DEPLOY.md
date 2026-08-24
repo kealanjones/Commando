@@ -9,6 +9,115 @@ knowing the production URL.
 
 ---
 
+# The short way: no terminal, no downloads, no secret key
+
+Everything below happens in a web browser. Nothing is installed, nothing is
+cloned, and **the secret key is never needed at all** — the Supabase SQL editor
+is already signed in as you, so it needs no credential of its own.
+
+Use this route unless you specifically want to run the app locally.
+
+## 1. Create the project
+
+[supabase.com](https://supabase.com) → New project. Choose **London
+(eu-west-2)** — it is a directorate's coordination record and there is no
+reason for it to sit outside the UK.
+
+## 2. Create the tables
+
+Left sidebar → **SQL Editor** → New query. Open each of these on GitHub, copy
+the whole file, paste, and press Run — **in order**:
+
+1. `supabase/migrations/0001_schema.sql`
+2. `supabase/migrations/0002_rls.sql`
+3. `supabase/migrations/0003_realtime.sql`
+4. `supabase/migrations/0004_intake.sql`
+
+Then run this to confirm the security is really on:
+
+```sql
+select c.relname, c.relrowsecurity, c.relforcerowsecurity
+from pg_class c join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public' and c.relkind = 'r';
+```
+
+Every row must say `true` twice. If any does not, run `0002_rls.sql` again.
+
+## 3. Create your account, then shut the door
+
+**Authentication → Users → Add user → Send invitation**, to your own address.
+
+Then **Authentication → Providers → Email → turn "Enable email signups" OFF.**
+
+Both halves matter. The publishable key is readable by anyone who views source
+on the deployed site. With signups on, a stranger could create an account inside
+your project — they would see none of your data, but they should not get in at
+all.
+
+## 4. Load the register
+
+SQL Editor → New query → paste **`supabase/seed.sql`**.
+
+Change one line near the top — the email — to the address you just invited:
+
+```sql
+owner_email text := 'you@example.com';
+```
+
+Run it. You should see `255 inserted`.
+
+Safe to run again whenever the seed changes. It reconciles rather than
+replaces: anything you have ticked, edited, or added yourself is left alone.
+
+## 5. Put the app online
+
+[vercel.com](https://vercel.com) → **Add New → Project** → import
+`kealanjones/Commando`.
+
+Under **Environment Variables**, add two:
+
+| Name | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | your project URL |
+| `VITE_SUPABASE_ANON_KEY` | your **publishable** key |
+
+Deploy. Note the URL it gives you.
+
+**Only ever put those two here.** Never the secret key.
+
+## 6. Close the loop
+
+Supabase → **Authentication → URL Configuration** → set **Site URL** to the
+Vercel URL. Without this, your sign-in link mails you back to localhost.
+
+## 7. Add it to your phone
+
+Open the URL in Safari → Share → **Add to Home Screen**.
+
+## 8. Intake, if you want it
+
+Supabase → **Edge Functions** → Deploy a new function → name it `extract` →
+paste the contents of `supabase/functions/extract/index.ts`.
+
+Then **Edge Functions → Secrets** and add:
+
+| Name | Value |
+|---|---|
+| `ANTHROPIC_API_KEY` | your Anthropic key |
+| `ALLOWED_ORIGIN` | your Vercel URL |
+
+**Read the information governance note in the README first.** This is the step
+that sends pasted text outside NHS control. Skip it and everything else works;
+the Intake tab simply says it is not configured.
+
+---
+
+# The long way: running it locally
+
+Only needed if you want to develop the app, not just use it. This is the route
+that uses `.env` and the secret key — both of which live only on your own
+machine and are never committed.
+
 ## 1. Create the Supabase project
 
 At [supabase.com](https://supabase.com), create a project. Pick **London
