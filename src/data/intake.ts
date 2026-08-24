@@ -32,9 +32,9 @@ export function useExtract() {
       });
 
       if (error) {
-        // Edge function errors carry the useful message in the response body,
-        // not in error.message — surface that rather than "Edge Function
-        // returned a non-2xx status code".
+        // When the function ran and refused, the useful message is in the
+        // response body, not in error.message — which would otherwise read
+        // "Edge Function returned a non-2xx status code".
         let detail = '';
         const ctx = (error as { context?: Response }).context;
         if (ctx && typeof ctx.json === 'function') {
@@ -42,7 +42,23 @@ export function useExtract() {
             detail = ((await ctx.json()) as { error?: string }).error ?? '';
           } catch { /* body was not JSON */ }
         }
-        throw new Error(detail || error.message);
+        if (detail) throw new Error(detail);
+
+        // No response at all: the request never landed. Supabase reports this
+        // as "Failed to send a request to the Edge Function", which tells you
+        // nothing about what to do. Nearly always it is simply not deployed.
+        if (error.name === 'FunctionsFetchError' || /failed to send a request/i.test(error.message)) {
+          throw new Error(
+            'Could not reach the extraction function. It is probably not deployed yet — ' +
+              'see DEPLOY.md step 8. Everything else in the app works without it.',
+          );
+        }
+
+        if (error.name === 'FunctionsRelayError') {
+          throw new Error('The extraction function is deployed but failed to start. Check its logs in Supabase.');
+        }
+
+        throw new Error(error.message);
       }
       if (!data) throw new Error('Extraction returned nothing.');
       return data;

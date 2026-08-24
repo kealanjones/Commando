@@ -115,8 +115,24 @@ Then **Edge Functions → Secrets** and add:
 | `ALLOWED_ORIGIN` | your Vercel URL |
 
 **Read the information governance note in the README first.** This is the step
-that sends pasted text outside NHS control. Skip it and everything else works;
-the Intake tab simply says it is not configured.
+that sends pasted text outside NHS control. Skip it and everything else works.
+
+### If Intake says it cannot reach the function
+
+*"Could not reach the extraction function"* means the request never landed.
+In order of likelihood:
+
+1. **The function is not deployed.** Supabase dashboard → Edge Functions. If
+   `extract` is not in that list, that is the whole problem.
+2. **`ALLOWED_ORIGIN` does not match the site you are on.** It must be the exact
+   origin, scheme included, with no trailing slash — and a Vercel *preview* URL
+   is a different origin from your production one. To allow both, set it to a
+   comma-separated list. Unset allows any origin, which is fine while you are
+   getting it working.
+3. **`ANTHROPIC_API_KEY` is missing.** This gives a clear message rather than a
+   silent failure, so you would see *"Extraction is not configured"* instead.
+
+Its logs are under Edge Functions → `extract` → Logs.
 
 ---
 

@@ -81,7 +81,8 @@ export function Intake() {
         <p>
           The text is sent to Anthropic&rsquo;s API to be read, and stored against your account so
           you can see where each item came from. Treat it as you would any other system holding
-          this material.
+          this material. This is the only part of the app that sends anything outside Supabase,
+          and it needs the <code>extract</code> function deployed — see DEPLOY.md step 8.
         </p>
       </div>
 
