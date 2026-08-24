@@ -37,6 +37,9 @@ export interface Task {
   position: number;
   user_edited: boolean;
   touched_at: string | null;
+  reviewed_at: string | null;
+  /** "I do not know what this means yet." Still work; just not actionable. */
+  unclear: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -99,3 +102,25 @@ export interface IntakeItem {
   position: number;
   created_at: string;
 }
+
+export type ReviewReason = 'overdue' | 'unfinishable' | 'unclear' | 'urgent_undated' | 'stale';
+export type ReviewMode = 'weekly' | 'unclear' | 'person';
+
+export interface ReviewCard {
+  task: Task;
+  reason: ReviewReason;
+  daysIdle: number;
+  /** Open items in the same section — a proxy for what is queued behind it. */
+  blocking: number;
+  waitingOn: string[];
+}
+
+export type Decision =
+  | { kind: 'date'; due: string }
+  | { kind: 'watch' }
+  | { kind: 'drop' }
+  | { kind: 'unclear' }
+  | { kind: 'clear' }
+  | { kind: 'done' }
+  | { kind: 'chased' }
+  | { kind: 'keep' };

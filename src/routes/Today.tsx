@@ -4,6 +4,7 @@ import { StreamCard } from '@/components/StreamCard';
 import { TaskCard } from '@/components/TaskCard';
 import { WatchCard } from '@/components/WatchCard';
 import { useHealth, useStreams, useTasks, useToday } from '@/data/store';
+import { useReviewStatus } from '@/data/review';
 import type { Task } from '@/lib/types';
 
 export function Today({
@@ -22,6 +23,7 @@ export function Today({
   const { data: streams = [] } = useStreams();
   const { data: tasks = [], isLoading } = useTasks();
   const today = useToday(3, recentlyDone);
+  const review = useReviewStatus();
 
   /**
    * Hold the list still while an undo is on offer.
@@ -73,6 +75,36 @@ export function Today({
       <div className="rail">
         {health.map((h, i) => <StreamCard key={h.id} health={h} index={i} />)}
       </div>
+
+      {review.waiting > 0 && (
+        <div className="prompt">
+          <div>
+            <h3>
+              {review.session} decision{review.session === 1 ? '' : 's'} to make
+            </h3>
+            <p>
+              {[
+                review.reasons.overdue && `${review.reasons.overdue} overdue`,
+                review.reasons.unfinishable && `${review.reasons.unfinishable} with no finish line`,
+                review.reasons.urgent_undated && `${review.reasons.urgent_undated} urgent but undated`,
+                review.reasons.stale && `${review.reasons.stale} gone quiet`,
+              ].filter(Boolean).join(' · ')}
+              {review.waiting > review.session && ` — ${review.waiting} waiting in all`}
+            </p>
+          </div>
+          <Link to="/review">Start</Link>
+        </div>
+      )}
+
+      {review.waiting === 0 && review.unclear > 0 && (
+        <div className="prompt">
+          <div>
+            <h3>{review.unclear} parked as unclear</h3>
+            <p>Things you set aside because you did not know what they meant.</p>
+          </div>
+          <Link to="/review?mode=unclear">Look again</Link>
+        </div>
+      )}
 
       {today.datedCount <= 1 && today.openCount > 20 && (
         <div className="nudge">

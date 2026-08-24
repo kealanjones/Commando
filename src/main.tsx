@@ -4,7 +4,7 @@ import { BrowserRouter, HashRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import App from './App';
-import { DEMO, demoSections, demoStreams, demoTasks } from './lib/demo';
+import { DEMO, demoPeople, demoSections, demoStreams, demoTaskPeople, demoTasks } from './lib/demo';
 import { keys } from './data/store';
 import { ToastProvider } from './components/Toasts';
 import './styles/fonts.css';
@@ -30,11 +30,14 @@ const queryClient = new QueryClient({
 });
 
 if (DEMO) {
+  const tasks = demoTasks();
+  const links = demoTaskPeople(tasks);
+  (window as unknown as { __demoLinks?: typeof links }).__demoLinks = links;
   queryClient.setQueryData(keys.streams, demoStreams());
   queryClient.setQueryData(keys.sections, demoSections());
-  queryClient.setQueryData(keys.tasks, demoTasks());
-  queryClient.setQueryData(keys.people, []);
-  queryClient.setQueryData(['task_people'], []);
+  queryClient.setQueryData(keys.tasks, tasks);
+  queryClient.setQueryData(keys.people, demoPeople());
+  queryClient.setQueryData(['task_people'], links);
   queryClient.setDefaultOptions({ queries: { staleTime: Infinity, retry: false, refetchOnWindowFocus: false } });
 }
 

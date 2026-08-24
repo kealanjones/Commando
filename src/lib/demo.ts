@@ -10,8 +10,9 @@
  * unless VITE_DEMO is set.
  */
 import { SECTIONS, STREAMS } from '@data/register.seed';
+import { KNOWN_PEOPLE } from '@data/people';
 import { naturalKey } from './slug';
-import type { IntakeItem, Section, Stream, StreamId, Task } from './types';
+import type { IntakeItem, Person, Section, Stream, StreamId, Task } from './types';
 
 export const DEMO = import.meta.env.VITE_DEMO === '1';
 
@@ -28,6 +29,34 @@ export function demoSections(): Section[] {
     id: s.id, owner_id: OWNER, stream_id: s.stream as StreamId, title: s.title,
     monitor: s.monitor ?? false, position: i, deleted_at: null,
   }));
+}
+
+export function demoPeople(): Person[] {
+  return KNOWN_PEOPLE.map((p, i) => ({
+    id: `demo-person-${i}`,
+    name: p.name,
+    role: p.role ?? null,
+  }));
+}
+
+/**
+ * Who is named on which task — the same extraction the real seeder does,
+ * so the People view and the review's waiting-on line work in fixture mode.
+ */
+export function demoTaskPeople(tasks: Task[]): { task_id: string; person_id: string }[] {
+  const out: { task_id: string; person_id: string }[] = [];
+  KNOWN_PEOPLE.forEach((p, i) => {
+    const re = new RegExp(
+      `(^|[^\\p{L}])${p.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^\\p{L}]|$)`,
+      'u',
+    );
+    for (const t of tasks) {
+      if (t.kind === 'task' && re.test(`${t.title} ${t.context ?? ''}`)) {
+        out.push({ task_id: t.id, person_id: `demo-person-${i}` });
+      }
+    }
+  });
+  return out;
 }
 
 export function demoTasks(): Task[] {
@@ -64,6 +93,8 @@ export function demoTasks(): Task[] {
         due: it.due ?? null,
         position: idx,
         user_edited: false,
+        reviewed_at: null,
+        unclear: false,
         touched_at:
           quiet === undefined || idx !== 0
             ? null

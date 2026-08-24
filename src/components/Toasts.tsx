@@ -8,6 +8,12 @@ export interface Toast {
   tone?: 'default' | 'warn';
   /** ms; 0 keeps it until dismissed */
   duration?: number;
+  /**
+   * Toasts sharing a key replace one another instead of stacking. Working
+   * through a review otherwise leaves a pile of identical confirmations
+   * covering the screen, and only the newest undo is the one you want.
+   */
+  replaceKey?: string;
 }
 
 const Ctx = createContext<{ push: (t: Omit<Toast, 'id'>) => void }>({ push: () => {} });
@@ -19,16 +25,33 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const dismiss = useCallback((id: string) => {
     setToasts((t) => t.filter((x) => x.id !== id));
-    const h = timers.current.get(id);
-    if (h) { window.clearTimeout(h); timers.current.delete(id); }
+    for (const [key, handle] of timers.current) {
+      if (key === id || key.endsWith(`::${id}`)) {
+        window.clearTimeout(handle);
+        timers.current.delete(key);
+      }
+    }
   }, []);
 
   const push = useCallback(
     (t: Omit<Toast, 'id'>) => {
       const id = crypto.randomUUID();
-      setToasts((prev) => [...prev.slice(-2), { ...t, id }]);
+      setToasts((prev) => {
+        const kept = t.replaceKey ? prev.filter((x) => x.replaceKey !== t.replaceKey) : prev;
+        return [...kept.slice(-2), { ...t, id }];
+      });
+      if (t.replaceKey) {
+        for (const [key, handle] of timers.current) {
+          if (key.startsWith(`${t.replaceKey}::`)) { window.clearTimeout(handle); timers.current.delete(key); }
+        }
+      }
       const ms = t.duration ?? 6000;
-      if (ms > 0) timers.current.set(id, window.setTimeout(() => dismiss(id), ms));
+      if (ms > 0) {
+        timers.current.set(
+          t.replaceKey ? `${t.replaceKey}::${id}` : id,
+          window.setTimeout(() => dismiss(id), ms),
+        );
+      }
     },
     [dismiss],
   );

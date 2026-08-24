@@ -20,6 +20,7 @@ Three destinations.
 | **Today** | Five stream cards, one nudge, and three tasks. Nothing else. |
 | **Streams** | Everything, by stream and section, with filters including who you are waiting on. |
 | **Periphery** | The remembering register. Nothing here can be ticked. |
+| **People** | Who owes you what. Open one before a catch-up. |
 | **Intake** | Paste a meeting record; review what it proposes; accept what is real. |
 
 ### The recency dial
@@ -31,6 +32,39 @@ touched today, emptying as it goes quiet, against a 21-day scale.
 It measures time since last contact, not completion. That is deliberate: a
 congress has no denominator, so any percentage-done figure would be fiction.
 Staleness is computed from `touched_at` and never entered by hand.
+
+### The review — what stops the list eating itself
+
+A register that only grows is the problem it was built to solve. Intake adds
+items after every meeting; nothing removed any. Worse, **a fifth of the tasks
+began with a verb that has no finish line** — "keep the pipeline current",
+"continue seeking sponsors". There is no state of the world in which those get
+ticked, so they would sit in the do-column for ever, diluting everything that
+can actually be finished.
+
+So the app asks. When decisions are waiting, Today offers a short deck — eight
+cards, one at a time, a few seconds each:
+
+> **No finish line.** There is no state of the world where you tick this. It is
+> a standing concern, not a task.
+> **Keep the sponsor pipeline current**
+> *Give it a date · Just watch it · Not clear yet · Drop it*
+
+Cards are queued by reason, worst first: overdue, then no-finish-line, then
+urgent-but-undated, then anything untouched for three weeks. A decision snoozes
+the item for a month — without that the same cards return every week and the
+ritual dies. Every decision is reversible, and the deck ends by telling you what
+changed: *your do-column is 8 lighter*.
+
+**Not clear yet** is the third answer to "is this doing or remembering". Some
+things are neither: real work you cannot act on because you do not yet know what
+it means. Parking one takes it off Today and puts it in its own pile to work
+through later, which is honest in a way that either forcing it into the task
+list or demoting it to the periphery is not.
+
+The same card surface runs for a person: open **Anthony** before a 1:1 and go
+through the seventeen things he owes you, one at a time, with *I've chased them*
+in place of *give it a date*.
 
 ### Intake
 
@@ -117,6 +151,7 @@ treat it as you would any other document with your work in it.
 | `npm run build:demo` + `npm run serve:dist` | Build and serve fixture mode |
 | `npm run test:ui` | Browser interaction checks (needs `serve:dist` running) |
 | `npm run test:intake` | End-to-end paste → triage → commit checks |
+| `npm run test:review` | The review deck, the people view and the unclear pile |
 | `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |
 | `npm run test:shots` | Screenshot every route at 375px and 1280px |
 | `npm run build:preview` | Fold the app into one self-contained `preview.html` for sharing |
@@ -374,7 +409,8 @@ scripts/seed.ts           idempotent reconciling seeder
 src/lib/                  supabase client, offline queue, types, slug
 src/data/store.ts         queries, optimistic mutations, derived signals
 src/components/           dial, cards, sheets, toasts
-src/routes/               Today, Streams, Periphery, Intake, sign-in
+src/routes/               Today, Streams, People, Periphery, Intake, Review, sign-in
+src/data/review.ts        queue building and the decision mutations
 src/data/intake.ts        extraction call and triage state
 supabase/functions/       the extract Edge Function (holds the Anthropic key)
 src/styles/tokens.css     the design system: colour, type, radii, motion

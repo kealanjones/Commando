@@ -98,6 +98,8 @@ export function useAcceptItems() {
         position: 9999,
         user_edited: true,
         touched_at: now,
+        reviewed_at: null,
+        unclear: false,
         created_at: now, updated_at: now, deleted_at: null,
       }));
 

@@ -620,3 +620,135 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 420px) {
   .nav a { font-size: 11.5px; padding: 11px 2px; letter-spacing: -.02em; }
 }
+
+/* ── review: one decision at a time ────────────────────────────── */
+.rv { display: flex; flex-direction: column; gap: 18px; }
+
+.rv__bar { display: flex; align-items: center; gap: 12px; }
+.rv__progress {
+  flex: 1; height: 6px; border-radius: 3px; background: var(--hair); overflow: hidden;
+}
+.rv__progress span {
+  display: block; height: 100%; border-radius: 3px; background: var(--ink);
+  transition: width .4s var(--ease);
+}
+.rv__count {
+  font-family: var(--data); font-size: 11px; color: var(--ink-3);
+  letter-spacing: .06em; white-space: nowrap;
+}
+
+.rv__card {
+  background: var(--card); border-radius: var(--r-panel); padding: 22px 20px 18px;
+  box-shadow: var(--soft); border-top: 5px solid var(--s, var(--ink));
+  animation: cardIn .34s var(--pop) backwards;
+}
+@keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(.97); } }
+
+/* Each decision sends the card a different way, so the gesture and the
+   outcome stay associated. */
+.rv__card--out-drop  { animation: outLeft  .26s var(--ease) forwards; }
+.rv__card--out-watch { animation: outRight .26s var(--ease) forwards; }
+.rv__card--out-date  { animation: outUp    .26s var(--ease) forwards; }
+.rv__card--out-done  { animation: outUp    .26s var(--ease) forwards; }
+.rv__card--out-keep  { animation: outFade  .26s var(--ease) forwards; }
+@keyframes outLeft  { to { opacity: 0; transform: translateX(-40px) scale(.95); } }
+@keyframes outRight { to { opacity: 0; transform: translateX(40px) scale(.95); } }
+@keyframes outUp    { to { opacity: 0; transform: translateY(-28px) scale(.97); } }
+@keyframes outFade  { to { opacity: 0; transform: scale(.98); } }
+
+.rv__why { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.rv__badge {
+  align-self: flex-start;
+  font-family: var(--data); font-size: 9.5px; font-weight: 500;
+  letter-spacing: .13em; text-transform: uppercase;
+  background: var(--s-tint, var(--hair-2)); color: var(--s-deep, var(--ink-2));
+  border-radius: var(--r-pill); padding: 5px 10px;
+}
+.rv__why p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+
+.rv__title {
+  margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -.03em;
+  line-height: 1.28; text-wrap: balance;
+}
+@media (min-width: 720px) { .rv__title { font-size: 24px; } }
+.rv__context { margin: 10px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+.rv__meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 14px; }
+
+.rv__actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 22px;
+}
+.rv__act {
+  border: 1.5px solid var(--hair); background: var(--card); cursor: pointer;
+  border-radius: 15px; padding: 15px 12px;
+  font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: var(--ink);
+  transition: border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--pop);
+}
+.rv__act:hover { transform: translateY(-2px); border-color: var(--ink-3); }
+.rv__act--go { background: var(--s-tint, var(--hair-2)); border-color: var(--s, var(--hair)); color: var(--s-deep, var(--ink)); }
+.rv__act--drop { color: var(--danger); border-color: var(--danger-tint); }
+.rv__act--drop:hover { border-color: var(--danger); }
+
+.rv__dates { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; align-items: center; }
+
+.rv__skip {
+  display: block; width: 100%; margin-top: 14px; padding: 12px;
+  background: none; border: 0; cursor: pointer; color: var(--ink-3);
+  font-family: var(--data); font-size: 11px; letter-spacing: .06em;
+}
+.rv__skip:hover { color: var(--ink-2); }
+
+.rv__done { text-align: center; padding: 40px 20px; animation: cardIn .4s var(--pop); }
+.rv__doneNum {
+  font-size: 62px; font-weight: 800; letter-spacing: -.05em; line-height: 1;
+  color: var(--per-deep); font-variant-numeric: tabular-nums;
+}
+.rv__done h2 {
+  margin: 14px 0 0; font-size: 21px; font-weight: 800; letter-spacing: -.03em; text-wrap: balance;
+}
+.rv__tally {
+  list-style: none; margin: 20px auto 0; padding: 0; max-width: 260px;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.rv__tally li { font-size: 14px; color: var(--ink-2); }
+.rv__tally b { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ── people ────────────────────────────────────────────────────── */
+.person {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  background: var(--card); border-radius: var(--r-card); padding: 13px 15px;
+  box-shadow: var(--softer); animation: rise .45s var(--ease) backwards;
+  transition: transform .2s var(--pop), box-shadow .2s var(--ease);
+}
+.person:hover { transform: translateY(-2px); box-shadow: var(--soft); }
+.person__disc {
+  width: 42px; height: 42px; border-radius: 50%; flex: none;
+  background: var(--ink); color: #fff; display: grid; place-items: center;
+  font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.person__body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.person__body b { font-size: 15.5px; font-weight: 700; letter-spacing: -.02em; }
+.person__role { font-size: 12.5px; color: var(--ink-2); }
+.person__meta { font-family: var(--data); font-size: 10.5px; color: var(--ink-3); letter-spacing: .03em; }
+.person__streams { display: flex; gap: 4px; }
+.person__streams i { width: 8px; height: 8px; border-radius: 50%; background: var(--s); display: block; }
+
+/* ── the review prompt on Today ────────────────────────────────── */
+.prompt {
+  display: grid; grid-template-columns: 1fr auto; gap: 12px 14px; align-items: center;
+  background: var(--ink); color: #fff; border-radius: var(--r-panel);
+  padding: 16px 18px; margin-bottom: 22px; box-shadow: var(--soft);
+}
+.prompt h3 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+.prompt p {
+  margin: 5px 0 0; font-size: 13px; line-height: 1.45; color: rgba(255, 255, 255, .72);
+}
+.prompt a {
+  grid-row: 1 / -1; grid-column: 2; align-self: center;
+  background: #fff; color: var(--ink); border-radius: var(--r-pill);
+  padding: 11px 17px; font-size: 13.5px; font-weight: 700; white-space: nowrap;
+}
+.prompt a:hover { background: var(--hair); }
+@media (max-width: 460px) {
+  .prompt { grid-template-columns: 1fr; }
+  .prompt a { grid-row: auto; grid-column: 1; justify-self: start; }
+}

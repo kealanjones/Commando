@@ -16,7 +16,8 @@
     "test:shots": "node tests/screenshots.mjs",
     "build:preview": "ARTIFACT=1 vite build --mode artifact --outDir dist-artifact && node scripts/inline.mjs dist-artifact preview.html",
     "test:intake": "node tests/intake.mjs",
-    "seed:sql": "tsx scripts/seed-sql.ts"
+    "seed:sql": "tsx scripts/seed-sql.ts",
+    "test:review": "node tests/review.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

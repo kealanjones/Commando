@@ -10,6 +10,7 @@ export interface SheetPatch {
   kind?: Task['kind'];
   section_id?: string;
   stream_id?: Task['stream_id'];
+  unclear?: boolean;
 }
 
 /**
@@ -42,6 +43,7 @@ export function TaskSheet({
   const [doNow, setDoNow] = useState(task.do_now);
   const [kind, setKind] = useState<Task['kind']>(task.kind);
   const [sectionId, setSectionId] = useState(task.section_id);
+  const [unclear, setUnclear] = useState(task.unclear);
 
   const sheetRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -55,6 +57,7 @@ export function TaskSheet({
     setDoNow(task.do_now);
     setKind(task.kind);
     setSectionId(task.section_id);
+    setUnclear(task.unclear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id]);
 
@@ -101,6 +104,7 @@ export function TaskSheet({
       kind,
       section_id: sectionId,
       stream_id: streamId,
+      unclear,
     });
     onClose();
   };
@@ -198,6 +202,21 @@ export function TaskSheet({
             Do now
             <span className="toggle__knob" />
           </button>
+        </div>
+
+        <div className="field">
+          <button
+            type="button"
+            className="toggle"
+            aria-pressed={unclear}
+            onClick={() => setUnclear((v) => !v)}
+          >
+            Not clear yet
+            <span className="toggle__knob" />
+          </button>
+          <p style={{ margin: '8px 2px 0', fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.5 }}>
+            Takes it off Today and puts it in the pile to work out later.
+          </p>
         </div>
 
         <div className="field">

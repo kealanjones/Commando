@@ -105,10 +105,17 @@ export function useRealtime() {
 
 // ── mutations ──────────────────────────────────────────────────────
 type Patch = Partial<Pick<Task,
-  'title' | 'note' | 'done' | 'do_now' | 'due' | 'kind' | 'section_id' | 'stream_id' | 'deleted_at'>>;
+  'title' | 'note' | 'done' | 'do_now' | 'due' | 'kind' | 'section_id' | 'stream_id'
+  | 'deleted_at' | 'reviewed_at' | 'unclear'>>;
 
-/** Fields whose editing means the seed file no longer owns this row. */
-const CONTENT_FIELDS = ['title', 'note', 'do_now', 'due', 'kind', 'section_id', 'stream_id'] as const;
+/**
+ * Fields whose editing means the seed file no longer owns this row.
+ *
+ * Deliberately excludes due, do_now, kind and unclear: those are review
+ * decisions, and deciding something should be watched rather than done must
+ * not stop the seed file owning its wording.
+ */
+const CONTENT_FIELDS = ['title', 'note', 'section_id', 'stream_id'] as const;
 const isContentEdit = (p: Patch) => CONTENT_FIELDS.some((f) => f in p);
 
 export function useUpdateTask() {
@@ -176,6 +183,8 @@ export function useCreateTask() {
         position: 9999,
         user_edited: true,
         touched_at: now,
+        reviewed_at: null,
+        unclear: false,
         created_at: now, updated_at: now, deleted_at: null,
       };
       enqueue({ kind: 'insert', row: row as unknown as Record<string, unknown> });
@@ -239,7 +248,11 @@ export function useToday(limit = 3, keepVisible: string[] = []) {
     // A task just ticked stays in place, struck through, until its undo
     // window closes. Having it vanish under your thumb makes the undo
     // toast refer to something you can no longer see.
-    const open = tasks.filter((t) => t.kind === 'task' && (!t.done || keep.has(t.id)));
+    // Parked items are still work, but they cannot be acted on, so they must
+    // not compete for a slot on Today.
+    const open = tasks.filter(
+      (t) => t.kind === 'task' && !t.unclear && (!t.done || keep.has(t.id)),
+    );
 
     // How many other open items sit in the same section: a proxy for how
     // much is waiting on this one.
