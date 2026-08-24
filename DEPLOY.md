@@ -32,6 +32,13 @@ the whole file, paste, and press Run — **in order**:
 2. `supabase/migrations/0002_rls.sql`
 3. `supabase/migrations/0003_realtime.sql`
 4. `supabase/migrations/0004_intake.sql`
+5. `supabase/migrations/0005_review.sql`
+
+**Migrations go before the code that needs them.** The app auto-deploys from the
+default branch, so a new version can be live before its migration has run. It
+will not lose anything — a write naming a column the database has not got is
+refused, surfaced as a warning, and dropped rather than retried for ever — but
+the decision itself does not land. Run the migrations first.
 
 Then run this to confirm the security is really on:
 

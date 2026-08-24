@@ -81,11 +81,22 @@ export function enqueue(op: NewOp) {
   void flush();
 }
 
-/** Errors that will never succeed on retry — surface, do not spin. */
+/**
+ * Errors that will never succeed on retry — surface, do not spin.
+ *
+ * 42xxx covers the whole syntax-and-access class, including 42703
+ * "column does not exist". That one matters: deploy an app version ahead of
+ * its migration and every write names a column the database has not got.
+ * Classed as transient it would retry for ever and wedge the queue behind it;
+ * classed as permanent it says so, once, and moves on.
+ */
 function permanent(code: string | undefined, status: number | undefined): boolean {
   if (status === 401 || status === 403) return true;
   if (!code) return false;
-  return code.startsWith('22') || code.startsWith('23') || code === '42501' || code === 'PGRST116';
+  return code.startsWith('22')   // data exception — bad value, bad date
+      || code.startsWith('23')   // integrity constraint violation
+      || code.startsWith('42')   // syntax error or access rule violation
+      || code === 'PGRST116';    // no rows where one was required
 }
 
 export async function flush(): Promise<void> {
