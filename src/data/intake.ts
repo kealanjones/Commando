@@ -10,7 +10,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { DEMO, demoExtraction } from '@/lib/demo';
 import { keys } from './store';
-import type { IntakeItem, Task } from '@/lib/types';
+import { parseProposals, placeItems } from '@/lib/proposalFormat';
+import type { IntakeItem, Section, Task } from '@/lib/types';
 
 export interface ExtractResult {
   intake_id: string;
@@ -69,12 +70,91 @@ export function useExtract() {
   });
 }
 
+/**
+ * Bring in proposals pasted back from Claude.
+ *
+ * Writes the same intake and intake_items rows the Edge Function would,
+ * using the ordinary RLS-bound client — so the triage screen, the evidence
+ * quotes and the "where did this come from" trail are identical. No function
+ * to deploy, no API key anywhere.
+ */
+export function useImportProposals() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      raw: string; label?: string; sections: Section[]; openTasks: Task[];
+    }): Promise<ExtractResult & { items: IntakeItem[] }> => {
+      const parsed = parseProposals(input.raw);
+      const placed = placeItems(parsed.items, input.sections, parsed.duplicateTitles, input.openTasks);
+
+      const now = new Date().toISOString();
+      const intakeId = crypto.randomUUID();
+
+      const items: IntakeItem[] = placed.map((p, i) => ({
+        ...p,
+        id: crypto.randomUUID(),
+        intake_id: intakeId,
+        owner_id: '',
+        status: 'pending' as const,
+        task_id: null,
+        position: i,
+        created_at: now,
+      }));
+
+      if (!DEMO) {
+        const { data: auth } = await supabase.auth.getUser();
+        const owner = auth.user?.id ?? '';
+        items.forEach((i) => { i.owner_id = owner; });
+
+        const { error: intakeErr } = await supabase.from('intakes').insert({
+          id: intakeId,
+          owner_id: owner,
+          label: input.label?.slice(0, 200) ?? null,
+          // The record itself stays in Claude. What is kept here is the
+          // proposals and their quotes, which is what the trail needs.
+          source_text: '(brought in from Claude)',
+          summary: parsed.summary || null,
+          status: 'ready',
+          model: 'pasted',
+          processed_at: now,
+        });
+        if (intakeErr) throw new Error(`Could not save the intake: ${intakeErr.message}`);
+
+        const { error: itemsErr } = await supabase.from('intake_items').insert(
+          items.map(({ id, intake_id, owner_id, title, kind, context, stream_id, section_id,
+                       do_now, due, waiting_on, evidence, confidence, duplicate_of, position }) => ({
+            id, intake_id, owner_id, title, kind, context, stream_id, section_id,
+            do_now, due, waiting_on, evidence, confidence, duplicate_of, position,
+          })),
+        );
+        if (itemsErr) throw new Error(`Could not save the proposals: ${itemsErr.message}`);
+      }
+
+      qc.setQueryData(['intake_items', intakeId], items);
+
+      return {
+        intake_id: intakeId,
+        summary: parsed.summary,
+        count: items.length,
+        tasks: items.filter((i) => i.kind === 'task').length,
+        watch: items.filter((i) => i.kind === 'watch').length,
+        duplicates: items.filter((i) => i.duplicate_of).length,
+        items,
+      };
+    },
+  });
+}
+
 export function useIntakeItems(intakeId: string | null) {
   return useQuery({
     queryKey: ['intake_items', intakeId],
     enabled: Boolean(intakeId),
     queryFn: async (): Promise<IntakeItem[]> => {
-      if (DEMO) return (window as unknown as { __demoItems?: IntakeItem[] }).__demoItems ?? [];
+      // Proposals pasted in this session are already in the cache under this
+      // key; only fetch when they came from somewhere else.
+      const cached = (window as unknown as { __demoItems?: IntakeItem[] }).__demoItems;
+      if (DEMO) return cached ?? [];
       const { data, error } = await supabase
         .from('intake_items').select('*')
         .eq('intake_id', intakeId!).order('position');

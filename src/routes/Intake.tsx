@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Close } from '@/components/icons';
 import { useToast } from '@/components/Toasts';
 import { useSections, useStreams, useTasks } from '@/data/store';
-import { useAcceptItems, useExtract, useIntakeItems, useTriage } from '@/data/intake';
+import { useAcceptItems, useExtract, useImportProposals, useIntakeItems, useTriage } from '@/data/intake';
+import { buildPrompt } from '@/lib/proposalFormat';
 import type { IntakeItem } from '@/lib/types';
 
 /**
@@ -12,16 +13,61 @@ import type { IntakeItem } from '@/lib/types';
  * is all in the triage, because an LLM reading a transcript is a good first
  * pass and a bad final authority.
  */
+type Route = 'claude' | 'here';
+
 export function Intake() {
+  const [route, setRoute] = useState<Route>('claude');
   const [text, setText] = useState('');
+  const [paste, setPaste] = useState('');
   const [label, setLabel] = useState('');
   const [intakeId, setIntakeId] = useState<string | null>(null);
   const [summary, setSummary] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   const extract = useExtract();
+  const importProposals = useImportProposals();
   const { data: items = [] } = useIntakeItems(intakeId);
+  const { data: sections = [] } = useSections();
+  const { data: streams = [] } = useStreams();
+  const { data: tasks = [] } = useTasks();
   const { push } = useToast();
   const boxRef = useRef<HTMLTextAreaElement>(null);
+
+  const openTasks = useMemo(
+    () => tasks.filter((t) => t.kind === 'task' && !t.done && !t.deleted_at),
+    [tasks],
+  );
+
+  const prompt = useMemo(
+    () => buildPrompt(streams, sections, openTasks.map((t) => t.title)),
+    [streams, sections, openTasks],
+  );
+
+  const copyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Clipboard refused — usually an insecure context or a locked-down
+      // browser. Show it so it can be selected by hand.
+      setShowPrompt(true);
+      push({ message: 'Could not reach the clipboard — select the prompt below instead.' });
+    }
+  };
+
+  const bringIn = async () => {
+    try {
+      const res = await importProposals.mutateAsync({
+        raw: paste, label: label.trim() || undefined, sections, openTasks,
+      });
+      setSummary(res.summary);
+      setIntakeId(res.intake_id);
+    } catch (e) {
+      push({ message: (e as Error).message, tone: 'warn', duration: 0, actionLabel: 'Dismiss' });
+    }
+  };
 
   const run = async () => {
     try {
@@ -35,7 +81,7 @@ export function Intake() {
   };
 
   const startOver = () => {
-    setIntakeId(null); setText(''); setLabel(''); setSummary('');
+    setIntakeId(null); setText(''); setPaste(''); setLabel(''); setSummary('');
     window.setTimeout(() => boxRef.current?.focus(), 0);
   };
 
@@ -49,15 +95,19 @@ export function Intake() {
     <section aria-labelledby="intake-head">
       <div className="shead">
         <h2 id="intake-head">Read a meeting in</h2>
-        <span className="shead__meta">{words ? `${words.toLocaleString()} words` : 'paste below'}</span>
+        <span className="shead__meta">{openTasks.length} in the register</span>
       </div>
 
-      <p style={{ margin: '0 0 18px', color: 'var(--ink-2)', fontSize: 14, lineHeight: 1.6, maxWidth: '58ch' }}>
-        Paste notes, a transcript, or an email chain. You get a list of proposed items to review —
-        nothing reaches the register until you accept it.
-      </p>
+      <div className="seg seg--wide" role="group" aria-label="How to bring it in">
+        <button aria-pressed={route === 'claude'} onClick={() => setRoute('claude')}>
+          Via Claude
+        </button>
+        <button aria-pressed={route === 'here'} onClick={() => setRoute('here')}>
+          In the app
+        </button>
+      </div>
 
-      <div className="field" style={{ marginTop: 0 }}>
+      <div className="field" style={{ marginTop: 18 }}>
         <label htmlFor="intake-label">What was it</label>
         <input
           id="intake-label" className="input" value={label}
@@ -66,41 +116,103 @@ export function Intake() {
         />
       </div>
 
-      <div className="field">
-        <label htmlFor="intake-text">The record</label>
-        <textarea
-          id="intake-text" ref={boxRef} className="textarea" value={text}
-          onChange={(e) => setText(e.target.value)}
-          style={{ minHeight: 260, fontSize: 14, lineHeight: 1.6 }}
-          placeholder={'Anthony asked me to get the sponsor payment route sorted before Sydney…'}
-        />
-      </div>
+      {route === 'claude' ? (
+        <>
+          <ol className="steps">
+            <li>
+              <div>
+                <b>Copy the prompt.</b> It already knows your streams and sections, and every
+                item you have open, so nothing comes back misfiled or duplicated.
+              </div>
+              <button className="btn btn--primary" onClick={copyPrompt} style={{ flex: 'none' }}>
+                {copied ? 'Copied' : 'Copy the prompt'}
+              </button>
+            </li>
+            <li>
+              <div>
+                <b>Paste it into Claude, then your meeting underneath.</b> Notes, a transcript, an
+                email chain — whatever you have.
+              </div>
+            </li>
+            <li>
+              <div><b>Paste the whole reply back here.</b> Fences and all; it will find the useful part.</div>
+            </li>
+          </ol>
 
-      <div className="notice">
-        <span className="notice__dot" />
-        <p>
-          The text is sent to Anthropic&rsquo;s API to be read, and stored against your account so
-          you can see where each item came from. Treat it as you would any other system holding
-          this material. This is the only part of the app that sends anything outside Supabase,
-          and it needs the <code>extract</code> function deployed — see DEPLOY.md step 8.
-        </p>
-      </div>
+          {showPrompt && (
+            <div className="field">
+              <label htmlFor="intake-prompt">The prompt, to select by hand</label>
+              <textarea
+                id="intake-prompt" className="textarea" readOnly value={prompt}
+                style={{ minHeight: 140, fontFamily: 'var(--data)', fontSize: 12 }}
+                onFocus={(e) => e.currentTarget.select()}
+              />
+            </div>
+          )}
 
-      <div className="actions">
-        <button
-          className="btn btn--primary"
-          onClick={run}
-          disabled={extract.isPending || text.trim().length < 40}
-        >
-          {extract.isPending ? 'Reading…' : 'Read it'}
-        </button>
-      </div>
+          <div className="field">
+            <label htmlFor="intake-paste">What Claude gave you back</label>
+            <textarea
+              id="intake-paste" ref={boxRef} className="textarea" value={paste}
+              onChange={(e) => setPaste(e.target.value)}
+              style={{ minHeight: 200, fontSize: 13.5, lineHeight: 1.55 }}
+              placeholder={'```json\n{ "summary": "…", "items": [ … ] }\n```'}
+            />
+          </div>
 
-      {extract.isPending && (
-        <div className="reading" role="status">
-          <span className="reading__bar" />
-          Reading {words.toLocaleString()} words, sorting them into your streams. Ten seconds or so.
-        </div>
+          <div className="actions">
+            <button
+              className="btn btn--primary"
+              onClick={bringIn}
+              disabled={importProposals.isPending || paste.trim().length < 10}
+            >
+              {importProposals.isPending ? 'Reading…' : 'Bring them in'}
+            </button>
+          </div>
+
+          <p className="footnote">
+            Nothing new leaves: you are already in Claude when you do this, and only the
+            proposals and their quotes are kept here.
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="field">
+            <label htmlFor="intake-text">The record</label>
+            <textarea
+              id="intake-text" className="textarea" value={text}
+              onChange={(e) => setText(e.target.value)}
+              style={{ minHeight: 240, fontSize: 14, lineHeight: 1.6 }}
+              placeholder={'Anthony asked me to get the sponsor payment route sorted before Sydney…'}
+            />
+          </div>
+
+          <div className="notice">
+            <span className="notice__dot" />
+            <p>
+              This route reads the record here and needs the <code>extract</code> function
+              deployed (DEPLOY.md step 8) and an Anthropic key. If you have not set that up,
+              use <b>Via Claude</b> — it does the same job with nothing to install.
+            </p>
+          </div>
+
+          <div className="actions">
+            <button
+              className="btn btn--primary"
+              onClick={run}
+              disabled={extract.isPending || text.trim().length < 40}
+            >
+              {extract.isPending ? 'Reading…' : 'Read it'}
+            </button>
+          </div>
+
+          {extract.isPending && (
+            <div className="reading" role="status">
+              <span className="reading__bar" />
+              Reading {words.toLocaleString()} words, sorting them into your streams.
+            </div>
+          )}
+        </>
       )}
     </section>
   );

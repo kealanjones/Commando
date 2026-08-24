@@ -20,6 +20,9 @@ Someone needs to chase Belaal again about the Australia arrangements.
 There was a question about whether we need someone external on the panel.`;
 
 async function paste() {
+  // The in-app read is now one of two routes; the other needs no backend.
+  await p.getByRole('button', { name: 'In the app' }).click();
+  await p.waitForTimeout(250);
   await p.locator('#intake-label').fill('SMT, 14 August');
   await p.locator('#intake-text').fill(transcript);
   await p.getByRole('button', { name: 'Read it' }).click();
@@ -31,6 +34,8 @@ await p.goto('http://127.0.0.1:4173/intake', { waitUntil: 'networkidle' });
 await p.waitForTimeout(800);
 
 // focus must survive typing into the paste box
+await p.getByRole('button', { name: 'In the app' }).click();
+await p.waitForTimeout(250);
 await p.locator('#intake-text').click();
 await p.keyboard.type('Anthony opened by saying the sponsor payment route is still the blocker.', { delay: 4 });
 const focused = await p.evaluate(() => document.activeElement?.id);

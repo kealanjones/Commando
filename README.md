@@ -89,8 +89,19 @@ It also checks proposals against your existing open items and flags anything
 that restates one, because half of what comes out of a meeting is already on
 the list.
 
-The extraction runs in a Supabase Edge Function (`supabase/functions/extract`),
-never in the browser — see Information governance below.
+There are two ways in, and the default needs nothing installed:
+
+**Via Claude.** The app writes a prompt that already carries your streams, your
+sections and every item you have open. Copy it, paste it into Claude with the
+meeting underneath, paste the reply back. No API key, no function to deploy, and
+nothing new leaves — you are already in Claude when you do it, which makes it a
+decision each time rather than a pipe that is always open. The parser takes the
+fenced block, the whole reply, or a bare array, and says plainly what to do when
+it cannot read something.
+
+**In the app.** Paste the record and it is read for you, which needs the
+`extract` Edge Function deployed and an Anthropic key (DEPLOY.md step 8). Same
+triage screen either way.
 
 ### Doing versus remembering
 
@@ -152,6 +163,8 @@ treat it as you would any other document with your work in it.
 | `npm run test:ui` | Browser interaction checks (needs `serve:dist` running) |
 | `npm run test:intake` | End-to-end paste → triage → commit checks |
 | `npm run test:review` | The review deck, the people view and the unclear pile |
+| `npm run test:paste` | Copy prompt → paste reply → triage, end to end |
+| `npm run test:parse` | The paste parser against the shapes people actually paste |
 | `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |
 | `npm run test:shots` | Screenshot every route at 375px and 1280px |
 | `npm run build:preview` | Fold the app into one self-contained `preview.html` for sharing |
@@ -224,8 +237,10 @@ what was fixed, and what is accepted and why.
 
 ## Information governance
 
-**Intake sends the text you paste to Anthropic's API.** Everything else in this
-app stays between your browser and your Supabase project.
+**Intake's *In the app* route sends the text you paste to Anthropic's API.**
+Everything else in this app stays between your browser and your Supabase
+project — including the *Via Claude* route, which sends nothing anywhere: you
+paste into Claude yourself, and only the proposals and their quotes come back.
 
 That is a decision about NHS information, not a technical detail, so it is made
 deliberately and it is reversible:

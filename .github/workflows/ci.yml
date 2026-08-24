@@ -21,6 +21,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Parser
+        run: npm run test:parse
+
       # Built in demo mode so CI needs no Supabase credentials. The env
       # validation that guards the real build is exercised separately below.
       - name: Build
@@ -34,6 +37,7 @@ jobs:
           npm run test:ui
           npm run test:intake
           npm run test:review
+          npm run test:paste
 
   database:
     name: Migrations and RLS
