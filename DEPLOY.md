@@ -83,7 +83,8 @@ Under **Environment Variables**, add two:
 
 Deploy. Note the URL it gives you.
 
-**Only ever put those two here.** Never the secret key.
+**Those two, and nothing else.** If the import form offers you any other
+variable, delete the row or leave it blank.
 
 ## 6. Close the loop
 
@@ -135,6 +136,15 @@ From **Project Settings → API**, take three values:
 Supabase renamed these keys; the variable names here still use the older words.
 Either key format works — the client handles both. If your dashboard shows a
 legacy pair *and* a new pair, use the new ones.
+
+For this route, copy **`.env.seed.example`** — not `.env.example` — to `.env`.
+The two files are deliberately separate: hosting providers read `.env.example`
+when importing a repo and offer to store everything in it, so the secret key is
+kept out of that file entirely.
+
+```bash
+cp .env.seed.example .env
+```
 
 The `anon` key ships inside the JavaScript bundle. That is expected and safe
 **because RLS is enabled and forced on every table**. The `service_role` key
@@ -193,7 +203,8 @@ Under **Authentication → URL Configuration**, set:
 
 ## 4. Seed the register
 
-Locally, with `.env` filled in:
+Locally, with `.env` filled in (or skip all of this and paste
+`supabase/seed.sql` into the dashboard instead — no key needed):
 
 ```bash
 npm run seed:dry    # shows what would change, writes nothing

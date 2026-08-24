@@ -75,7 +75,7 @@ Full design and architecture reasoning is in [`docs/DECISIONS.md`](docs/DECISION
 
 ```bash
 npm install
-cp .env.example .env      # fill in your Supabase URL and anon key
+cp .env.example .env      # your Supabase URL and publishable key
 npm run dev
 ```
 
@@ -99,6 +99,10 @@ Builds fixture mode into one self-contained `preview.html` — every script and
 stylesheet inlined, no service worker, hash routing so it works with no server.
 Open it directly or send it to someone. It carries the real register content, so
 treat it as you would any other document with your work in it.
+
+> Seeding from your machine additionally needs the secret key — copy
+> `.env.seed.example` instead. You can avoid that entirely by pasting
+> `supabase/seed.sql` into the Supabase dashboard; see DEPLOY.md.
 
 ### Scripts
 

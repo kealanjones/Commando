@@ -28,7 +28,9 @@ const EMAIL = process.env.SEED_OWNER_EMAIL;
 if (!URL || !KEY || !EMAIL) {
   console.error(
     'Missing environment. Need VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and\n' +
-      'SEED_OWNER_EMAIL. Copy .env.example to .env and fill it in.',
+      'SEED_OWNER_EMAIL. Copy .env.seed.example to .env and fill it in.\n\n' +
+      'You may not need this at all: to load the register without any key,\n' +
+      'paste supabase/seed.sql into the Supabase dashboard SQL editor instead.',
   );
   process.exit(1);
 }
