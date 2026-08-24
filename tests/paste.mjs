@@ -16,8 +16,10 @@ p.on('pageerror', (e) => fail.push('PAGEERROR ' + e.message));
 await p.goto('http://127.0.0.1:4173/intake', { waitUntil: 'networkidle' });
 await p.waitForTimeout(900);
 
+await p.getByRole('button', { name: 'Via Claude' }).click();
+await p.waitForTimeout(250);
 ok(await p.getByRole('button', { name: 'Via Claude' }).getAttribute('aria-pressed') === 'true',
-  'the route needing no setup is the default');
+  'the no-setup route is still available as a second option');
 await p.screenshot({ path: `${out}/phone-intake-claude.png` });
 
 // the prompt must carry the real register
@@ -83,6 +85,8 @@ ok((await p.locator('.task__title', { hasText: 'Send Isaac the revised registrat
 // a bad paste must explain itself, not just fail
 await p.getByRole('link', { name: 'Intake' }).click();
 await p.waitForTimeout(700);
+await p.getByRole('button', { name: 'Via Claude' }).click();
+await p.waitForTimeout(250);
 await p.locator('#intake-paste').fill('Sure, I can help with that!');
 await p.getByRole('button', { name: 'Bring them in' }).click();
 await p.waitForTimeout(600);

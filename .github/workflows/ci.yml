@@ -24,6 +24,9 @@ jobs:
       - name: Parser
         run: npm run test:parse
 
+      - name: API guards
+        run: npm run test:api
+
       # Built in demo mode so CI needs no Supabase credentials. The env
       # validation that guards the real build is exercised separately below.
       - name: Build

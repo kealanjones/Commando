@@ -28,41 +28,32 @@ export function useExtract() {
     mutationFn: async (input: { text: string; label?: string; meetingDate?: string }): Promise<ExtractResult> => {
       if (DEMO) return demoExtraction(input.text, input.label);
 
-      const { data, error } = await supabase.functions.invoke<ExtractResult>('extract', {
-        body: { text: input.text, label: input.label, meeting_date: input.meetingDate },
-      });
+      // /api/extract ships with the app on Vercel, so it is same-origin: no
+      // CORS, no separate deployment, and nothing to install.
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      if (!token) throw new Error('Your session has expired. Sign in again.');
 
-      if (error) {
-        // When the function ran and refused, the useful message is in the
-        // response body, not in error.message — which would otherwise read
-        // "Edge Function returned a non-2xx status code".
-        let detail = '';
-        const ctx = (error as { context?: Response }).context;
-        if (ctx && typeof ctx.json === 'function') {
-          try {
-            detail = ((await ctx.json()) as { error?: string }).error ?? '';
-          } catch { /* body was not JSON */ }
-        }
-        if (detail) throw new Error(detail);
-
-        // No response at all: the request never landed. Supabase reports this
-        // as "Failed to send a request to the Edge Function", which tells you
-        // nothing about what to do. Nearly always it is simply not deployed.
-        if (error.name === 'FunctionsFetchError' || /failed to send a request/i.test(error.message)) {
-          throw new Error(
-            'Could not reach the extraction function. It is probably not deployed yet — ' +
-              'see DEPLOY.md step 8. Everything else in the app works without it.',
-          );
-        }
-
-        if (error.name === 'FunctionsRelayError') {
-          throw new Error('The extraction function is deployed but failed to start. Check its logs in Supabase.');
-        }
-
-        throw new Error(error.message);
+      let res: Response;
+      try {
+        res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            text: input.text, label: input.label, meeting_date: input.meetingDate,
+          }),
+        });
+      } catch {
+        throw new Error('Could not reach the server. Check your connection and try again.');
       }
-      if (!data) throw new Error('Extraction returned nothing.');
-      return data;
+
+      const payload = (await res.json().catch(() => null)) as (ExtractResult & { error?: string }) | null;
+
+      if (!res.ok) {
+        throw new Error(payload?.error ?? `Reading it failed (${res.status}).`);
+      }
+      if (!payload) throw new Error('The server sent back nothing readable.');
+      return payload;
     },
     onSuccess: () => {
       if (!DEMO) void qc.invalidateQueries({ queryKey: ['intake_items'] });

@@ -104,6 +104,8 @@ export default defineConfig(({ mode }) => {
         // The app shell is cached so it opens on the Underground. Data comes
         // from the query cache; writes go through the offline queue.
         navigateFallback: 'index.html',
+        // Never let the cached shell answer for the API.
+        navigateFallbackDenylist: [/^\/api\//],
         // Fonts are local and already covered by globPatterns, so there is
         // no third-party origin left to cache at runtime.
       },

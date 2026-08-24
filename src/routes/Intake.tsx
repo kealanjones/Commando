@@ -16,7 +16,7 @@ import type { IntakeItem } from '@/lib/types';
 type Route = 'claude' | 'here';
 
 export function Intake() {
-  const [route, setRoute] = useState<Route>('claude');
+  const [route, setRoute] = useState<Route>('here');
   const [text, setText] = useState('');
   const [paste, setPaste] = useState('');
   const [label, setLabel] = useState('');
@@ -99,11 +99,11 @@ export function Intake() {
       </div>
 
       <div className="seg seg--wide" role="group" aria-label="How to bring it in">
+        <button aria-pressed={route === 'here'} onClick={() => setRoute('here')}>
+          Read it here
+        </button>
         <button aria-pressed={route === 'claude'} onClick={() => setRoute('claude')}>
           Via Claude
-        </button>
-        <button aria-pressed={route === 'here'} onClick={() => setRoute('here')}>
-          In the app
         </button>
       </div>
 
@@ -122,7 +122,8 @@ export function Intake() {
             <li>
               <div>
                 <b>Copy the prompt.</b> It already knows your streams and sections, and every
-                item you have open, so nothing comes back misfiled or duplicated.
+                item you have open, so nothing comes back misfiled or duplicated. Use this route
+                if you would rather nothing left the app at all.
               </div>
               <button className="btn btn--primary" onClick={copyPrompt} style={{ flex: 'none' }}>
                 {copied ? 'Copied' : 'Copy the prompt'}
@@ -190,9 +191,9 @@ export function Intake() {
           <div className="notice">
             <span className="notice__dot" />
             <p>
-              This route reads the record here and needs the <code>extract</code> function
-              deployed (DEPLOY.md step 8) and an Anthropic key. If you have not set that up,
-              use <b>Via Claude</b> — it does the same job with nothing to install.
+              The record is sent to Anthropic&rsquo;s API to be read, and kept against your
+              account so each item can show where it came from. This is the only part of the app
+              that sends anything outside Supabase.
             </p>
           </div>
 
@@ -202,7 +203,7 @@ export function Intake() {
               onClick={run}
               disabled={extract.isPending || text.trim().length < 40}
             >
-              {extract.isPending ? 'Reading…' : 'Read it'}
+              {extract.isPending ? 'Reading…' : 'Read this meeting'}
             </button>
           </div>
 

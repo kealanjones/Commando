@@ -104,58 +104,27 @@ Open the URL in Safari → Share → **Add to Home Screen**.
 
 ## 8. Intake, if you want it
 
-Two ways, both from a browser. Use whichever your dashboard offers.
+**One environment variable. Nothing to deploy.**
 
-**a) Paste it in.** Supabase → **Edge Functions** → Deploy a new function → *via
-editor* → name it exactly `extract` → paste the contents of
-`supabase/functions/extract/index.ts`.
-
-**b) Let GitHub deploy it.** If your dashboard has no in-browser editor, use the
-committed workflow instead. One-off setup:
-
-1. Supabase → account menu (top right) → **Access Tokens** → generate one.
-2. GitHub → your repo → **Settings → Secrets and variables → Actions** → **New
-   repository secret**, twice:
-   - `SUPABASE_ACCESS_TOKEN` — the token you just generated
-   - `SUPABASE_PROJECT_REF` — the ref from your Supabase project URL
-3. GitHub → **Actions** tab → **Deploy the extract function** → **Run workflow**.
-
-After that it redeploys automatically whenever the function changes.
-
-Then **Edge Functions → Secrets** and add:
+Reading a meeting runs at `/api/extract`, which ships with the app and deploys
+with it. Add one variable in Vercel — the same screen as the other two:
 
 | Name | Value |
 |---|---|
-| `ANTHROPIC_API_KEY` | your Anthropic key |
-| `ALLOWED_ORIGIN` | your Vercel URL |
+| `ANTHROPIC_API_KEY` | your key from [console.anthropic.com](https://console.anthropic.com) → API Keys |
+
+Then redeploy (Vercel → Deployments → ⋯ → Redeploy) so it picks the value up.
+
+Without it, the Intake screen says so plainly and the rest of the app is
+unaffected.
 
 **Read the information governance note in the README first.** This is the step
-that sends pasted text outside NHS control. Skip it and everything else works.
+that sends pasted text outside NHS control.
 
-### If Intake says it cannot reach the function
+If you would rather nothing left the app at all, the **Via Claude** tab needs no
+key: the app writes a prompt carrying your sections and open items, you run it
+in Claude yourself, and paste the reply back into the same triage screen.
 
-*"Could not reach the extraction function"* means the request never landed.
-In order of likelihood:
-
-1. **The function is not deployed.** Supabase dashboard → Edge Functions. If
-   `extract` is not in that list, that is the whole problem.
-2. **`ALLOWED_ORIGIN` does not match the site you are on.** It must be the exact
-   origin, scheme included, with no trailing slash — and a Vercel *preview* URL
-   is a different origin from your production one. To allow both, set it to a
-   comma-separated list. Unset allows any origin, which is fine while you are
-   getting it working.
-3. **`ANTHROPIC_API_KEY` is missing.** This gives a clear message rather than a
-   silent failure, so you would see *"Extraction is not configured"* instead.
-
-Its logs are under Edge Functions → `extract` → Logs.
-
----
-
-# The long way: running it locally
-
-Only needed if you want to develop the app, not just use it. This is the route
-that uses `.env` and the secret key — both of which live only on your own
-machine and are never committed.
 
 ## 1. Create the Supabase project
 

@@ -89,9 +89,9 @@ It also checks proposals against your existing open items and flags anything
 that restates one, because half of what comes out of a meeting is already on
 the list.
 
-There are two ways in, and the default needs nothing installed:
+Two ways in.
 
-**Via Claude.** The app writes a prompt that already carries your streams, your
+**Via Claude.** Needs nothing at all. The app writes a prompt that already carries your streams, your
 sections and every item you have open. Copy it, paste it into Claude with the
 meeting underneath, paste the reply back. No API key, no function to deploy, and
 nothing new leaves — you are already in Claude when you do it, which makes it a
@@ -99,9 +99,13 @@ decision each time rather than a pipe that is always open. The parser takes the
 fenced block, the whole reply, or a bare array, and says plainly what to do when
 it cannot read something.
 
-**In the app.** Paste the record and it is read for you, which needs the
-`extract` Edge Function deployed and an Anthropic key (DEPLOY.md step 8). Same
-triage screen either way.
+**Read it here.** The default. Paste the record and it is read for you. Runs at
+`/api/extract`, which ships and deploys with the app — the only setup is adding
+`ANTHROPIC_API_KEY` to the Vercel project. The key never reaches the browser;
+the endpoint forwards your own session to PostgREST, so its reads and writes are
+bounded by the same RLS policies the app runs under.
+
+Same triage screen either way.
 
 ### Doing versus remembering
 
@@ -165,6 +169,7 @@ treat it as you would any other document with your work in it.
 | `npm run test:review` | The review deck, the people view and the unclear pile |
 | `npm run test:paste` | Copy prompt → paste reply → triage, end to end |
 | `npm run test:parse` | The paste parser against the shapes people actually paste |
+| `npm run test:api` | The `/api/extract` guards: auth, method, missing key |
 | `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |
 | `npm run test:shots` | Screenshot every route at 375px and 1280px |
 | `npm run build:preview` | Fold the app into one self-contained `preview.html` for sharing |
@@ -237,7 +242,7 @@ what was fixed, and what is accepted and why.
 
 ## Information governance
 
-**Intake's *In the app* route sends the text you paste to Anthropic's API.**
+**Intake's *Read it here* route sends the text you paste to Anthropic's API.**
 Everything else in this app stays between your browser and your Supabase
 project — including the *Via Claude* route, which sends nothing anywhere: you
 paste into Claude yourself, and only the proposals and their quotes come back.
@@ -427,7 +432,7 @@ src/components/           dial, cards, sheets, toasts
 src/routes/               Today, Streams, People, Periphery, Intake, Review, sign-in
 src/data/review.ts        queue building and the decision mutations
 src/data/intake.ts        extraction call and triage state
-supabase/functions/       the extract Edge Function (holds the Anthropic key)
+api/extract.ts            reads a meeting server-side; holds the Anthropic key
 src/styles/tokens.css     the design system: colour, type, radii, motion
 src/styles/fonts.css      self-hosted @font-face (scripts/fetch-fonts.sh)
 vercel.json netlify.toml  SPA rewrites, security headers, cache policy
