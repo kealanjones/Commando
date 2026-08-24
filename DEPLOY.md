@@ -104,8 +104,23 @@ Open the URL in Safari → Share → **Add to Home Screen**.
 
 ## 8. Intake, if you want it
 
-Supabase → **Edge Functions** → Deploy a new function → name it `extract` →
-paste the contents of `supabase/functions/extract/index.ts`.
+Two ways, both from a browser. Use whichever your dashboard offers.
+
+**a) Paste it in.** Supabase → **Edge Functions** → Deploy a new function → *via
+editor* → name it exactly `extract` → paste the contents of
+`supabase/functions/extract/index.ts`.
+
+**b) Let GitHub deploy it.** If your dashboard has no in-browser editor, use the
+committed workflow instead. One-off setup:
+
+1. Supabase → account menu (top right) → **Access Tokens** → generate one.
+2. GitHub → your repo → **Settings → Secrets and variables → Actions** → **New
+   repository secret**, twice:
+   - `SUPABASE_ACCESS_TOKEN` — the token you just generated
+   - `SUPABASE_PROJECT_REF` — the ref from your Supabase project URL
+3. GitHub → **Actions** tab → **Deploy the extract function** → **Run workflow**.
+
+After that it redeploys automatically whenever the function changes.
 
 Then **Edge Functions → Secrets** and add:
 
