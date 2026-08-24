@@ -17,11 +17,15 @@ to sit outside the UK.
 
 From **Project Settings → API**, take three values:
 
-| Value | Goes where |
-|---|---|
-| Project URL | `VITE_SUPABASE_URL` — hosting env vars and your local `.env` |
-| `anon` key | `VITE_SUPABASE_ANON_KEY` — same |
-| `service_role` key | `SUPABASE_SERVICE_ROLE_KEY` — your local `.env` only |
+| Dashboard name | Older projects call it | Goes where |
+|---|---|---|
+| Project URL | — | `VITE_SUPABASE_URL` — hosting env vars and your local `.env` |
+| **Publishable** key (`sb_publishable_…`) | `anon` (a long `eyJ…` JWT) | `VITE_SUPABASE_ANON_KEY` — same |
+| **Secret** key (`sb_secret_…`) | `service_role` | `SUPABASE_SERVICE_ROLE_KEY` — your local `.env` only |
+
+Supabase renamed these keys; the variable names here still use the older words.
+Either key format works — the client handles both. If your dashboard shows a
+legacy pair *and* a new pair, use the new ones.
 
 The `anon` key ships inside the JavaScript bundle. That is expected and safe
 **because RLS is enabled and forced on every table**. The `service_role` key

@@ -132,8 +132,10 @@ Create a project at [supabase.com](https://supabase.com). From
 **Project Settings → API** copy the project URL and the `anon` key into `.env`,
 and the `service_role` key into `SUPABASE_SERVICE_ROLE_KEY`.
 
-The anon key ships to the browser. That is safe **only** because RLS is enabled
-on every table — see below. The service role key bypasses RLS entirely: it
+The **publishable** key (called `anon` on older projects) ships to the browser.
+That is safe **only** because RLS is enabled and forced on every table — see
+below. The **secret** key (`service_role` on older projects) bypasses RLS and
+stays on your machine. The service role key bypasses RLS entirely: it
 belongs in `.env` and CI secrets, never in the repo and never prefixed `VITE_`.
 
 ### 2. Run the migrations
