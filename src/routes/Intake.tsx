@@ -65,7 +65,10 @@ export function Intake() {
       setSummary(res.summary);
       setIntakeId(res.intake_id);
     } catch (e) {
-      push({ message: (e as Error).message, tone: 'warn', duration: 0, actionLabel: 'Dismiss' });
+      push({
+        message: (e as Error).message, tone: 'warn', duration: 0,
+        actionLabel: 'Dismiss', replaceKey: 'intake-error',
+      });
     }
   };
 
@@ -76,7 +79,10 @@ export function Intake() {
       setSummary(res.summary);
       if (res.count === 0) push({ message: 'Nothing in there needed adding.' });
     } catch (e) {
-      push({ message: (e as Error).message, tone: 'warn', duration: 0, actionLabel: 'Dismiss' });
+      push({
+        message: (e as Error).message, tone: 'warn', duration: 0,
+        actionLabel: 'Dismiss', replaceKey: 'intake-error',
+      });
     }
   };
 

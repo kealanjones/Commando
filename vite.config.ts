@@ -82,7 +82,12 @@ export default defineConfig(({ mode }) => {
     csp(env),
     react(),
     !artifact && VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt', not 'autoUpdate'. autoUpdate installs the new worker but
+      // never tells the open page, so a tab — or an installed home-screen
+      // app, which stays open for days — keeps running the old code. The app
+      // now offers a reload instead, rather than pulling the rug mid-sentence.
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Work Register',

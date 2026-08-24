@@ -7,6 +7,7 @@ import App from './App';
 import { DEMO, demoPeople, demoSections, demoStreams, demoTaskPeople, demoTasks } from './lib/demo';
 import { keys } from './data/store';
 import { ToastProvider } from './components/Toasts';
+import { UpdatePrompt } from './components/UpdatePrompt';
 import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/app.css';
@@ -46,6 +47,7 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <Router>
         <ToastProvider>
+          <UpdatePrompt />
           <App />
         </ToastProvider>
       </Router>

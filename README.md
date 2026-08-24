@@ -384,6 +384,17 @@ The app is expected to be used on the Underground.
 
 A pending or offline state shows as a badge in the header.
 
+### Getting new versions
+
+The app deploys on every push and the service worker keeps the shell cached, so
+a tab left open — or an installed home-screen app, which stays open for days —
+would otherwise carry on running whatever it started with.
+
+When a new version lands you get a toast offering **Reload**. It is offered
+rather than forced: a refresh in the middle of a sentence would lose a note
+being typed, which is the one thing this app must not do. An install also checks
+for updates hourly, so a long-lived one does not only notice on a cold start.
+
 ### Add to Home Screen
 
 The manifest sets `display: standalone` and the iOS meta tags are in place, so
