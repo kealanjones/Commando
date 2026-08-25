@@ -13,10 +13,12 @@ const initials = (email: string) =>
 export function Header({
   email,
   onAdd,
+  onSearch,
   subtitle,
 }: {
   email: string;
   onAdd: () => void;
+  onSearch: () => void;
   subtitle?: string;
 }) {
   const name = (email.split('@')[0] ?? '').split(/[.\-_]/)[0] ?? '';
@@ -33,6 +35,12 @@ export function Header({
         <div className="hello__date">{subtitle ?? today}</div>
       </div>
       <SyncBadge />
+      <button className="iconbtn iconbtn--ghost" onClick={onSearch} aria-label="Search the register">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+        </svg>
+      </button>
       <button className="iconbtn" onClick={onAdd} aria-label="Add an item">
         <Plus />
       </button>

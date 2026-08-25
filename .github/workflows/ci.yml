@@ -24,6 +24,9 @@ jobs:
       - name: Parser
         run: npm run test:parse
 
+      - name: Search ranking
+        run: npm run test:search
+
       - name: API guards
         run: npm run test:api
 
@@ -41,6 +44,7 @@ jobs:
           npm run test:intake
           npm run test:review
           npm run test:paste
+          npm run test:find
 
   database:
     name: Migrations and RLS

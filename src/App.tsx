@@ -5,6 +5,7 @@ import type { Session } from '@supabase/supabase-js';
 import { Header, Nav } from '@/components/Chrome';
 import { TaskSheet, type SheetPatch } from '@/components/TaskSheet';
 import { AddSheet } from '@/components/AddSheet';
+import { Search } from '@/components/Search';
 import { useToast } from '@/components/Toasts';
 import { Today } from '@/routes/Today';
 import { Streams } from '@/routes/Streams';
@@ -65,8 +66,27 @@ function Register({ email }: { email: string }) {
   const [editing, setEditing] = useState<Task | null>(null);
   const [adding, setAdding] = useState(false);
   const [recentlyDone, setRecentlyDone] = useState<string[]>([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [location.pathname]);
+
+  // Cmd/Ctrl+K and plain "/" both open search, the two conventions people
+  // already have in their fingers. Ignored while typing into a field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+      if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearching(true);
+      } else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setSearching(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const onToggle = useCallback(
     (task: Task) => {
@@ -134,7 +154,7 @@ function Register({ email }: { email: string }) {
       <a className="skip" href="#main">Skip to content</a>
 
       <main className="page" id="main">
-        <Header email={email} onAdd={() => setAdding(true)} />
+        <Header email={email} onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} />
         {/* Inline in the document so it sits under the header on desktop;
             CSS pins it to the bottom of the viewport on a phone. */}
         <Nav />
@@ -170,6 +190,10 @@ function Register({ email }: { email: string }) {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
+      {searching && (
+        <Search onOpenTask={setEditing} onClose={() => setSearching(false)} />
+      )}
 
       {editing && (
         <TaskSheet

@@ -33,6 +33,25 @@ It measures time since last contact, not completion. That is deliberate: a
 congress has no denominator, so any percentage-done figure would be fiction.
 Staleness is computed from `touched_at` and never entered by hand.
 
+### Finding things
+
+The magnifying glass in the header, `/`, or `Cmd/Ctrl+K`. It searches task
+titles, your notes, the detail carried over from the seed, section names and
+who you are waiting on — all at once, over the already-cached list, so it works
+with no signal and returns as you type.
+
+Ranked rather than filtered: with 255 items a plain substring match buries the
+thing you meant under everything that merely mentions the word. An exact title
+beats a prefix, which beats a word-boundary match, which beats one buried
+mid-word — so "organ" finds *Organ Recovery Systems* before *reorganisation*.
+Notes and section names count for less than titles; finished items are found but
+demoted. Every word you type has to appear somewhere, so a second word narrows
+rather than widens.
+
+Arrow keys move, Enter opens the item, Escape closes. Matches are highlighted,
+and when the hit was in a note or in the seeded detail, that line is shown
+underneath rather than leaving you guessing why the result is there.
+
 ### The review — what stops the list eating itself
 
 A register that only grows is the problem it was built to solve. Intake adds
@@ -170,6 +189,8 @@ treat it as you would any other document with your work in it.
 | `npm run test:paste` | Copy prompt → paste reply → triage, end to end |
 | `npm run test:parse` | The paste parser against the shapes people actually paste |
 | `npm run test:api` | The `/api/extract` guards: auth, method, missing key |
+| `npm run test:search` | Search ranking and highlighting |
+| `npm run test:find` | Search in the browser: shortcuts, keyboard, opening a result |
 | `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |
 | `npm run test:shots` | Screenshot every route at 375px and 1280px |
 | `npm run build:preview` | Fold the app into one self-contained `preview.html` for sharing |
@@ -442,6 +463,7 @@ src/data/store.ts         queries, optimistic mutations, derived signals
 src/components/           dial, cards, sheets, toasts
 src/routes/               Today, Streams, People, Periphery, Intake, Review, sign-in
 src/data/review.ts        queue building and the decision mutations
+src/lib/search.ts         ranking and highlighting
 src/data/intake.ts        extraction call and triage state
 api/extract.ts            reads a meeting server-side; holds the Anthropic key
 src/styles/tokens.css     the design system: colour, type, radii, motion

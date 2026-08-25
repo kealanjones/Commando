@@ -781,3 +781,70 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
   margin: 16px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-3);
   max-width: 56ch;
 }
+
+/* ── search ────────────────────────────────────────────────────── */
+.scrim--top { align-items: flex-start; padding-top: calc(12px + var(--safe-t)); }
+@media (min-width: 720px) { .scrim--top { padding-top: 8vh; } }
+
+.find {
+  width: min(620px, calc(100vw - 24px));
+  background: var(--bg); border-radius: 22px; box-shadow: var(--lift);
+  display: flex; flex-direction: column; overflow: hidden;
+  max-height: min(78vh, 680px);
+  animation: sheetin .26s var(--ease);
+}
+
+.find__bar {
+  display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 16px;
+  background: var(--card); border-bottom: 1px solid var(--hair); color: var(--ink-3);
+}
+.find__input {
+  flex: 1; min-width: 0; border: 0; background: none; padding: 6px 0;
+  font-family: var(--ui); font-size: 16px; font-weight: 500;
+  letter-spacing: -.01em; color: var(--ink);
+}
+.find__input:focus { outline: none; }
+.find__input::placeholder { color: var(--ink-3); font-weight: 400; }
+
+.find__hint { padding: 22px 18px 24px; }
+.find__hint p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+.find__hint b { color: var(--ink); font-weight: 700; }
+.find__jumps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+.find__count {
+  font-family: var(--data); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-3); padding: 12px 18px 6px;
+}
+
+.find__list { list-style: none; margin: 0; padding: 0 8px 10px; overflow-y: auto; }
+.find__row { border-radius: 14px; }
+.find__row button {
+  width: 100%; text-align: left; background: none; border: 0; cursor: pointer;
+  padding: 11px 12px; border-radius: 14px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.find__row--on { background: var(--card); box-shadow: var(--softer); }
+.find__row--done .find__title { text-decoration: line-through; text-decoration-color: var(--ink-3); }
+.find__row--done { opacity: .6; }
+
+.find__title {
+  font-size: 14.5px; font-weight: 600; letter-spacing: -.015em;
+  line-height: 1.4; color: var(--ink);
+}
+.find__title mark, .find__where mark {
+  background: var(--s-tint, var(--cttl-tint)); color: var(--s-deep, var(--cttl-deep));
+  border-radius: 4px; padding: 0 2px; font-weight: 700;
+}
+.find__meta {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--data); font-size: 10.5px; color: var(--ink-3); letter-spacing: .02em;
+}
+.find__dot {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: var(--s, var(--ink-3));
+}
+.find__where {
+  font-size: 12.5px; line-height: 1.45; color: var(--ink-2);
+  border-left: 2px solid var(--hair); padding-left: 9px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
