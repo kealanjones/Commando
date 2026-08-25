@@ -11,6 +11,7 @@ import { Today } from '@/routes/Today';
 import { Streams } from '@/routes/Streams';
 import { Periphery } from '@/routes/Periphery';
 import { Intake } from '@/routes/Intake';
+import { Threads } from '@/routes/Threads';
 import { Review } from '@/routes/Review';
 import { People } from '@/routes/People';
 import { NotConfigured, SignIn } from '@/routes/SignIn';
@@ -186,6 +187,7 @@ function Register({ email }: { email: string }) {
           <Route path="/intake" element={<Intake />} />
           <Route path="/review" element={<Review />} />
           <Route path="/people" element={<People />} />
+          <Route path="/threads" element={<Threads onOpenTask={setEditing} />} />
           <Route path="/people/:personId" element={<Review />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

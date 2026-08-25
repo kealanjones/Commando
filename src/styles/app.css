@@ -848,3 +848,75 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
   border-left: 2px solid var(--hair); padding-left: 9px;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
+
+/* ── threads ───────────────────────────────────────────────────── */
+.prop {
+  background: var(--card); border-radius: var(--r-panel); padding: 16px;
+  box-shadow: var(--softer); border-left: 4px solid var(--s, var(--hair));
+  animation: rise .45s var(--ease) backwards;
+}
+.prop__head { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.prop__name {
+  border: 0; background: none; padding: 2px 0; width: 100%;
+  font-family: var(--ui); font-size: 18px; font-weight: 800;
+  letter-spacing: -.03em; color: var(--ink);
+  border-bottom: 1.5px solid transparent;
+}
+.prop__name:hover { border-bottom-color: var(--hair); }
+.prop__name:focus { outline: none; border-bottom-color: var(--s, var(--ink)); }
+.prop__name:focus-visible { outline: 3px solid var(--s-deep, var(--ink)); outline-offset: 3px; }
+.prop__why {
+  font-family: var(--data); font-size: 10.5px; color: var(--ink-3); letter-spacing: .04em;
+}
+
+.prop__items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.prop__item { border-top: 1px solid var(--hair-2); }
+.prop__item label {
+  display: grid; grid-template-columns: auto 1fr; gap: 11px; align-items: start;
+  padding: 10px 0; cursor: pointer;
+}
+.prop__item span { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.prop__item b {
+  font-size: 14px; font-weight: 600; letter-spacing: -.01em; line-height: 1.35; color: var(--ink);
+}
+.prop__item i {
+  font-style: normal; font-family: var(--data); font-size: 10px;
+  color: var(--ink-3); letter-spacing: .04em;
+}
+.prop__item--out { opacity: .4; }
+.prop__item--out b { text-decoration: line-through; text-decoration-color: var(--ink-3); }
+
+.prop__actions {
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--hair);
+}
+.prop__actions .meta { flex: 1; min-width: 100px; }
+.prop__actions .btn { padding: 11px 15px; font-size: 13px; }
+
+.thread {
+  background: var(--card); border-radius: var(--r-card); padding: 14px 15px;
+  box-shadow: var(--softer); border-left: 4px solid var(--s, var(--hair));
+}
+.thread__top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.thread__top b { font-size: 15.5px; font-weight: 700; letter-spacing: -.02em; }
+.thread__items { list-style: none; margin: 10px 0 0; padding: 0; }
+.thread__item {
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+  border-top: 1px solid var(--hair-2);
+}
+.thread__item > button:first-child {
+  background: none; border: 0; padding: 9px 0; text-align: left; cursor: pointer;
+  font-family: var(--ui); font-size: 13.5px; line-height: 1.4; color: var(--ink-2);
+}
+.thread__item > button:first-child:hover { color: var(--ink); }
+
+/* the chip a task wears once it is in a thread */
+.threadchip {
+  font-family: var(--data); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-2); background: var(--hair-2); border-radius: var(--r-pill);
+  padding: 4px 9px; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.threadchip::before {
+  content: ''; width: 12px; height: 2px; border-radius: 1px; background: var(--ink-3);
+}

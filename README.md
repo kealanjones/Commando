@@ -33,6 +33,35 @@ It measures time since last contact, not completion. That is deliberate: a
 congress has no denominator, so any percentage-done figure would be fiction.
 Staleness is computed from `touched_at` and never entered by hand.
 
+### Threads — the strands the sections miss
+
+Sections are a filing system: one item, one place. Work does not arrive that
+way. Satya's trip lives in Commonwealth *and* in Directorate; sponsorship runs
+across five ISODP sections. A **thread** is an overlay, not a move — an item
+keeps where it is filed and gains a strand.
+
+The app proposes them. Each suggestion arrives named, listing exactly what it
+would gather, everything pre-selected and each item showing where it is filed.
+**You take out whatever does not belong before agreeing**, rename it if the
+suggested name is wrong, and nothing is grouped until you say so. *Not a thread*
+turns it down for good.
+
+Suggestions are computed locally from the words already in the register — no
+API, no key, works with no signal, and instant on 255 items. Which also means a
+proposal can always explain itself: *these ten share this word, across five
+sections*.
+
+Two rules make the suggestions worth reading:
+
+- **A strand inside one section is never offered.** Your filing already tells
+  you that. Only a thread that crosses sections adds anything.
+- **Only two kinds of word can name a thread**: a proper noun (Dale, Getinge,
+  QEII, VAT) or a word from your own section titles (sponsorship, accreditation,
+  hotels). Scoring by how many sections a word reaches sounds right and is
+  exactly backwards — a generic word like *through* or *whether* appears
+  everywhere, so it spans the most sections and wins. Restricting the vocabulary
+  makes a bad suggestion structurally impossible rather than merely unlikely.
+
 ### Finding things
 
 The magnifying glass in the header, `/`, or `Cmd/Ctrl+K`. It searches task
@@ -190,6 +219,8 @@ treat it as you would any other document with your work in it.
 | `npm run test:parse` | The paste parser against the shapes people actually paste |
 | `npm run test:api` | The `/api/extract` guards: auth, method, missing key |
 | `npm run test:search` | Search ranking and highlighting |
+| `npm run test:group` | What can and cannot anchor a thread |
+| `npm run test:threads` | Proposing, editing, accepting and dismissing a grouping |
 | `npm run test:find` | Search in the browser: shortcuts, keyboard, opening a result |
 | `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |
 | `npm run test:shots` | Screenshot every route at 375px and 1280px |
@@ -464,6 +495,7 @@ src/components/           dial, cards, sheets, toasts
 src/routes/               Today, Streams, People, Periphery, Intake, Review, sign-in
 src/data/review.ts        queue building and the decision mutations
 src/lib/search.ts         ranking and highlighting
+src/lib/grouping.ts       finding the strands the sections miss
 src/data/intake.ts        extraction call and triage state
 api/extract.ts            reads a meeting server-side; holds the Anthropic key
 src/styles/tokens.css     the design system: colour, type, radii, motion

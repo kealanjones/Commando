@@ -124,3 +124,12 @@ export type Decision =
   | { kind: 'done' }
   | { kind: 'chased' }
   | { kind: 'keep' };
+
+export interface Thread {
+  id: string;
+  owner_id: string;
+  title: string;
+  anchor: string | null;
+  created_at: string;
+  deleted_at: string | null;
+}

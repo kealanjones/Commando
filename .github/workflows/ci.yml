@@ -27,6 +27,9 @@ jobs:
       - name: Search ranking
         run: npm run test:search
 
+      - name: Grouping
+        run: npm run test:group
+
       - name: API guards
         run: npm run test:api
 
@@ -45,6 +48,7 @@ jobs:
           npm run test:review
           npm run test:paste
           npm run test:find
+          npm run test:threads
 
   database:
     name: Migrations and RLS

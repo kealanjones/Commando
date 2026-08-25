@@ -5,6 +5,7 @@ import { Dial, quietLabel } from '@/components/Dial';
 import { TaskCard } from '@/components/TaskCard';
 import { WatchCard } from '@/components/WatchCard';
 import { useHealth, usePeople, useSections, useStreams, useTasks } from '@/data/store';
+import { useSuggestions, useThreadsWithItems } from '@/data/threads';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import type { Task } from '@/lib/types';
@@ -60,6 +61,17 @@ export function Streams({
     return c;
   }, [links, tasks]);
 
+  const suggestions = useSuggestions(6);
+  const threads = useThreadsWithItems();
+
+  const threadsFor = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const { thread, items } of threads) {
+      for (const t of items) m.set(t.id, [...(m.get(t.id) ?? []), thread.title]);
+    }
+    return m;
+  }, [threads]);
+
   const setFilter = (f: Filter) => {
     const next = new URLSearchParams(params);
     if (f === 'all') next.delete('filter'); else next.set('filter', f);
@@ -96,6 +108,24 @@ export function Streams({
         >
           ← All streams
         </Link>
+      )}
+
+      {(suggestions.length > 0 || threads.length > 0) && (
+        <div className="prompt">
+          <div>
+            <h3>
+              {suggestions.length > 0
+                ? `${suggestions.length} possible thread${suggestions.length === 1 ? '' : 's'}`
+                : `${threads.length} thread${threads.length === 1 ? '' : 's'}`}
+            </h3>
+            <p>
+              {suggestions.length > 0
+                ? `Strands running across sections — ${suggestions.slice(0, 3).map((s) => s.label).join(', ')}${suggestions.length > 3 ? '…' : ''}`
+                : 'Strands running across your sections.'}
+            </p>
+          </div>
+          <Link to="/threads">{suggestions.length > 0 ? 'Take a look' : 'Open'}</Link>
+        </div>
       )}
 
       <div className="filters" role="group" aria-label="Filter">
@@ -187,6 +217,7 @@ export function Streams({
                         task={t}
                         index={i}
                         waitingOn={waitingFor.get(t.id)}
+                        threads={threadsFor.get(t.id)}
                         onToggle={onToggle}
                         onOpen={onOpen}
                       />

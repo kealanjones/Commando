@@ -12,6 +12,7 @@ export const TaskCard = memo(function TaskCard({
   task,
   streamLabel,
   waitingOn,
+  threads,
   index = 0,
   onToggle,
   onOpen,
@@ -19,6 +20,7 @@ export const TaskCard = memo(function TaskCard({
   task: Task;
   streamLabel?: string;
   waitingOn?: string[];
+  threads?: string[];
   index?: number;
   onToggle: (task: Task) => void;
   onOpen: (task: Task) => void;
@@ -57,6 +59,9 @@ export const TaskCard = memo(function TaskCard({
             </span>
           )}
           {!task.due && task.do_now && <span className="pill pill--flag">do now</span>}
+          {threads?.map((t) => (
+            <span className="threadchip" key={t}>{t}</span>
+          ))}
           {waitingOn && waitingOn.length > 0 && (
             <span className="meta">
               waiting on <b>{waitingOn.join(', ')}</b>

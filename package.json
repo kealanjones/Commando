@@ -22,7 +22,9 @@
     "test:parse": "tsx tests/parse.mjs",
     "test:api": "tsx tests/api.mjs",
     "test:search": "tsx tests/search.mjs",
-    "test:find": "node tests/find.mjs"
+    "test:find": "node tests/find.mjs",
+    "test:group": "tsx tests/group.mjs",
+    "test:threads": "node tests/threads.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
