@@ -8,14 +8,18 @@ import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { describeWriteError } from '@/lib/dbError';
-import { DEMO } from '@/lib/demo';
+import { DEMO, demoThreads } from '@/lib/demo';
 import { useSections, useStreams, useTasks } from './store';
 import { suggestGroups, type Suggestion } from '@/lib/grouping';
 import type { Task, Thread } from '@/lib/types';
 
+// Fixture mode starts with two threads already drawn, so the Web has both
+// kinds of link to show. A real install starts empty.
+const seeded = DEMO ? demoThreads() : { threads: [] as Thread[], links: [] as { task_id: string; thread_id: string }[] };
+
 const memory = {
-  threads: [] as Thread[],
-  links: [] as { task_id: string; thread_id: string }[],
+  threads: seeded.threads,
+  links: seeded.links,
   dismissed: [] as string[],
 };
 

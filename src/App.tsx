@@ -12,6 +12,7 @@ import { Streams } from '@/routes/Streams';
 import { Periphery } from '@/routes/Periphery';
 import { Intake } from '@/routes/Intake';
 import { Threads } from '@/routes/Threads';
+import { Web } from '@/routes/Web';
 import { Review } from '@/routes/Review';
 import { People } from '@/routes/People';
 import { NotConfigured, SignIn } from '@/routes/SignIn';
@@ -184,6 +185,7 @@ function Register({ email }: { email: string }) {
             path="/periphery"
             element={<Periphery onOpen={setEditing} onPromote={onPromote} />}
           />
+          <Route path="/web" element={<Web onOpenTask={setEditing} />} />
           <Route path="/intake" element={<Intake />} />
           <Route path="/review" element={<Review />} />
           <Route path="/people" element={<People />} />

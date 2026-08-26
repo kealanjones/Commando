@@ -222,3 +222,66 @@ with the register.
 tasks, which a stream member can see. A meeting record routinely covers more
 than the one workstream a collaborator was given access to, so the transcript
 must not travel with the stream.
+
+
+## The web — why a map, and why of sections
+
+The register answers "what must I do today" with a list, and a list is the right
+shape for that. It is the wrong shape for the second question, and worse than
+useless for a third that only appeared once there were 255 items: *what is
+actually connected to what*.
+
+### A node is a section, not a task
+
+Two hundred and fifty-five nodes is a hairball — technically a graph, practically
+a smudge, and no one has ever learned anything from one. Thirty-three is a map
+you can hold in your head. It also matches how the work is actually thought
+about: not "chase Belaal", but "the Australia business".
+
+### The edges are people and threads, and nothing else
+
+Both are already in the database and both mean something specific. A shared
+person is *observed* — the seeder extracted the name from the title. A shared
+thread is *asserted* — you agreed to a grouping. So a thread pulls twice as hard
+as a name, and is drawn solid where a name is drawn dashed. Anything else that
+could have been an edge (same stream, similar words) is either already visible in
+the filing or a guess dressed as a fact.
+
+### Fading rather than a staleness badge
+
+The recency dial answers "how quiet is this stream". The web answers it a level
+down, for all thirty-three sections at once, and it cannot do that with numbers —
+thirty-three figures is a table, not a picture. So colour drains out of a section
+as the days since it was touched pile up. Neglect stops being something you audit
+and becomes something you notice.
+
+A register with no history reads as *no evidence*, not as *abandoned*: a fresh
+install opens at full colour. Making a brand-new register look neglected would be
+both wrong and discouraging.
+
+### Three arrangements, not three features
+
+Filed, connected and under pressure are the same dots under different forces, and
+the move between them is the argument. Watching Australia and Sydney leave the
+Commonwealth pile and settle next to Office says something no static picture of
+either arrangement says on its own. The move plays itself once, on a first visit,
+and then the app opens where you left it — a reveal that repeats is an animation
+tax.
+
+### No timeline
+
+One item in 201 carried a date. Every Gantt, calendar and burndown was ruled out
+by that number before anything was drawn.
+
+### The spine
+
+When one person accounts for most of the links, the caption says so in words:
+*78 of the 109 links are Anthony*. The drawing already shows it, but a sentence
+survives being looked away from, and this is the single most useful thing the
+whole view has to say.
+
+### Optional, and load-bearing for nothing
+
+No other route reads it, no schema changed, and no write happens from it except
+through the ordinary task editor. If it turns out to be a poster rather than a
+tool, deleting the route costs three files.

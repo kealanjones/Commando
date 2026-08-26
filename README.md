@@ -13,14 +13,13 @@ the design is for.
 
 ## The shape of it
 
-Three destinations.
-
 | | |
 |---|---|
 | **Today** | Five stream cards, one nudge, and three tasks. Nothing else. |
 | **Streams** | Everything, by stream and section, with filters including who you are waiting on. |
-| **Periphery** | The remembering register. Nothing here can be ticked. |
+| **Web** | The same register as a shape: what is connected to what, and what has gone quiet. |
 | **People** | Who owes you what. Open one before a catch-up. |
+| **Periphery** | The remembering register. Nothing here can be ticked. |
 | **Intake** | Paste a meeting record; review what it proposes; accept what is real. |
 
 ### The recency dial
@@ -61,6 +60,51 @@ Two rules make the suggestions worth reading:
   exactly backwards — a generic word like *through* or *whether* appears
   everywhere, so it spans the most sections and wins. Restricting the vocabulary
   makes a bad suggestion structurally impossible rather than merely unlikely.
+
+### The web — the register as a shape
+
+Optional, and nothing else depends on it. Two questions a list is bad at.
+
+**What is actually connected to what.** A dot is a section, not a task — 255
+dots is a hairball, and you do not think in tasks anyway, you think in "the
+Australia business". A line between two dots means they move together: **dashed**
+because the same person is named in both, **solid** because you put them in the
+same thread. Names are observed, threads you asserted, so a thread counts double
+in the pull between two sections.
+
+The point is what the filing hides. Australia and Sydney is filed under
+Commonwealth; released, it settles beside Office and OrganOx, because Satya and
+Dale are in all three. And when one person holds most of the web together, the
+caption says so outright — *78 of the 109 links are Anthony* is not something the
+list will ever tell you.
+
+**What has gone quiet.** Every dot fades toward white as the days since you last
+touched that section pile up — full colour today, empty at three weeks. Neglect
+becomes something you see rather than something you audit. A register with no
+history at all opens at full colour rather than looking abandoned.
+
+Three arrangements of the same dots:
+
+| | |
+|---|---|
+| **As filed** | Five piles, the way you keep them |
+| **As connected** | Released: shared people and threads pull sections together |
+| **Under pressure** | A scatter — quiet across, loaded up. The top right is the corner going quiet with work still in it |
+
+Everything else on a dot carries a reading too: **size** is open items plus what
+you are keeping tabs on, **the arc on the ring** is how much of that section is
+finished, **a red dot** is work that is pressing, and **a dashed ring** is a
+section you only monitor.
+
+Pick a connector or a thread to see just their reach; pick a stream to see how
+much of it leaks outside itself. Drag a dot to park it, double-click to let it
+go. Selecting a section lists its open work, and tapping an item opens the same
+editor as everywhere else — the map is a way into the register, not a poster of
+it. Arrow keys walk between sections without a mouse; `Escape` clears.
+
+The first visit holds the filed arrangement for a beat and then lets go, because
+watching Australia leave the Commonwealth pile is the whole argument and it only
+needs making once. After that it opens where you left it.
 
 ### Finding things
 
@@ -223,6 +267,8 @@ treat it as you would any other document with your work in it.
 | `npm run test:dberror` | That a failed write explains itself rather than going quiet |
 | `npm run test:threads` | Proposing, editing, accepting and dismissing a grouping |
 | `npm run test:find` | Search in the browser: shortcuts, keyboard, opening a result |
+| `npm run test:graph` | The web's graph and its three layouts, with no browser |
+| `npm run test:web` | The web in the browser: arrangements, filters, selection, keyboard |
 | `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |
 | `npm run test:shots` | Screenshot every route at 375px and 1280px |
 | `npm run build:preview` | Fold the app into one self-contained `preview.html` for sharing |
@@ -493,10 +539,13 @@ scripts/seed.ts           idempotent reconciling seeder
 src/lib/                  supabase client, offline queue, types, slug
 src/data/store.ts         queries, optimistic mutations, derived signals
 src/components/           dial, cards, sheets, toasts
-src/routes/               Today, Streams, People, Periphery, Intake, Review, sign-in
+src/routes/               Today, Streams, Web, People, Periphery, Intake, Review, sign-in
 src/data/review.ts        queue building and the decision mutations
 src/lib/search.ts         ranking and highlighting
 src/lib/grouping.ts       finding the strands the sections miss
+src/lib/web.ts            the register as a graph: links, connectors, staleness
+src/lib/force.ts          the three layouts, framework-free and testable
+src/lib/webPaint.ts       drawing the web on a canvas
 src/data/intake.ts        extraction call and triage state
 api/extract.ts            reads a meeting server-side; holds the Anthropic key
 src/styles/tokens.css     the design system: colour, type, radii, motion

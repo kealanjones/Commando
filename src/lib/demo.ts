@@ -12,7 +12,7 @@
 import { SECTIONS, STREAMS } from '@data/register.seed';
 import { KNOWN_PEOPLE } from '@data/people';
 import { naturalKey } from './slug';
-import type { IntakeItem, Person, Section, Stream, StreamId, Task } from './types';
+import type { IntakeItem, Person, Section, Stream, StreamId, Task, Thread } from './types';
 
 export const DEMO = import.meta.env.VITE_DEMO === '1';
 
@@ -106,6 +106,37 @@ export function demoTasks(): Task[] {
     (s.watch ?? []).forEach((i, idx) => add(i, 'watch', idx));
   }
   return out;
+}
+
+/**
+ * Two ready-made threads, so the Web has both kinds of link to draw in
+ * fixture mode. Real threads are created by accepting a suggestion; these
+ * exist only so the drawing can be seen and tested without a database.
+ */
+export function demoThreads(): { threads: Thread[]; links: { task_id: string; thread_id: string }[] } {
+  const now = new Date().toISOString();
+  const strands = [
+    { id: 'demo-thread-sydney', title: 'Sydney', anchor: 'Sydney' },
+    { id: 'demo-thread-payment', title: 'The payment route', anchor: 'payment' },
+  ];
+
+  const threads: Thread[] = strands.map((s) => ({
+    id: s.id, owner_id: OWNER, title: s.title, anchor: s.anchor,
+    created_at: now, deleted_at: null,
+  }));
+
+  const links: { task_id: string; thread_id: string }[] = [];
+  for (const s of strands) {
+    for (const section of SECTIONS) {
+      section.items.forEach((raw, idx) => {
+        const text = typeof raw === 'string' ? raw : raw.t;
+        if (text.includes(s.anchor)) {
+          links.push({ task_id: `${section.id}-task-${idx}`, thread_id: s.id });
+        }
+      });
+    }
+  }
+  return { threads, links };
 }
 
 /**

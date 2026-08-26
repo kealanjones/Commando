@@ -49,13 +49,14 @@ ok(Number((await first.getByRole('button', { name: /Group these/ }).textContent(
   'and ticking puts it back');
 
 // rename, then accept
+const threadsBefore = await p.locator('.thread').count();
 await first.locator('.prop__name').fill('Everything Dale owes me');
 await p.waitForTimeout(150);
 await first.getByRole('button', { name: /Group these/ }).click();
 await p.waitForTimeout(800);
 ok(await p.locator('.toast', { hasText: 'kept' }).isVisible(), 'accepting confirms');
-ok((await p.locator('.thread').count()) === 1, 'the thread is kept and listed');
-ok(/Everything Dale owes me/.test((await p.locator('.thread').first().textContent()) ?? ''),
+ok((await p.locator('.thread').count()) === threadsBefore + 1, 'the thread is kept and listed');
+ok(await p.locator('.thread', { hasText: 'Everything Dale owes me' }).first().isVisible(),
   'under the name you gave it');
 
 // Turning one down removes that one for good. The count may hold steady:

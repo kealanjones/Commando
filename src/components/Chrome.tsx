@@ -53,6 +53,7 @@ export function Nav() {
     <nav className="nav" aria-label="Sections">
       <NavLink to="/" end>Today</NavLink>
       <NavLink to="/streams">Streams</NavLink>
+      <NavLink to="/web">Web</NavLink>
       <NavLink to="/people">People</NavLink>
       <NavLink to="/periphery">Periphery</NavLink>
       <NavLink to="/intake">Intake</NavLink>

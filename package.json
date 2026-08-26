@@ -25,6 +25,8 @@
     "test:find": "node tests/find.mjs",
     "test:group": "tsx tests/group.mjs",
     "test:threads": "node tests/threads.mjs",
+    "test:web": "node tests/web.mjs",
+    "test:graph": "tsx tests/graph.mjs",
     "test:dberror": "tsx tests/dberror.mjs"
   },
   "dependencies": {
