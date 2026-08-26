@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { DEMO, demoExtraction } from '@/lib/demo';
 import { keys } from './store';
 import { parseProposals, placeItems } from '@/lib/proposalFormat';
+import { describeWriteError } from '@/lib/dbError';
 import type { IntakeItem, Section, Task } from '@/lib/types';
 
 export interface ExtractResult {
@@ -110,7 +111,7 @@ export function useImportProposals() {
           model: 'pasted',
           processed_at: now,
         });
-        if (intakeErr) throw new Error(`Could not save the intake: ${intakeErr.message}`);
+        if (intakeErr) throw new Error(describeWriteError(intakeErr, 'save that'));
 
         const { error: itemsErr } = await supabase.from('intake_items').insert(
           items.map(({ id, intake_id, owner_id, title, kind, context, stream_id, section_id,
@@ -119,7 +120,7 @@ export function useImportProposals() {
             do_now, due, waiting_on, evidence, confidence, duplicate_of, position,
           })),
         );
-        if (itemsErr) throw new Error(`Could not save the proposals: ${itemsErr.message}`);
+        if (itemsErr) throw new Error(describeWriteError(itemsErr, 'save those proposals'));
       }
 
       qc.setQueryData(['intake_items', intakeId], items);
@@ -194,12 +195,12 @@ export function useAcceptItems() {
         const { error } = await supabase
           .from('tasks')
           .insert(rows.map((r, n) => ({ ...r, intake_item_id: items[n].id })));
-        if (error) throw error;
+        if (error) throw new Error(describeWriteError(error, 'add those to the register'));
 
         const { error: markErr } = await supabase
           .from('intake_items')
           .upsert(items.map((i, n) => ({ ...i, status: 'accepted' as const, task_id: rows[n].id })));
-        if (markErr) throw markErr;
+        if (markErr) throw new Error(describeWriteError(markErr, 'mark those as accepted'));
       }
 
       qc.setQueryData<Task[]>(keys.tasks, (old) => [...(old ?? []), ...rows]);

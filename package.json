@@ -24,7 +24,8 @@
     "test:search": "tsx tests/search.mjs",
     "test:find": "node tests/find.mjs",
     "test:group": "tsx tests/group.mjs",
-    "test:threads": "node tests/threads.mjs"
+    "test:threads": "node tests/threads.mjs",
+    "test:dberror": "tsx tests/dberror.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

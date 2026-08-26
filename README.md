@@ -220,6 +220,7 @@ treat it as you would any other document with your work in it.
 | `npm run test:api` | The `/api/extract` guards: auth, method, missing key |
 | `npm run test:search` | Search ranking and highlighting |
 | `npm run test:group` | What can and cannot anchor a thread |
+| `npm run test:dberror` | That a failed write explains itself rather than going quiet |
 | `npm run test:threads` | Proposing, editing, accepting and dismissing a grouping |
 | `npm run test:find` | Search in the browser: shortcuts, keyboard, opening a result |
 | `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |

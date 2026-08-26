@@ -7,6 +7,7 @@
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { describeWriteError } from '@/lib/dbError';
 import { DEMO } from '@/lib/demo';
 import { useSections, useStreams, useTasks } from './store';
 import { suggestGroups, type Suggestion } from '@/lib/grouping';
@@ -98,9 +99,14 @@ export function useAcceptThread() {
         memory.links = [...memory.links, ...links];
       } else {
         const { error } = await supabase.from('threads').insert(thread);
-        if (error) throw new Error(`Could not create the thread: ${error.message}`);
+        if (error) throw new Error(describeWriteError(error, 'keep that thread'));
+
         const { error: linkErr } = await supabase.from('task_threads').insert(links);
-        if (linkErr) throw new Error(`Could not attach the items: ${linkErr.message}`);
+        if (linkErr) {
+          // Do not leave a thread with nothing in it.
+          await supabase.from('threads').update({ deleted_at: now }).eq('id', id);
+          throw new Error(describeWriteError(linkErr, 'attach those items'));
+        }
       }
 
       qc.setQueryData<Thread[]>(['threads'], (old) => [thread, ...(old ?? [])]);
@@ -119,7 +125,8 @@ export function useDismissSuggestion() {
       if (DEMO) memory.dismissed = [...memory.dismissed, signature];
       else {
         const owner = (await supabase.auth.getUser()).data.user?.id ?? '';
-        await supabase.from('dismissed_groupings').upsert({ owner_id: owner, signature });
+        const { error } = await supabase.from('dismissed_groupings').upsert({ owner_id: owner, signature });
+        if (error) throw new Error(describeWriteError(error, 'turn that down'));
       }
       qc.setQueryData<string[]>(['dismissed_groupings'], (old) => [...(old ?? []), signature]);
     },
@@ -135,7 +142,9 @@ export function useRemoveFromThread() {
       if (DEMO) {
         memory.links = memory.links.filter((l) => !(l.task_id === taskId && l.thread_id === threadId));
       } else {
-        await supabase.from('task_threads').delete().eq('task_id', taskId).eq('thread_id', threadId);
+        const { error } = await supabase
+          .from('task_threads').delete().eq('task_id', taskId).eq('thread_id', threadId);
+        if (error) throw new Error(describeWriteError(error, 'take that out of the thread'));
       }
       qc.setQueryData<{ task_id: string; thread_id: string }[]>(['task_threads'], (old) =>
         (old ?? []).filter((l) => !(l.task_id === taskId && l.thread_id === threadId)),

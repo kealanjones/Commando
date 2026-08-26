@@ -30,6 +30,9 @@ jobs:
       - name: Grouping
         run: npm run test:group
 
+      - name: Error messages
+        run: npm run test:dberror
+
       - name: API guards
         run: npm run test:api
 

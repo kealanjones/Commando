@@ -87,12 +87,22 @@ export function Threads({ onOpenTask }: { onOpenTask: (t: Task) => void }) {
 
 function ThreadItem({ task, threadId, onOpen }: { task: Task; threadId: string; onOpen: (t: Task) => void }) {
   const remove = useRemoveFromThread();
+  const { push } = useToast();
+
+  const take = async () => {
+    try {
+      await remove(task.id, threadId);
+    } catch (e) {
+      push({ message: (e as Error).message, tone: 'warn', duration: 0, actionLabel: 'Dismiss' });
+    }
+  };
+
   return (
     <li className="thread__item" data-stream={task.stream_id}>
       <button onClick={() => onOpen(task)}>{task.title}</button>
       <button
         className="rowbtn"
-        onClick={() => void remove(task.id, threadId)}
+        onClick={() => void take()}
         aria-label={`Take out of this thread: ${task.title}`}
       >
         <Close />
@@ -127,19 +137,36 @@ function Proposal({ suggestion }: { suggestion: Suggestion }) {
       return n;
     });
 
+  // Every one of these awaits a write. Without the catch a failure is
+  // swallowed and the button simply appears dead, which is worse than an
+  // error: you cannot tell whether it worked.
   const commit = async () => {
     if (keeping.length < 2) return;
-    await accept.mutateAsync({
-      title, anchor: suggestion.label, taskIds: keeping.map((t) => t.id),
-    });
-    push({ message: `“${title}” kept — ${keeping.length} items.`, replaceKey: 'thread' });
-    setGone(true);
+    try {
+      await accept.mutateAsync({
+        title, anchor: suggestion.label, taskIds: keeping.map((t) => t.id),
+      });
+      push({ message: `“${title}” kept — ${keeping.length} items.`, replaceKey: 'thread' });
+      setGone(true);
+    } catch (e) {
+      push({
+        message: (e as Error).message, tone: 'warn', duration: 0,
+        actionLabel: 'Dismiss', replaceKey: 'thread',
+      });
+    }
   };
 
   const reject = async () => {
-    await dismiss(suggestion.signature);
-    push({ message: 'Not a thread. It will not be suggested again.', replaceKey: 'thread' });
-    setGone(true);
+    try {
+      await dismiss(suggestion.signature);
+      push({ message: 'Not a thread. It will not be suggested again.', replaceKey: 'thread' });
+      setGone(true);
+    } catch (e) {
+      push({
+        message: (e as Error).message, tone: 'warn', duration: 0,
+        actionLabel: 'Dismiss', replaceKey: 'thread',
+      });
+    }
   };
 
   return (
@@ -185,7 +212,7 @@ function Proposal({ suggestion }: { suggestion: Suggestion }) {
           disabled={keeping.length < 2 || accept.isPending}
           style={{ flex: 'none' }}
         >
-          Group these {keeping.length}
+          {accept.isPending ? 'Keeping…' : `Group these ${keeping.length}`}
         </button>
       </div>
     </li>

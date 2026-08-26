@@ -277,9 +277,18 @@ function Triage({
 
   const commit = async () => {
     if (!ready) return;
-    await accept.mutateAsync(placed);
-    push({ message: `${ready} added to the register.` });
-    onDone();
+    try {
+      await accept.mutateAsync(placed);
+      push({ message: `${ready} added to the register.` });
+      onDone();
+    } catch (e) {
+      // Without this the button looks dead and you cannot tell whether the
+      // items landed — worse than an error message.
+      push({
+        message: (e as Error).message, tone: 'warn', duration: 0,
+        actionLabel: 'Dismiss', replaceKey: 'intake-error',
+      });
+    }
   };
 
   const taskCount = kept.filter((i) => i.kind === 'task').length;
