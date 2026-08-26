@@ -407,6 +407,36 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
 .btn--danger { background: var(--danger-tint); color: var(--danger); flex: none; }
 
 /* ── browse ────────────────────────────────────────────────────── */
+/* ── the middle level ──────────────────────────────────────────────
+   A group is a heading with a rule, not another card: the stream is
+   already a coloured panel and the section is already a collapsible
+   block, so a third box would just be more edges. The rule and the
+   indent carry the level instead. */
+.groupblock { margin-bottom: 28px; }
+.groupblock__head {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  background: none; border: 0; cursor: pointer; text-align: left;
+  padding: 0 0 10px; margin-bottom: 16px;
+  border-bottom: 1.5px solid var(--s-tint, var(--hair));
+}
+.groupblock__head h3 {
+  margin: 0; flex: 1; min-width: 0;
+  font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--s-deep, var(--ink-2));
+}
+.groupblock__head .chev { width: 18px; height: 18px; color: var(--s-deep, var(--ink-3)); opacity: .6; }
+.groupblock__head[aria-expanded='true'] .chev { transform: rotate(90deg); }
+.groupblock__meta {
+  font-family: var(--data); font-size: 10.5px; color: var(--ink-3);
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.groupblock__body { padding-left: 14px; border-left: 1.5px solid var(--hair-2); }
+.groupblock__body .sectionblock:last-child { margin-bottom: 4px; }
+@media (max-width: 420px) {
+  .groupblock__body { padding-left: 10px; }
+  .groupblock__meta { font-size: 10px; }
+}
+
 .sectionblock { margin-bottom: 26px; }
 .sectionblock__head {
   display: flex; align-items: center; gap: 10px; width: 100%;

@@ -621,7 +621,9 @@ function SectionCard({
   return (
     <div className="web__detail" data-stream={node.stream}>
       <button type="button" className="web__dismiss" onClick={onClose} aria-label="Close">×</button>
-      <p className="web__streamname">{streamTitle}</p>
+      <p className="web__streamname">
+        {streamTitle}{node.groupTitle && <> › {node.groupTitle}</>}
+      </p>
       <h3>{node.title}</h3>
 
       <div className="web__counts">

@@ -47,43 +47,59 @@ begin
      set title = excluded.title, short = excluded.short,
          code = excluded.code, position = excluded.position;
 
-  -- ── sections ─────────────────────────────────────────────────────
-  insert into public.sections (id, owner_id, stream_id, title, monitor, position, deleted_at) values
-    ('cttl-gov', owner, 'cttl', 'Governance and meetings', false, 0, null),
-    ('cttl-fell', owner, 'cttl', 'Fellowship', false, 1, null),
-    ('cttl-aus', owner, 'cttl', 'Australia and Sydney', false, 2, null),
-    ('cttl-read', owner, 'cttl', 'Reading and development', false, 3, null),
-    ('isodp-spons', owner, 'isodp', 'Sponsorship — overall management', false, 4, null),
-    ('isodp-organox', owner, 'isodp', 'Sponsorship — OrganOx', false, 5, null),
-    ('isodp-china', owner, 'isodp', 'Sponsorship — Chinese and TransNovo', false, 6, null),
-    ('isodp-leads', owner, 'isodp', 'Sponsorship — other leads', false, 7, null),
-    ('isodp-coll', owner, 'isodp', 'Sponsorship — collateral', false, 8, null),
-    ('isodp-pay', owner, 'isodp', 'Finance — sponsor payment process', false, 9, null),
-    ('isodp-mystery', owner, 'isodp', 'Finance — the unexplained payment', false, 10, null),
-    ('isodp-budget', owner, 'isodp', 'Finance — budget management', false, 11, null),
-    ('isodp-abs', owner, 'isodp', 'Programme — abstracts', false, 12, null),
-    ('isodp-awards', owner, 'isodp', 'Programme — awards', false, 13, null),
-    ('isodp-prog', owner, 'isodp', 'Programme — development', false, 14, null),
-    ('isodp-accred', owner, 'isodp', 'Accreditation', false, 15, null),
-    ('isodp-web', owner, 'isodp', 'Website', false, 16, null),
-    ('isodp-hotels', owner, 'isodp', 'Hotels and accommodation', false, 17, null),
-    ('isodp-social', owner, 'isodp', 'Social events and logistics', false, 18, null),
-    ('dir-smt', owner, 'dir', 'Senior Management Team', false, 19, null),
-    ('dir-crib', owner, 'dir', 'CRIB presentation', false, 20, null),
-    ('dir-people', owner, 'dir', 'People compliance', false, 21, null),
-    ('dir-steph', owner, 'dir', 'Steph', false, 22, null),
-    ('dir-office', owner, 'dir', 'Office', false, 23, null),
-    ('dir-restructure', owner, 'dir', 'OTDT and Clinical Services restructure', true, 24, null),
-    ('dir-digital', owner, 'dir', 'Digital referral discovery', false, 25, null),
-    ('dir-perf', owner, 'dir', 'Donation programme and performance', false, 26, null),
-    ('dir-session', owner, 'dir', 'Session design and engagement', false, 27, null),
-    ('dir-events', owner, 'dir', 'Events and communications', false, 28, null),
-    ('dir-honours', owner, 'dir', 'Honours — Lisa Burnham', false, 29, null),
-    ('career-decision', owner, 'career', 'The decision', false, 30, null),
-    ('per-grassroot', owner, 'per', 'Grassroot', false, 31, null),
-    ('per-property', owner, 'per', 'Property', false, 32, null)
+  -- ── groups ───────────────────────────────────────────────────────
+  -- The middle level, written first so the sections below can point at it.
+  insert into public.sections (id, owner_id, stream_id, title, parent_id, monitor, position, deleted_at) values
+    ('isodp-g-sponsorship', owner, 'isodp', 'Sponsorship', null, false, 0, null),
+    ('isodp-g-finance', owner, 'isodp', 'Finance', null, false, 1, null),
+    ('isodp-g-programme', owner, 'isodp', 'Programme', null, false, 2, null),
+    ('isodp-g-logistics', owner, 'isodp', 'Delegates and logistics', null, false, 3, null),
+    ('dir-g-office', owner, 'dir', 'Office and people', null, false, 4, null),
+    ('dir-g-performance', owner, 'dir', 'Programme performance', null, false, 5, null),
+    ('dir-g-engagement', owner, 'dir', 'Engagement', null, false, 6, null)
   on conflict (owner_id, id) do update
      set stream_id = excluded.stream_id, title = excluded.title,
+         parent_id = null, monitor = false, position = excluded.position,
+         deleted_at = null;
+
+  -- ── sections ─────────────────────────────────────────────────────
+  insert into public.sections (id, owner_id, stream_id, title, parent_id, monitor, position, deleted_at) values
+    ('cttl-gov', owner, 'cttl', 'Governance and meetings', null, false, 0, null),
+    ('cttl-fell', owner, 'cttl', 'Fellowship', null, false, 1, null),
+    ('cttl-aus', owner, 'cttl', 'Australia and Sydney', null, false, 2, null),
+    ('cttl-read', owner, 'cttl', 'Reading and development', null, false, 3, null),
+    ('isodp-spons', owner, 'isodp', 'Pipeline and outreach', 'isodp-g-sponsorship', false, 4, null),
+    ('isodp-organox', owner, 'isodp', 'OrganOx', 'isodp-g-sponsorship', false, 5, null),
+    ('isodp-china', owner, 'isodp', 'TransNovo and Chinese partners', 'isodp-g-sponsorship', false, 6, null),
+    ('isodp-leads', owner, 'isodp', 'Prospects and leads', 'isodp-g-sponsorship', false, 7, null),
+    ('isodp-coll', owner, 'isodp', 'Collateral', 'isodp-g-sponsorship', false, 8, null),
+    ('isodp-pay', owner, 'isodp', 'Sponsor payment process', 'isodp-g-finance', false, 9, null),
+    ('isodp-mystery', owner, 'isodp', 'The unexplained payment', 'isodp-g-finance', false, 10, null),
+    ('isodp-budget', owner, 'isodp', 'Budget management', 'isodp-g-finance', false, 11, null),
+    ('isodp-abs', owner, 'isodp', 'Abstracts', 'isodp-g-programme', false, 12, null),
+    ('isodp-awards', owner, 'isodp', 'Awards', 'isodp-g-programme', false, 13, null),
+    ('isodp-prog', owner, 'isodp', 'Programme development', 'isodp-g-programme', false, 14, null),
+    ('isodp-accred', owner, 'isodp', 'Accreditation', 'isodp-g-programme', false, 15, null),
+    ('isodp-web', owner, 'isodp', 'Website', null, false, 16, null),
+    ('isodp-hotels', owner, 'isodp', 'Hotels and accommodation', 'isodp-g-logistics', false, 17, null),
+    ('isodp-social', owner, 'isodp', 'Social events', 'isodp-g-logistics', false, 18, null),
+    ('dir-smt', owner, 'dir', 'Senior Management Team', null, false, 19, null),
+    ('dir-crib', owner, 'dir', 'CRIB presentation', null, false, 20, null),
+    ('dir-people', owner, 'dir', 'People compliance', 'dir-g-office', false, 21, null),
+    ('dir-steph', owner, 'dir', 'Line management', 'dir-g-office', false, 22, null),
+    ('dir-office', owner, 'dir', 'Office', 'dir-g-office', false, 23, null),
+    ('dir-restructure', owner, 'dir', 'OTDT and Clinical Services restructure', null, true, 24, null),
+    ('dir-digital', owner, 'dir', 'Digital referral discovery', 'dir-g-performance', false, 25, null),
+    ('dir-perf', owner, 'dir', 'Donation programme and performance', 'dir-g-performance', false, 26, null),
+    ('dir-session', owner, 'dir', 'Session design', 'dir-g-engagement', false, 27, null),
+    ('dir-events', owner, 'dir', 'Events and communications', 'dir-g-engagement', false, 28, null),
+    ('dir-honours', owner, 'dir', 'Honours — Lisa Burnham', null, false, 29, null),
+    ('career-decision', owner, 'career', 'The decision', null, false, 30, null),
+    ('per-grassroot', owner, 'per', 'Grassroot', null, false, 31, null),
+    ('per-property', owner, 'per', 'Property', null, false, 32, null)
+  on conflict (owner_id, id) do update
+     set stream_id = excluded.stream_id, title = excluded.title,
+         parent_id = excluded.parent_id,
          monitor = excluded.monitor, position = excluded.position,
          deleted_at = null;
 

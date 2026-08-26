@@ -15,6 +15,11 @@ export interface Section {
   owner_id: string;
   stream_id: StreamId;
   title: string;
+  /**
+   * The group this section sits in. Null means it hangs straight off the
+   * stream. One level only — a group's own parent is always null.
+   */
+  parent_id: string | null;
   monitor: boolean;
   position: number;
   deleted_at: string | null;

@@ -29,6 +29,11 @@ export interface Section {
   id: string;
   stream: StreamId;
   title: string;
+  /**
+   * The group this section sits inside, from GROUPS below. Omitted means it
+   * hangs directly off the stream — not everything needs a middle level.
+   */
+  group?: string;
   /** tracked but not driven — read-only register, not a to-do list */
   monitor?: boolean;
   items: (string | Item)[];
@@ -50,6 +55,34 @@ export const STREAMS = {
   career: { title: 'Career',                       short: 'Career',       code: 'Career' },
   per:    { title: 'Personal',                     short: 'Personal',     code: 'Per' },
 } as const;
+
+/**
+ * The middle level.
+ *
+ * Fifteen ISODP sections at one level is a list, not a structure, and the
+ * "Sponsorship — X" naming was a hierarchy smuggled into a string: the app
+ * could not read it, so nothing could be collapsed, counted or navigated by
+ * it. These are real rows now, and a section names its group instead of
+ * spelling it out in its own title.
+ *
+ * A group holds sections; only sections hold items. Streams with few enough
+ * sections to read at a glance have no groups at all.
+ */
+export interface Group {
+  id: string;
+  stream: StreamId;
+  title: string;
+}
+
+export const GROUPS: Group[] = [
+  { id: 'isodp-g-sponsorship', stream: 'isodp', title: 'Sponsorship' },
+  { id: 'isodp-g-finance',     stream: 'isodp', title: 'Finance' },
+  { id: 'isodp-g-programme',   stream: 'isodp', title: 'Programme' },
+  { id: 'isodp-g-logistics',   stream: 'isodp', title: 'Delegates and logistics' },
+  { id: 'dir-g-office',        stream: 'dir',   title: 'Office and people' },
+  { id: 'dir-g-performance',   stream: 'dir',   title: 'Programme performance' },
+  { id: 'dir-g-engagement',    stream: 'dir',   title: 'Engagement' },
+];
 
 export const SECTIONS: Section[] = [
 
@@ -96,7 +129,7 @@ export const SECTIONS: Section[] = [
  "Pull out practical implications for CTtL, equity and donation strategy rather than just reading them"]},
 
 // ═══ ISODP 2027 ════════════════════════════════════════════════════
-{id:'isodp-spons',stream:'isodp',title:'Sponsorship — overall management',items:[
+{id:'isodp-spons',stream:'isodp',title:'Pipeline and outreach',group:'isodp-g-sponsorship',items:[
  P("Send Anthony the short priority sponsor list",{p:1,note:"Quad, MVTA, transplant-related leads, TransMedics"}),
  "Schedule time with Anthony to go through the sponsor outreach spreadsheet",
  "Prepare a short chasing text Anthony can use with priority sponsors",
@@ -116,7 +149,7 @@ export const SECTIONS: Section[] = [
  "Matt Weis outreach",
  "UK sponsor pipeline"]},
 
-{id:'isodp-organox',stream:'isodp',title:'Sponsorship — OrganOx',items:[
+{id:'isodp-organox',stream:'isodp',title:'OrganOx',group:'isodp-g-sponsorship',items:[
  "Follow up the OrganOx UK marketing manager",
  "Set up a call including Anthony",
  "Speak to Derek about senior escalation through Peter",
@@ -125,7 +158,7 @@ export const SECTIONS: Section[] = [
  watch:[
  "OrganOx"]},
 
-{id:'isodp-china',stream:'isodp',title:'Sponsorship — Chinese and TransNovo',items:[
+{id:'isodp-china',stream:'isodp',title:'TransNovo and Chinese partners',group:'isodp-g-sponsorship',items:[
  P("Clarify exactly what they want",{p:1,note:"Platinum sponsorship, pre-Congress workshop, speaking slot, or a combination"}),
  P("Clarify the actual sponsoring entity",{p:1,note:"TransNovo, COTDF or another associated company"}),
  P("Clarify which organisation will actually make payment",{p:1}),
@@ -138,7 +171,7 @@ export const SECTIONS: Section[] = [
  watch:[
  "Chinese and TransNovo"]},
 
-{id:'isodp-leads',stream:'isodp',title:'Sponsorship — other leads',items:[
+{id:'isodp-leads',stream:'isodp',title:'Prospects and leads',group:'isodp-g-sponsorship',items:[
  P("Convert the Getinge pencilled commitment into formal confirmation",{p:1}),
  P("Get European outreach underway before Sydney",{p:1}),
  "Track Getinge potential platinum sponsorship",
@@ -161,7 +194,7 @@ export const SECTIONS: Section[] = [
  "BA sponsorship",
  "European and Spanish pipeline"]},
 
-{id:'isodp-coll',stream:'isodp',title:'Sponsorship — collateral',items:[
+{id:'isodp-coll',stream:'isodp',title:'Collateral',group:'isodp-g-sponsorship',items:[
  "Ensure Emma has the final sponsorship brochure",
  "Ensure Emma has sponsor contacts assigned to her",
  "Ensure Emma has sponsorship document access",
@@ -172,7 +205,7 @@ export const SECTIONS: Section[] = [
  "Summarise the sponsorship discussion by email when useful",
  "Send the congress graphic and video file to Lauren for the website"]},
 
-{id:'isodp-pay',stream:'isodp',title:'Finance — sponsor payment process',items:[
+{id:'isodp-pay',stream:'isodp',title:'Sponsor payment process',group:'isodp-g-finance',items:[
  P("Clarify the end-to-end process for sponsors paying NHSBT",{p:1}),
  P("Draft escalation email for Anthony to send to Mark Taylor",{p:1,note:"Make clear sponsors are ready to pay but currently lack a workable payment route."}),
  P("Set up a daytime call with Anthony, Isaac and John Richardson",{p:1}),
@@ -195,7 +228,7 @@ export const SECTIONS: Section[] = [
  "Stripe or invoicing solution",
  "Registration cost modelling"]},
 
-{id:'isodp-mystery',stream:'isodp',title:'Finance — the unexplained payment',items:[
+{id:'isodp-mystery',stream:'isodp',title:'The unexplained payment',group:'isodp-g-finance',items:[
  P("Investigate the unexplained €1,085 payment",{note:"Approximately £910"}),
  "Identify the sender",
  "Establish why it was paid",
@@ -205,11 +238,11 @@ export const SECTIONS: Section[] = [
  watch:[
  "Mystery £910 payment"]},
 
-{id:'isodp-budget',stream:'isodp',title:'Finance — budget management',items:[
+{id:'isodp-budget',stream:'isodp',title:'Budget management',group:'isodp-g-finance',items:[
  "Add a forecast of major expenditure to the budget tracker",
  "Upload the budget tracking document to SharePoint"]},
 
-{id:'isodp-abs',stream:'isodp',title:'Programme — abstracts',items:[
+{id:'isodp-abs',stream:'isodp',title:'Abstracts',group:'isodp-g-programme',items:[
  "Find the number of accepted oral abstracts at Kyoto",
  "Speak to Suzanne about abstract categories, awards and submission rules",
  "Chase Matt and Dale for final abstract categories and awards information",
@@ -220,7 +253,7 @@ export const SECTIONS: Section[] = [
  "Final abstract categories",
  "SPC parallel-session structure"]},
 
-{id:'isodp-awards',stream:'isodp',title:'Programme — awards',items:[
+{id:'isodp-awards',stream:'isodp',title:'Awards',group:'isodp-g-programme',items:[
  "Get existing award details from Suzanne",
  "Feed award details into the Oxford and website build",
  "Track Executive Council decisions on top abstract and poster awards",
@@ -230,13 +263,13 @@ export const SECTIONS: Section[] = [
  watch:[
  "Awards decision"]},
 
-{id:'isodp-prog',stream:'isodp',title:'Programme — development',items:[
+{id:'isodp-prog',stream:'isodp',title:'Programme development',group:'isodp-g-programme',items:[
  "Keep Dr Koval and Ukraine plenary participation on the radar",
  "Ensure programme information needed for website and accreditation is captured as it firms up"],
  watch:[
  "Dr Koval"]},
 
-{id:'isodp-accred',stream:'isodp',title:'Accreditation',items:[
+{id:'isodp-accred',stream:'isodp',title:'Accreditation',group:'isodp-g-programme',items:[
  "Have Dale speak to Sylvia Paris regarding CME and accreditation needs",
  "Clarify whether College of Intensive Care Medicine accreditation is sufficient",
  "Determine whether ABTC or non-physician accreditation is worthwhile",
@@ -258,7 +291,7 @@ export const SECTIONS: Section[] = [
  watch:[
  "Website progress"]},
 
-{id:'isodp-hotels',stream:'isodp',title:'Hotels and accommodation',items:[
+{id:'isodp-hotels',stream:'isodp',title:'Hotels and accommodation',group:'isodp-g-logistics',items:[
  P("Start accommodation work now",{p:1}),
  "Contact the QEII Centre about preferred hotel relationships and rates",
  "Investigate HotelMap",
@@ -274,7 +307,7 @@ export const SECTIONS: Section[] = [
  "Headquarters hotel",
  "Room block"]},
 
-{id:'isodp-social',stream:'isodp',title:'Social events and logistics',items:[
+{id:'isodp-social',stream:'isodp',title:'Social events',group:'isodp-g-logistics',items:[
  "Develop 007 gala dinner ideas in the shared LOC folder",
  P("Follow up Houses of Parliament dinner possibilities",{note:"Capacity, regulations, costs, practical feasibility"}),
  "Contact the aquarium venue about the President's Dinner",
@@ -297,7 +330,7 @@ export const SECTIONS: Section[] = [
  "Add clearer labels where needed",
  "Move narrative text into speaker notes so it is not visible to the audience"]},
 
-{id:'dir-people',stream:'dir',title:'People compliance',items:[
+{id:'dir-people',stream:'dir',title:'People compliance',group:'dir-g-office',items:[
  P("Draft and send the PDPR compliance email to non-compliant staff",{p:1,note:"Make clear that managers are responsible for arranging PDPRs."}),
  P("Review Anthony's previous Conflicts of Interest email",{p:1}),
  "Check outstanding Conflicts of Interest declarations",
@@ -306,11 +339,11 @@ export const SECTIONS: Section[] = [
  "PDPR rate",
  "Conflict of Interest compliance"]},
 
-{id:'dir-steph',stream:'dir',title:'Steph',items:[
+{id:'dir-steph',stream:'dir',title:'Line management',group:'dir-g-office',items:[
  "Finalise Steph's PDPR",
  "Try to arrange Steph's Blood Donation visit"]},
 
-{id:'dir-office',stream:'dir',title:'Office',items:[
+{id:'dir-office',stream:'dir',title:'Office',group:'dir-g-office',items:[
  "Ask the Heads of Office group for a workaround to the Team Talk recording-access issue",
  "Sort Satya's honorary contract",
  "Chase Satya's contract through an alternative route if stalled"]},
@@ -327,7 +360,7 @@ export const SECTIONS: Section[] = [
  "Communications and staff engagement risks",
  "Anthony's own position and appetite for the future role"]},
 
-{id:'dir-digital',stream:'dir',title:'Digital referral discovery',items:[
+{id:'dir-digital',stream:'dir',title:'Digital referral discovery',group:'dir-g-performance',items:[
  P("Speak to Anthony about splitting your time so you can begin working with Laura",{p:1}),
  "Start involvement in digital referral discovery",
  "Find the Texas digital referral case study paper",
@@ -336,7 +369,7 @@ export const SECTIONS: Section[] = [
  watch:[
  "Digital referral discovery"]},
 
-{id:'dir-perf',stream:'dir',title:'Donation programme and performance',items:[
+{id:'dir-perf',stream:'dir',title:'Donation programme and performance',group:'dir-g-performance',items:[
  "Speak to Anthony about whether the organ donation session should be postponed until better prepared",
  "Review the Organ Donation Week script",
  "Review the Organ Donation Week slides",
@@ -347,7 +380,7 @@ export const SECTIONS: Section[] = [
  "Current donation performance pressures when planning transformation activity",
  "Donation performance"]},
 
-{id:'dir-session',stream:'dir',title:'Session design and engagement',items:[
+{id:'dir-session',stream:'dir',title:'Session design',group:'dir-g-engagement',items:[
  "Test Mentimeter",
  "Confirm Mentimeter works as expected",
  "Consider Menti or an equivalent interactive platform for the SDG session",
@@ -357,7 +390,7 @@ export const SECTIONS: Section[] = [
  "Find and share notes containing Anthony's brainstorming ideas",
  "Reach out to Kate or Mark Taylor's team if required regarding SDG planning"]},
 
-{id:'dir-events',stream:'dir',title:'Events and communications',items:[
+{id:'dir-events',stream:'dir',title:'Events and communications',group:'dir-g-engagement',items:[
  "Contact the NHSBT filming and recording team to pencil them in for the donor recognition event",
  "Prepare Anthony's speaking notes for the partner and stakeholder webinar",
  "Set up a Teams channel for the relevant three participants",

@@ -131,6 +131,32 @@ select assert((select days_quiet from public.stream_health where stream_id = 'is
 select assert((select days_quiet from public.stream_health where stream_id = 'cttl') is null,
   'an untouched stream reports no recency rather than a wrong one');
 
+-- ── the middle level cannot be used to reach across owners ─────────
+reset role;
+insert into public.sections (id, owner_id, stream_id, title, parent_id)
+values ('cttl-g-area', '11111111-1111-1111-1111-111111111111', 'cttl', 'An area', null);
+update public.sections set parent_id = 'cttl-g-area' where id = 'cttl-gov';
+select assert(
+  (select parent_id from public.sections where id = 'cttl-gov') = 'cttl-g-area',
+  'a section can be filed under a group of its own');
+
+do $$
+begin
+  insert into public.sections (id, owner_id, stream_id, title, parent_id)
+  values ('other-child', '22222222-2222-2222-2222-222222222222', 'other', 'Borrowed',
+          'cttl-g-area');
+  raise exception 'FAIL  a section was parented to another owner''s group';
+exception
+  when foreign_key_violation then
+    raise notice 'PASS  a section cannot be filed under another owner''s group';
+end $$;
+
+-- Removing a heading must not take the work underneath it with it.
+delete from public.sections where id = 'cttl-g-area';
+select assert(
+  (select count(*) from public.sections where id = 'cttl-gov' and parent_id is null) = 1,
+  'deleting a group leaves its sections in place, one level up');
+
 -- ── intake is personal, even where a stream is shared ──────────────
 reset role;
 insert into public.intakes (id, owner_id, label, source_text, status)

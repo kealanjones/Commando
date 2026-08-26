@@ -4,6 +4,7 @@ import { Close } from './icons';
 import { usePeople, useSections, useStreams, useTasks } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
 import { highlight, search } from '@/lib/search';
+import { pathOf } from '@/lib/tree';
 import type { Task } from '@/lib/types';
 
 /**
@@ -125,7 +126,7 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
                     </span>
                     <span className="find__meta">
                       <i className="find__dot" />
-                      {hit.section?.title ?? 'Unfiled'}
+                      {hit.section ? pathOf(sections, hit.section.id) : 'Unfiled'}
                       {hit.task.kind === 'watch' && ' · watching'}
                       {hit.task.done && ' · done'}
                       {hit.task.unclear && ' · parked'}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Close } from './icons';
+import { groupOf, leavesFor } from '@/lib/tree';
 import type { Section, Stream, Task } from '@/lib/types';
 
 export function AddSheet({
@@ -36,7 +37,7 @@ export function AddSheet({
 
   const section = sections.find((s) => s.id === sectionId);
   const grouped = streams.map((s) => ({
-    stream: s, sections: sections.filter((sec) => sec.stream_id === s.id),
+    stream: s, sections: leavesFor(sections, s.id),
   }));
 
   const submit = (e: React.FormEvent) => {
@@ -84,7 +85,9 @@ export function AddSheet({
             >
               {grouped.map((g) => (
                 <optgroup key={g.stream.id} label={g.stream.title}>
-                  {g.sections.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                  {g.sections.map((s) => (
+                    <option key={s.id} value={s.id}>{labelFor(sections, s)}</option>
+                  ))}
                 </optgroup>
               ))}
             </select>
@@ -117,4 +120,13 @@ export function AddSheet({
       </form>
     </div>
   );
+}
+
+/**
+ * A native picker only nests one level, and the stream already owns that.
+ * So a section inside a group carries its group in its own label.
+ */
+function labelFor(sections: Section[], section: Section) {
+  const group = groupOf(sections, section.id);
+  return group ? `${group.title} › ${section.title}` : section.title;
 }

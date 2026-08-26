@@ -16,7 +16,7 @@
  *   npm run seed:sql        writes supabase/seed.sql
  */
 import { writeFileSync } from 'node:fs';
-import { SECTIONS, STREAMS, type Item } from '../data/register.seed.js';
+import { GROUPS, SECTIONS, STREAMS, type Item } from '../data/register.seed.js';
 import { KNOWN_PEOPLE } from '../data/people.js';
 import { naturalKey } from '../src/lib/slug.js';
 
@@ -115,13 +115,25 @@ ${Object.entries(STREAMS)
      set title = excluded.title, short = excluded.short,
          code = excluded.code, position = excluded.position;
 
-  -- ── sections ─────────────────────────────────────────────────────
-  insert into public.sections (id, owner_id, stream_id, title, monitor, position, deleted_at) values
-${SECTIONS.map((s, i) =>
-  `    (${q(s.id)}, owner, ${q(s.stream)}, ${q(s.title)}, ${s.monitor ? 'true' : 'false'}, ${i}, null)`,
+  -- ── groups ───────────────────────────────────────────────────────
+  -- The middle level, written first so the sections below can point at it.
+  insert into public.sections (id, owner_id, stream_id, title, parent_id, monitor, position, deleted_at) values
+${GROUPS.map((g, i) =>
+  `    (${q(g.id)}, owner, ${q(g.stream)}, ${q(g.title)}, null, false, ${i}, null)`,
 ).join(',\n')}
   on conflict (owner_id, id) do update
      set stream_id = excluded.stream_id, title = excluded.title,
+         parent_id = null, monitor = false, position = excluded.position,
+         deleted_at = null;
+
+  -- ── sections ─────────────────────────────────────────────────────
+  insert into public.sections (id, owner_id, stream_id, title, parent_id, monitor, position, deleted_at) values
+${SECTIONS.map((s, i) =>
+  `    (${q(s.id)}, owner, ${q(s.stream)}, ${q(s.title)}, ${q(s.group ?? null)}, ${s.monitor ? 'true' : 'false'}, ${i}, null)`,
+).join(',\n')}
+  on conflict (owner_id, id) do update
+     set stream_id = excluded.stream_id, title = excluded.title,
+         parent_id = excluded.parent_id,
          monitor = excluded.monitor, position = excluded.position,
          deleted_at = null;
 
@@ -215,5 +227,5 @@ select kind, count(*) as items
 writeFileSync('supabase/seed.sql', sql);
 console.log(
   `supabase/seed.sql  ${rows.length} items (${tasks} tasks, ${watch} watch) ` +
-    `across ${SECTIONS.length} sections`,
+    `across ${SECTIONS.length} sections in ${GROUPS.length} groups`,
 );

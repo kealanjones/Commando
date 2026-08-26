@@ -285,3 +285,66 @@ whole view has to say.
 No other route reads it, no schema changed, and no write happens from it except
 through the ordinary task editor. If it turns out to be a poster rather than a
 tool, deleting the route costs three files.
+
+
+## Three levels, and the one that was fake
+
+The register had three levels from the start — stream, section, item — and the
+section level quietly did two jobs at once. "Sponsorship — OrganOx" and
+"Sponsorship — collateral" sat at the same level as "Website" and "Hotels and
+accommodation", related to each other only by an em dash inside a string.
+
+That is a hierarchy the app cannot read. Nothing could collapse Sponsorship,
+count it, navigate to it or say how much of it there was, because as far as the
+data was concerned there was no such thing as Sponsorship — only five sections
+whose titles happened to start with the same word. Fifteen ISODP sections at one
+level is a list wearing a structure's clothes.
+
+### A parent column, not a new table
+
+`sections.parent_id` points at another section. A group is simply a section that
+other sections point at, which means no new table, no new query, and no new
+concept to learn: the thing you already understand gained one property.
+
+One level deep, deliberately. Two would let the tree grow to the point where
+finding something means remembering a path, which is the failure mode of the
+document this app replaced.
+
+### Depth is optional
+
+Commonwealth has four sections and no areas. Career has one. A middle level
+there would be a heading over a room with one chair in it. So a stream's top
+level is a mix of groups and bare sections, and `src/lib/tree.ts` is the single
+place that knows how to read that shape — every consumer asks it rather than
+re-deriving the rule.
+
+Ordering falls out of it: a group takes the position of its first child rather
+than one of its own, so the seed file's order survives grouping unchanged.
+Sections that already read well together stay together, and nobody has to
+maintain a second ordering.
+
+### Groups are headings, never places
+
+A task cannot be filed into Sponsorship, only into a section inside it. The
+pickers offer leaves only, so there is never a question about where something
+lives. On the map, a group is not drawn at all — it holds no items, so it would
+be an empty dot claiming to be work.
+
+### Renaming was safe; moving would not have been
+
+A seeded row's identity is `<section_id>:<slug(title)>`. Section *ids* did not
+change, so dropping "Sponsorship — " from a dozen section titles moved no keys
+and orphaned no rows: every completed tick, note and reschedule survived. Moving
+tasks between sections would change their keys and churn them, so this change
+deliberately did none of that. The bins that remain — a section called "Pipeline
+and outreach" holding four things that are really "what I need from Anthony" —
+are a separate decision, to be made in the app where rows keep their identity.
+
+### The delete rule has a column list on it
+
+`on delete set null (parent_id)`. The foreign key is composite — `(owner_id,
+parent_id)` — and without the column list Postgres nulls every column in the
+key, `owner_id` included, so deleting a group fails on a not-null constraint
+instead of quietly orphaning its sections. Caught by the RLS proof, which now
+asserts both that a section cannot be filed under another owner's group and that
+removing a heading leaves the work underneath it in place.

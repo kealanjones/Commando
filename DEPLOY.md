@@ -33,6 +33,8 @@ the whole file, paste, and press Run — **in order**:
 3. `supabase/migrations/0003_realtime.sql`
 4. `supabase/migrations/0004_intake.sql`
 5. `supabase/migrations/0005_review.sql`
+6. `supabase/migrations/0006_threads.sql`
+7. `supabase/migrations/0007_groups.sql`
 
 **Migrations go before the code that needs them.** The app auto-deploys from the
 default branch, so a new version can be live before its migration has run. It
@@ -165,6 +167,10 @@ Paste each file into **SQL Editor**, in order, and run it:
 1. `supabase/migrations/0001_schema.sql`
 2. `supabase/migrations/0002_rls.sql`
 3. `supabase/migrations/0003_realtime.sql`
+4. `supabase/migrations/0004_intake.sql`
+5. `supabase/migrations/0005_review.sql`
+6. `supabase/migrations/0006_threads.sql`
+7. `supabase/migrations/0007_groups.sql`
 
 Or, with the CLI:
 
@@ -173,8 +179,8 @@ npx supabase link --project-ref <your-ref>
 npx supabase db push
 ```
 
-These three migrations are applied to a throwaway Postgres and their policies
-proved on every CI run — see `tests/rls.sql`. Seventeen assertions, including
+Every migration is applied to a throwaway Postgres and the policies proved on
+every CI run — see `tests/rls.sql`. Twenty-four assertions, including
 that a second user sees nothing, that an anonymous caller with the anon key gets
 nothing, that sharing one stream grants exactly that stream, and that a hard
 delete is refused.

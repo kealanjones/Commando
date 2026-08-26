@@ -9,7 +9,7 @@
  * Excluded from the normal build path by the flag; nothing here runs
  * unless VITE_DEMO is set.
  */
-import { SECTIONS, STREAMS } from '@data/register.seed';
+import { GROUPS, SECTIONS, STREAMS } from '@data/register.seed';
 import { KNOWN_PEOPLE } from '@data/people';
 import { naturalKey } from './slug';
 import type { IntakeItem, Person, Section, Stream, StreamId, Task, Thread } from './types';
@@ -25,10 +25,17 @@ export function demoStreams(): Stream[] {
 }
 
 export function demoSections(): Section[] {
-  return SECTIONS.map((s, i) => ({
-    id: s.id, owner_id: OWNER, stream_id: s.stream as StreamId, title: s.title,
-    monitor: s.monitor ?? false, position: i, deleted_at: null,
+  // Groups come first so a parent always exists before the sections that
+  // name it — the same order the seeder writes them in.
+  const groups: Section[] = GROUPS.map((g, i) => ({
+    id: g.id, owner_id: OWNER, stream_id: g.stream as StreamId, title: g.title,
+    parent_id: null, monitor: false, position: i, deleted_at: null,
   }));
+  const leaves: Section[] = SECTIONS.map((s, i) => ({
+    id: s.id, owner_id: OWNER, stream_id: s.stream as StreamId, title: s.title,
+    parent_id: s.group ?? null, monitor: s.monitor ?? false, position: i, deleted_at: null,
+  }));
+  return [...groups, ...leaves];
 }
 
 export function demoPeople(): Person[] {

@@ -15,7 +15,7 @@
  */
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
-import { SECTIONS, STREAMS, type Item, type Section } from '../data/register.seed.js';
+import { GROUPS, SECTIONS, STREAMS, type Item, type Section } from '../data/register.seed.js';
 import { KNOWN_PEOPLE } from '../data/people.js';
 import { naturalKey } from '../src/lib/slug.js';
 
@@ -91,15 +91,23 @@ async function main() {
   console.log(`streams   ${streamRows.length}`);
 
   // ── sections ─────────────────────────────────────────────────────
+  // Groups go in first: a section's parent has to exist before the foreign
+  // key on it can be satisfied.
+  const groupRows = GROUPS.map((g, i) => ({
+    id: g.id, owner_id: owner, stream_id: g.stream, title: g.title,
+    parent_id: null, monitor: false, position: i, deleted_at: null,
+  }));
   const sectionRows = SECTIONS.map((s: Section, i) => ({
     id: s.id, owner_id: owner, stream_id: s.stream, title: s.title,
-    monitor: s.monitor ?? false, position: i, deleted_at: null,
+    parent_id: s.group ?? null, monitor: s.monitor ?? false, position: i, deleted_at: null,
   }));
   if (!DRY) {
-    const { error } = await db.from('sections').upsert(sectionRows, { onConflict: 'owner_id,id' });
-    if (error) throw error;
+    for (const batch of [groupRows, sectionRows]) {
+      const { error } = await db.from('sections').upsert(batch, { onConflict: 'owner_id,id' });
+      if (error) throw error;
+    }
   }
-  console.log(`sections  ${sectionRows.length}`);
+  console.log(`sections  ${sectionRows.length} in ${groupRows.length} groups`);
 
   // ── people ───────────────────────────────────────────────────────
   if (!DRY) {

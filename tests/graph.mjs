@@ -17,8 +17,8 @@ const T = (id, section, stream, extra = {}) => ({
   touched_at: null, reviewed_at: null, unclear: false,
   created_at: '2026-01-01', updated_at: '2026-01-01', ...extra,
 });
-const S = (id, stream, title, monitor = false) =>
-  ({ id, title, stream_id: stream, owner_id: '', monitor, position: 0, deleted_at: null });
+const S = (id, stream, title, monitor = false, parent = null) =>
+  ({ id, title, stream_id: stream, owner_id: '', monitor, parent_id: parent, position: 0, deleted_at: null });
 
 // aus and office share Satya; aus and organox share Dale; hotels is alone.
 const sections = [
@@ -89,6 +89,27 @@ ok(g.connectors[0].sections.length >= g.connectors[1].sections.length, 'connecto
 ok(g.soloPeople === 1, 'the one-section person is counted, not listed');
 ok(g.connectors.find((c) => c.id === 'satya').streams.length === 2, 'Satya spans two streams');
 ok(g.threads[0].sections.length === 2, 'the thread reaches two sections');
+
+// ── groups are headings, not places ────────────────────────────────
+{
+  const grouped = buildGraph({
+    tasks, streams, people, taskPeople, threads, threadLinks,
+    sections: [
+      { ...S('g-spons', 'isodp', 'Sponsorship') },
+      { ...S('organox', 'isodp', 'OrganOx', false, 'g-spons') },
+      { ...S('hotels', 'isodp', 'Hotels', false, 'g-spons') },
+      S('aus', 'cttl', 'Australia and Sydney'),
+      S('office', 'dir', 'Office'),
+      S('restructure', 'dir', 'Restructure', true),
+    ],
+  });
+  ok(!grouped.nodes.some((n) => n.id === 'g-spons'), 'a group is not drawn as an empty dot');
+  ok(grouped.nodes.length === 5, 'every section that holds work still is');
+  ok(grouped.nodes.find((n) => n.id === 'organox').groupTitle === 'Sponsorship',
+    'a section carries the group it sits in');
+  ok(grouped.nodes.find((n) => n.id === 'aus').groupTitle === null,
+    'and a section with no group says so');
+}
 
 // ── the one name the whole thing hangs off ─────────────────────────
 ok(g.spine === null, 'no spine is claimed when the links are spread between people');

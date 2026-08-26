@@ -16,7 +16,7 @@ the design is for.
 | | |
 |---|---|
 | **Today** | Five stream cards, one nudge, and three tasks. Nothing else. |
-| **Streams** | Everything, by stream and section, with filters including who you are waiting on. |
+| **Streams** | Everything, stream → area → section, with filters including who you are waiting on. |
 | **Web** | The same register as a shape: what is connected to what, and what has gone quiet. |
 | **People** | Who owes you what. Open one before a catch-up. |
 | **Periphery** | The remembering register. Nothing here can be ticked. |
@@ -31,6 +31,31 @@ touched today, emptying as it goes quiet, against a 21-day scale.
 It measures time since last contact, not completion. That is deliberate: a
 congress has no denominator, so any percentage-done figure would be fiction.
 Staleness is computed from `touched_at` and never entered by hand.
+
+### Three levels, and only where they are earned
+
+**Stream → area → section → item.** ISODP is a stream; Sponsorship is an area
+inside it; OrganOx is a section inside that; chasing their UK marketing manager
+is an item.
+
+The middle level is real data, not a naming convention. It used to be spelled
+out in the section's own title — *Sponsorship — OrganOx*, *Finance — sponsor
+payment process* — which meant nothing could collapse by it, count by it or
+navigate by it, because nothing could read it. Fifteen ISODP sections at one
+level is a list wearing a structure's clothes.
+
+Now ISODP reads as five things (Sponsorship, Finance, Programme, Delegates and
+logistics, Website) and the Directorate as seven, and each area says how much is
+in it and how far it spreads before you open it.
+
+**Depth is optional, and that is the point.** Commonwealth has four sections and
+no areas at all; Career has one. Forcing every section into a group would be
+filing for its own sake — a heading over a room with one chair in it. A stream
+small enough to read at a glance is left flat.
+
+Areas are headings, never places: a task cannot be filed *into* Sponsorship, only
+into a section within it, so there is no ambiguity about where anything lives.
+Delete an area and its sections stay, one level up.
 
 ### Threads — the strands the sections miss
 
@@ -264,6 +289,8 @@ treat it as you would any other document with your work in it.
 | `npm run test:api` | The `/api/extract` guards: auth, method, missing key |
 | `npm run test:search` | Search ranking and highlighting |
 | `npm run test:group` | What can and cannot anchor a thread |
+| `npm run test:tree` | Stream → area → section: the shape and the order it reads in |
+| `npm run test:groups` | The middle level in the browser: reading it, filing into it, finding through it |
 | `npm run test:dberror` | That a failed write explains itself rather than going quiet |
 | `npm run test:threads` | Proposing, editing, accepting and dismissing a grouping |
 | `npm run test:find` | Search in the browser: shortcuts, keyboard, opening a result |
@@ -543,6 +570,7 @@ src/routes/               Today, Streams, Web, People, Periphery, Intake, Review
 src/data/review.ts        queue building and the decision mutations
 src/lib/search.ts         ranking and highlighting
 src/lib/grouping.ts       finding the strands the sections miss
+src/lib/tree.ts           stream → area → section, the one place that knows the shape
 src/lib/web.ts            the register as a graph: links, connectors, staleness
 src/lib/force.ts          the three layouts, framework-free and testable
 src/lib/webPaint.ts       drawing the web on a canvas

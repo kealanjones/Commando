@@ -8,7 +8,8 @@ import { useHealth, usePeople, useSections, useStreams, useTasks } from '@/data/
 import { useSuggestions, useThreadsWithItems } from '@/data/threads';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
-import type { Task } from '@/lib/types';
+import { branchesFor } from '@/lib/tree';
+import type { Section, Task } from '@/lib/types';
 
 type Filter = 'all' | 'donow' | 'undated' | 'done';
 
@@ -199,31 +200,54 @@ export function Streams({
               </div>
             </div>
 
-            {mySections.map((sec) => {
-              const items = rows.filter((t) => t.section_id === sec.id);
-              if (!items.length) return null;
+            {branchesFor(mySections, h.id).map((branch) => {
+              const cards = (sec: Section) => {
+                const items = rows.filter((t) => t.section_id === sec.id);
+                if (!items.length) return null;
+                return (
+                  <SectionBlock
+                    key={sec.id}
+                    title={sec.title}
+                    monitor={sec.monitor}
+                    count={items.length}
+                    streamId={h.id}
+                  >
+                    <ul className="list" style={{ paddingBottom: 16 }}>
+                      {items.map((t, i) => (
+                        <TaskCard
+                          key={t.id}
+                          task={t}
+                          index={i}
+                          waitingOn={waitingFor.get(t.id)}
+                          threads={threadsFor.get(t.id)}
+                          onToggle={onToggle}
+                          onOpen={onOpen}
+                        />
+                      ))}
+                    </ul>
+                  </SectionBlock>
+                );
+              };
+
+              // A bare section sits at the top level on its own.
+              if (!branch.children.length) return cards(branch.node);
+
+              const total = branch.children.reduce(
+                (n, c) => n + rows.filter((t) => t.section_id === c.id).length, 0,
+              );
+              if (!total) return null;
+
               return (
-                <SectionBlock
-                  key={sec.id}
-                  title={sec.title}
-                  monitor={sec.monitor}
-                  count={items.length}
-                  streamId={h.id}
+                <GroupBlock
+                  key={branch.node.id}
+                  title={branch.node.title}
+                  count={total}
+                  sections={branch.children.filter(
+                    (c) => rows.some((t) => t.section_id === c.id),
+                  ).length}
                 >
-                  <ul className="list" style={{ paddingBottom: 16 }}>
-                    {items.map((t, i) => (
-                      <TaskCard
-                        key={t.id}
-                        task={t}
-                        index={i}
-                        waitingOn={waitingFor.get(t.id)}
-                        threads={threadsFor.get(t.id)}
-                        onToggle={onToggle}
-                        onOpen={onOpen}
-                      />
-                    ))}
-                  </ul>
-                </SectionBlock>
+                  {branch.children.map(cards)}
+                </GroupBlock>
               );
             })}
 
@@ -247,6 +271,39 @@ export function Streams({
         );
       })}
     </>
+  );
+}
+
+/**
+ * The middle level. Open by default — this is a heading that groups, not a
+ * drawer that hides; collapsing it is for when a stream is being read one
+ * area at a time.
+ */
+function GroupBlock({
+  title, count, sections, children,
+}: {
+  title: string; count: number; sections: number; children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(true);
+  const id = `grp-${title.replace(/\W+/g, '-')}`;
+  return (
+    <div className="groupblock">
+      <button
+        className="groupblock__head"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Chevron />
+        <h3>{title}</h3>
+        <span className="groupblock__meta">
+          {count} in {sections} section{sections === 1 ? '' : 's'}
+        </span>
+      </button>
+      <div className="collapse" data-open={open} id={id}>
+        <div className="groupblock__body">{children}</div>
+      </div>
+    </div>
   );
 }
 

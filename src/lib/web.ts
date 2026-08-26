@@ -20,6 +20,8 @@ export const QUIET_FULL_DAYS = 21;
 export interface WebNode {
   id: string;
   title: string;
+  /** The group it sits in, when it sits in one. */
+  groupTitle: string | null;
   stream: StreamId;
   monitor: boolean;
   /** Open, actionable items — the size of the dot. */
@@ -101,7 +103,13 @@ const daysSince = (iso: string | null): number | null =>
 const startOfToday = () => new Date(new Date().toDateString());
 
 export function buildGraph(input: GraphInput): WebGraph {
-  const { tasks, sections, taskPeople, people } = input;
+  const { tasks, taskPeople, people } = input;
+  // A group is a heading over other sections and holds no items of its own,
+  // so it must not become an empty dot on the map.
+  const parents = new Set(
+    input.sections.map((s) => s.parent_id).filter((v): v is string => Boolean(v)),
+  );
+  const sections = input.sections.filter((s) => !parents.has(s.id));
   const threads = input.threads ?? [];
   const threadLinks = input.threadLinks ?? [];
 
@@ -152,6 +160,9 @@ export function buildGraph(input: GraphInput): WebGraph {
     return {
       id: s.id,
       title: s.title,
+      groupTitle: s.parent_id
+        ? input.sections.find((g) => g.id === s.parent_id)?.title ?? null
+        : null,
       stream: s.stream_id,
       monitor: s.monitor,
       open: openTasks.length,
