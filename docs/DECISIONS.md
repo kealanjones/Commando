@@ -404,3 +404,84 @@ Opening focuses the card, not the title. You opened it to read it — a caret in
 the title puts a ring round the first thing you look at and throws the
 keyboard up on a phone. Every field is still local state seeded once per task,
 which is what stops a realtime event re-rendering a textarea mid-sentence.
+
+
+## Reading dates instead of asking for them
+
+The register opened with one dated item in two hundred, and no amount of
+nagging was going to fix that — a screen that says "add a date" to 200 items
+is a screen nobody opens twice.
+
+But the dates were largely there already, written into notes and titles
+because that is where you write things while you are typing. So the app reads
+them back out.
+
+### Every proposal shows its evidence
+
+A date is offered beside the sentence it was taken from, with the matched
+words picked out. That is the whole design: the proposal argues for itself and
+you can see instantly whether it read you right. A parser that says "9 October
+2026" with no working shown is asking to be trusted, and a wrong date is worse
+than no date at all.
+
+### Certainty is a sentence, not a score
+
+"87% confident" tells you nothing you can act on. The find carries its own
+explanation instead — *a date, spelled out*, *no year given — this is the next
+one*, *reading this as the coming Friday — check it is the right one*.
+
+The weekday case earned its hedge the hard way. The first version rated "on
+Wednesday" as likely, and the very first thing the real register produced was
+"Share Satya's taxi to the hotel on Wednesday morning" resolved to next
+Wednesday — when it plainly means the Wednesday of a trip in September. A
+weekday names a day and never a week, so it is now never offered as sure.
+
+### What it will not guess at
+
+Eight items promise a deadline in words only: *ahead of the Australia trip*,
+*before Sydney*. Those refer to events the app has never heard of. They get
+gathered into their own list with a date field and no proposal, because the
+alternative is inventing a date and calling it a find.
+
+### The honest count
+
+Reading the real register produced **three** parseable dates, not the eighteen a
+first rough grep suggested — that grep matched "mar" inside "marketing" and
+"may" as a verb. The sweep is therefore not a one-off fix for a backlog; its
+value is that it keeps reading everything that arrives from now on, and meeting
+notes are full of "before Friday".
+
+## The brief, and why nothing left the app before
+
+Every feature so far has moved work *inward*: intake, grouping, review, the
+map. Nothing ever came back out, and nearly everything this job produces is
+something for somebody else — a line for a director before a 1:1, a paragraph
+for the monthly report.
+
+### Two different briefs, not one with a filter
+
+A person's brief leads with what you need from them and ends with what has
+moved since you last spoke. A stream's leads with what is pressing and ends
+with what has gone quiet. Those are different documents for different
+conversations; making one template serve both would have produced something
+that suited neither.
+
+### Plain text, deliberately
+
+It has to survive being pasted into Teams, Outlook and a Word document, so
+there is no markup at all — headings are capitals and lines are bullets. The
+formatted version on screen is for reading; the text is for sending, and the
+two are generated from the same blocks so they cannot drift.
+
+### Composed locally
+
+No API call. The brief you most want is the one you write on the train, and a
+brief that needs a signal is a brief you cannot have when you need it. It also
+means nothing about who owes you what leaves the device to produce one.
+
+### An empty block still speaks
+
+"Nothing closed in this window" is information; a silently missing heading is
+not. Blocks that matter say so when they are empty, and blocks that do not are
+dropped entirely — the difference is set per block rather than guessed at
+render time.

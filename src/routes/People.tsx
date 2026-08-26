@@ -53,10 +53,20 @@ export function People() {
         <h2 id="people-head">Waiting on</h2>
         <span className="shead__meta">{total} items · {rows.length} people</span>
       </div>
-      <p style={{ margin: '0 0 20px', color: 'var(--ink-2)', fontSize: 14, lineHeight: 1.6, maxWidth: '58ch' }}>
+      <p style={{ margin: '0 0 16px', color: 'var(--ink-2)', fontSize: 14, lineHeight: 1.6, maxWidth: '58ch' }}>
         Work that moves when somebody else does. Open one before a catch-up and go
         through it a card at a time.
       </p>
+
+      {rows.length > 0 && (
+        <div className="prompt">
+          <div>
+            <h3>Before a catch-up</h3>
+            <p>A brief you can paste: what has moved, what is stuck, what you need from them.</p>
+          </div>
+          <Link to={`/brief?person=${rows[0].id}`}>Write one</Link>
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <div className="empty">

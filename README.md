@@ -21,6 +21,8 @@ the design is for.
 | **People** | Who owes you what. Open one before a catch-up. |
 | **Periphery** | The remembering register. Nothing here can be ticked. |
 | **Intake** | Paste a meeting record; review what it proposes; accept what is real. |
+| **Brief** | Something the register hands back: text you can paste, for a person or a stream. |
+| **Dates** | The dates you already wrote down, read back out of your own words. |
 
 ### The recency dial
 
@@ -81,6 +83,57 @@ small enough to read at a glance is left flat.
 Areas are headings, never places: a task cannot be filed *into* Sponsorship, only
 into a section within it, so there is no ambiguity about where anything lives.
 Delete an area and its sections stay, one level up.
+
+### Dates you already wrote down
+
+The worst number in the register was **one dated item in two hundred**, which is
+why everything felt equally urgent. But most of those dates were never missing —
+they were in the wrong field. *"9 October, 1–2pm"* was sitting in a note;
+*"outbound 14 September, return 25 September"* in another.
+
+The sweep reads them back out. Every proposal shows **the words it came from**,
+picked out of your own sentence, so it argues for itself rather than asking to be
+trusted. Nothing is set without a tap, and skipping writes nothing at all.
+
+It is careful about how sure it is, and says so in plain words rather than a
+confidence score:
+
+| It found | It says |
+|---|---|
+| `28 August 2026` | a date, spelled out |
+| `9 October` | no year given — this is the next one |
+| `by Friday` | reading this as the coming Friday — check it is the right one |
+
+A weekday is the hedged case on purpose. *"Share Satya's taxi on Wednesday
+morning"* sits in a note about a trip and means **that** Wednesday, not the next
+one, so it is never offered as sure.
+
+A second list gathers the items that promise a deadline in words only — *ahead of
+the Australia trip*, *before Sydney*. No parser should guess at those, so they
+are put in front of you with a date field and nothing proposed.
+
+All of it is local: a date parser that needed a network call to read "9 October"
+would be a worse parser. It also keeps working on everything that arrives later,
+which is where most of its value is — meeting notes are full of *"before Friday"*.
+
+### The brief
+
+Everything else in this app is about getting work *in* and keeping it straight.
+This is the part that comes back out.
+
+Pick a person or a stream, get text you can paste into a message, an email or the
+monthly report. A person's brief leads with **what you need from them**, then
+what is also open, what has been waiting longest, and what has moved since you
+last spoke. A stream's is a different brief: **pressing**, moved recently, gone
+quiet, waiting on somebody else, not clear yet.
+
+Every line carries its reason — *overdue — was 22 Aug*, *40 days untouched*,
+*with Dale* — and clicking one opens the item it is about. The window is 7, 14 or
+30 days.
+
+The pasted version is plain text with no markup, because it has to survive Teams
+and Outlook. Composed locally from rows already held: no call, no key, and the
+brief you want most is the one you write on the train.
 
 ### Threads — the strands the sections miss
 
@@ -316,6 +369,9 @@ treat it as you would any other document with your work in it.
 | `npm run test:search` | Search ranking and highlighting |
 | `npm run test:group` | What can and cannot anchor a thread |
 | `npm run test:tree` | Stream → area → section: the shape and the order it reads in |
+| `npm run test:dates` | Reading dates back out of what was already written down |
+| `npm run test:brief` | What goes in a brief, what stays out, and what it reads like |
+| `npm run test:upgrades` | The sweep and the brief in the browser |
 | `npm run test:groups` | The middle level in the browser: reading it, filing into it, finding through it |
 | `npm run test:dberror` | That a failed write explains itself rather than going quiet |
 | `npm run test:threads` | Proposing, editing, accepting and dismissing a grouping |
@@ -597,6 +653,8 @@ src/data/review.ts        queue building and the decision mutations
 src/lib/search.ts         ranking and highlighting
 src/lib/grouping.ts       finding the strands the sections miss
 src/lib/tree.ts           stream → area → section, the one place that knows the shape
+src/lib/dates.ts          reading dates out of your own wording
+src/lib/brief.ts          composing something the register can hand back
 src/lib/web.ts            the register as a graph: links, connectors, staleness
 src/lib/force.ts          the three layouts, framework-free and testable
 src/lib/webPaint.ts       drawing the web on a canvas

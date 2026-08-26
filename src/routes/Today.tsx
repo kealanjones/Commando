@@ -124,14 +124,14 @@ export function Today({
             )}
           </p>
           <Link
-            to="/streams?filter=undated"
+            to="/dates"
             style={{
               flex: 'none', textDecoration: 'none', background: 'var(--ink)', color: '#fff',
               padding: '7px 13px', borderRadius: 999, fontFamily: 'var(--data)',
               fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase',
             }}
           >
-            Add dates
+            Read them back
           </Link>
         </div>
       )}

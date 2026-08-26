@@ -14,22 +14,30 @@ const fail = [];
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail.push(m); };
 const near = (a, b, slack) => Math.abs(a - b) <= slack;
 
-/** Widths of the card, frame by frame, from the click. */
-async function trace(p, ms = 620) {
-  return p.evaluate((limit) => new Promise((res) => {
+/**
+ * Sample the card's width every frame — started *before* the click, so the
+ * very first frame of the growth is caught rather than whatever the test
+ * happened to arrive in time for.
+ */
+async function watch(p) {
+  await p.evaluate(() => {
+    window.__frames = [];
     const t0 = performance.now();
-    const s = [];
     const tick = () => {
       const c = document.querySelector('.card');
       if (c) {
         const r = c.getBoundingClientRect();
-        s.push([Math.round(performance.now() - t0), Math.round(r.width), Math.round(r.left), Math.round(r.top)]);
+        window.__frames.push([
+          Math.round(performance.now() - t0), Math.round(r.width),
+          Math.round(r.left), Math.round(r.top),
+        ]);
       }
-      if (performance.now() - t0 < limit) requestAnimationFrame(tick); else res(s);
+      if (performance.now() - t0 < 4000) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  }), ms);
+  });
 }
+const frames_ = (p) => p.evaluate(() => window.__frames);
 
 // ── 1. it grows out of the row you touched ──────────────────────────
 {
@@ -42,8 +50,10 @@ async function trace(p, ms = 620) {
 
   const row = await p.locator('.task').first().boundingBox();
   const clicked = p.locator('.task__open').first();
+  await watch(p);
   await clicked.click();
-  const frames = await trace(p);
+  await p.waitForTimeout(700);
+  const frames = await frames_(p);
 
   const first = frames[0];
   const last = frames[frames.length - 1];
@@ -60,8 +70,10 @@ async function trace(p, ms = 620) {
   const between = [...new Set(frames
     .map((f) => f[1])
     .filter((w) => w < row.width - 8 && w > last[1] + 8))];
-  ok(between.length >= 6,
-    `the growth is drawn over many frames rather than jumping (${between.length} intermediate sizes)`);
+  // Headless Chromium composites at maybe fifteen frames a second, so the
+  // bar is "not a jump" rather than a frame count a real browser would hit.
+  ok(between.length >= 3,
+    `the growth is drawn over several frames rather than jumping (${between.length} intermediate sizes)`);
   const span = row.width - last[1];
   const spread = between.map((w) => (row.width - w) / span);
   ok(spread.some((v) => v < 0.4) && spread.some((v) => v > 0.4 && v < 0.85),
@@ -76,13 +88,17 @@ async function trace(p, ms = 620) {
 
   // ── 2. and drops back into the list ───────────────────────────────
   const open = await p.locator('.card').boundingBox();
+  await watch(p);
   await p.keyboard.press('Escape');
-  await p.waitForTimeout(120);
-  const going = await p.locator('.card').boundingBox().catch(() => null);
-  ok(going !== null && going.width > open.width + 40 && going.width <= row.width + 8,
+  await p.waitForTimeout(420);
+  // Sampled across the whole close rather than at one instant: headless
+  // composites too coarsely to land on a chosen millisecond.
+  const back = await frames_(p);
+  const widest = Math.max(...back.map((f) => f[1]));
+  ok(widest > open.width + 60 && widest <= row.width + 8,
     `closing travels back out to the row rather than vanishing `
-    + `(${Math.round(open.width)} → ${going ? Math.round(going.width) : 'gone'} → ${Math.round(row.width)})`);
-  await p.waitForTimeout(500);
+    + `(${Math.round(open.width)} → ${widest} → ${Math.round(row.width)})`);
+  await p.waitForTimeout(300);
   ok(!(await p.isVisible('.card')), 'and then it is gone');
 
   const focused = await p.evaluate(() => document.activeElement?.className ?? '');
