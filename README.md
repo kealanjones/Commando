@@ -32,6 +32,31 @@ It measures time since last contact, not completion. That is deliberate: a
 congress has no denominator, so any percentage-done figure would be fiction.
 Staleness is computed from `touched_at` and never entered by hand.
 
+### The card
+
+An item is not a row with a dialog behind it. Touch a row and it **lifts off
+the page** — the rectangle you touched grows into the whole record, the page
+behind draws back and blurs, and when you are done it drops back into its own
+place in the list.
+
+The geometry is a FLIP, and it is asserted numerically rather than eyeballed:
+the card is laid out at its final size, transformed back onto the row it came
+from, then released. Nothing inside is drawn while it is still row-sized —
+text scaled to a fifth and back is a smear, not a transition — so the contents
+arrive a beat after the shape does, staggered from the top down.
+
+Everything about the item is on it: where it is filed, the title as an
+editable sentence rather than a form field, its three states as one tap each
+(do now, not clear yet, keep tabs only), the detail the register carried, your
+own note, its date and section, and — folded away until you ask — when it was
+added, when it was last touched, when it was last reviewed and whether it came
+from the register or from you.
+
+Opened from somewhere with no row to grow from — search, the map, a thread —
+it simply arrives at full size. `prefers-reduced-motion` does the same, with
+no morph at all. `Escape` closes it and focus returns to the row that opened
+it; `⌘/Ctrl+Enter` saves.
+
 ### Three levels, and only where they are earned
 
 **Stream → area → section → item.** ISODP is a stream; Sponsorship is an area
@@ -282,6 +307,7 @@ treat it as you would any other document with your work in it.
 | `npm run seed:dry` | Report what a seed would change, write nothing |
 | `npm run build:demo` + `npm run serve:dist` | Build and serve fixture mode |
 | `npm run test:ui` | Browser interaction checks (needs `serve:dist` running) |
+| `npm run test:card` | The card: the growth out of a row, and the drop back into it |
 | `npm run test:intake` | End-to-end paste → triage → commit checks |
 | `npm run test:review` | The review deck, the people view and the unclear pile |
 | `npm run test:paste` | Copy prompt → paste reply → triage, end to end |

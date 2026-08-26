@@ -59,7 +59,7 @@ ok((await p.locator('.sectionblock').count()) > 0, 'its sections still show');
 // ── filing into it ──────────────────────────────────────────────────
 await p.goto(`${base}/streams/isodp`, { waitUntil: 'networkidle' });
 await p.waitForTimeout(800);
-await p.locator('.rowbtn').first().click();
+await p.locator('.task__open').first().click();
 await p.waitForSelector('#sheet-section');
 const options = await p.locator('#sheet-section option').allTextContents();
 ok(options.some((o) => o.includes('›')), `the picker carries the area (${options.find((o) => o.includes('›'))})`);

@@ -185,10 +185,29 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
 .task {
   background: var(--card); border-radius: var(--r-card); padding: 14px 15px;
   box-shadow: var(--softer);
-  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start;
+  display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;
   animation: rise .45s var(--ease) backwards;
-  transition: opacity .35s var(--ease), transform .3s var(--pop);
+  transition: opacity .35s var(--ease), transform .3s var(--pop), box-shadow .3s var(--ease);
 }
+.task:has(.task__open:hover) { box-shadow: var(--soft); transform: translateY(-1px); }
+.task:has(.task__open:active) { transform: scale(.994); }
+
+/* The whole body opens the item: on a phone the natural gesture is to
+   touch the thing you are reading, not to aim at a dots button. */
+.task__open {
+  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+  background: none; border: 0; padding: 0; margin: 0; width: 100%;
+  text-align: left; cursor: pointer; font: inherit; color: inherit; min-width: 0;
+}
+.task__open:focus-visible { outline: 3px solid var(--s-deep, var(--ink)); outline-offset: 6px; border-radius: 10px; }
+.task__chevron {
+  flex: none; color: var(--ink-3); opacity: 0; transform: translateX(-4px);
+  transition: opacity .22s var(--ease), transform .22s var(--ease);
+  display: grid; place-items: center;
+}
+.task__open:hover .task__chevron,
+.task__open:focus-visible .task__chevron { opacity: 1; transform: none; }
+@media (hover: none) { .task__chevron { opacity: .35; transform: none; } }
 .task--done { opacity: .45; transform: scale(.985); }
 .task--done .task__title { text-decoration: line-through; text-decoration-color: var(--ink-3); }
 
@@ -209,14 +228,14 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
 .task__body { min-width: 0; }
 .task__title {
   display: block; font-size: 15px; font-weight: 600; letter-spacing: -.015em;
-  line-height: 1.38; color: var(--ink); cursor: pointer;
+  line-height: 1.38; color: var(--ink);
 }
 .task__meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .task__context {
-  font-size: 12.5px; color: var(--ink-2); line-height: 1.45; margin-top: 6px;
+  display: block; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; margin-top: 6px;
 }
 .task__note {
-  font-size: 12.5px; color: var(--ink-2); line-height: 1.45; margin-top: 6px;
+  display: block; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; margin-top: 6px;
   border-left: 2px solid var(--s); padding-left: 9px;
 }
 
@@ -1133,4 +1152,212 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
   .web__detail { animation: none; }
+}
+
+/* ═══ the card ══════════════════════════════════════════════════════
+   Opening an item is not a dialog arriving over a list. The row lifts
+   off the page, grows into the whole record, and drops back into its
+   place when you are done. The geometry is a FLIP done in TaskSheet;
+   everything here is what that growth looks like.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.scrim--card {
+  align-items: center;
+  padding: max(14px, env(safe-area-inset-top)) 12px max(14px, var(--safe-b));
+  background: rgba(22, 24, 31, .38);
+  backdrop-filter: blur(6px) saturate(.9);
+  -webkit-backdrop-filter: blur(6px) saturate(.9);
+  animation: fade .28s var(--ease);
+}
+.scrim--leaving { animation: fadeout .3s var(--ease) forwards; }
+@keyframes fadeout { to { opacity: 0; } }
+
+/* The page underneath draws back rather than sitting there unchanged —
+   the card has left it, and it should look like it. */
+body.is-carded .page {
+  transform: scale(.986);
+  filter: saturate(.85);
+  transition: transform .46s var(--pop), filter .46s var(--ease);
+}
+.page { transition: transform .34s var(--ease), filter .34s var(--ease); }
+
+.card:focus { outline: none; }
+.card:focus-visible { outline: 3px solid var(--s-deep); outline-offset: 3px; }
+
+.card {
+  --card-pad: 20px;
+  width: min(620px, 100%);
+  max-height: min(92vh, 860px);
+  background: var(--bg);
+  border-radius: 26px;
+  box-shadow: 0 40px 90px -30px rgba(22, 24, 31, .5), 0 2px 8px -2px rgba(22, 24, 31, .18);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: none;
+  will-change: transform;
+}
+
+/* No source rectangle to grow from — search, the map, a thread. */
+.card--settle { transform: scale(.94) translateY(14px); opacity: 0; }
+.card--settle.card--open {
+  transform: none; opacity: 1;
+  transition: transform .42s var(--pop), opacity .3s var(--ease);
+}
+.card--away { transform: scale(.95) translateY(10px); opacity: 0; transition: all .28s var(--ease); }
+
+/* ── the tinted head: what the row's colour becomes ──────────────── */
+.card__head {
+  position: relative;
+  padding: 20px var(--card-pad) 18px;
+  background: linear-gradient(155deg, var(--s-tint) 0%, var(--s-tint) 32%, var(--bg) 100%);
+  border-bottom: 1px solid var(--hair);
+}
+.card__head::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 4px;
+  background: var(--s);
+}
+
+.card__where {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  padding-right: 40px; margin-bottom: 10px;
+}
+.card__stream {
+  font-family: var(--data); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--s-deep);
+}
+.card__crumb { font-size: 12px; color: var(--ink-3); min-width: 0; }
+
+.card__close { position: absolute; top: 14px; right: 12px; }
+
+.card__title {
+  display: block; width: 100%; resize: none; overflow: hidden;
+  border: 0; background: none; padding: 2px 0; margin: 0;
+  font-family: var(--ui); font-size: 21px; font-weight: 800;
+  letter-spacing: -.03em; line-height: 1.24; color: var(--ink);
+  border-radius: 8px;
+  transition: box-shadow .2s var(--ease), background .2s var(--ease);
+}
+.card__title:focus { outline: none; background: rgba(255, 255, 255, .7); box-shadow: 0 0 0 6px rgba(255, 255, 255, .7); }
+.card__title:focus-visible { outline: 3px solid var(--s-deep); outline-offset: 4px; }
+@media (min-width: 560px) { .card__title { font-size: 24px; } }
+
+.card__marks { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+.mark {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1.5px solid var(--hair); background: var(--card); color: var(--ink-2);
+  border-radius: var(--r-pill); padding: 7px 13px 7px 10px; cursor: pointer;
+  font-family: var(--ui); font-size: 12.5px; font-weight: 700; letter-spacing: -.01em;
+  transition: border-color .2s var(--ease), background .2s var(--ease), color .2s var(--ease);
+}
+.mark__dot {
+  width: 8px; height: 8px; border-radius: 50%; flex: none;
+  background: var(--hair); box-shadow: inset 0 0 0 0 var(--card);
+  transition: background .24s var(--ease), transform .3s var(--pop);
+}
+.mark:hover { border-color: var(--ink-3); color: var(--ink); }
+.mark[aria-pressed='true'] { border-color: var(--s); background: var(--s-tint); color: var(--s-deep); }
+.mark[aria-pressed='true'] .mark__dot { background: var(--s); transform: scale(1.25); }
+.mark--now[aria-pressed='true'] { border-color: var(--danger); background: var(--danger-tint); color: var(--danger); }
+.mark--now[aria-pressed='true'] .mark__dot { background: var(--danger); }
+
+/* ── the body ────────────────────────────────────────────────────── */
+.card__body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 4px var(--card-pad) 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.card__block { padding: 18px 0; border-bottom: 1px solid var(--hair); }
+.card__block:last-child { border-bottom: 0; }
+.card__block h3 {
+  margin: 0 0 8px;
+  font-family: var(--data); font-size: 10px; font-weight: 400;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3);
+}
+.card__block h3 label { cursor: pointer; }
+
+.card__block--quoted p {
+  margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-2);
+  border-left: 2px solid var(--s); padding-left: 14px;
+}
+
+.card__note {
+  display: block; width: 100%; resize: none; overflow: hidden;
+  border: 1.5px solid transparent; border-radius: 14px;
+  background: var(--card); padding: 12px 14px; margin: 0;
+  font-family: var(--ui); font-size: 14.5px; line-height: 1.6; color: var(--ink);
+  box-shadow: var(--softer);
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.card__note::placeholder { color: var(--ink-3); }
+.card__note:focus { outline: none; border-color: var(--s); box-shadow: var(--soft); }
+.card__note:focus-visible { outline: 3px solid var(--s-deep); outline-offset: 2px; }
+
+.card__grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 480px) { .card__grid { grid-template-columns: 1fr 1.3fr; } }
+
+.card__more {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--data); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.card__more:hover { color: var(--ink-2); }
+.card__morechev { font-size: 14px; transition: transform .24s var(--ease); display: inline-block; }
+.card__more[aria-expanded='true'] .card__morechev { transform: rotate(90deg); }
+
+.card__history { margin: 0; padding: 12px 0 0; display: grid; gap: 2px; }
+.card__history > div {
+  display: grid; grid-template-columns: 120px 1fr; gap: 12px;
+  padding: 7px 0; border-top: 1px solid var(--hair-2);
+}
+.card__history dt { font-size: 12.5px; color: var(--ink-3); }
+.card__history dd { margin: 0; font-family: var(--data); font-size: 12.5px; color: var(--ink-2); }
+
+/* ── the foot ────────────────────────────────────────────────────── */
+.card__foot {
+  display: flex; gap: 10px; flex: none;
+  padding: 14px var(--card-pad) calc(14px + var(--safe-b));
+  background: var(--card); border-top: 1px solid var(--hair);
+  /* The body scrolls under it, so it needs to read as a layer above. */
+  box-shadow: 0 -14px 26px -20px rgba(22, 24, 31, .45);
+}
+
+/* ── what the growth reveals ─────────────────────────────────────── */
+/* Nothing inside is visible while the card is still the size of a row:
+   text scaled to a fifth of its size and back is a smear, not a
+   transition. It arrives once the shape has, a beat apart. */
+.card__where, .card__title, .card__marks, .card__body, .card__foot, .card__close {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.card--open .card__where,
+.card--open .card__title,
+.card--open .card__marks,
+.card--open .card__body,
+.card--open .card__foot,
+.card--open .card__close {
+  opacity: 1;
+  transform: none;
+  transition: opacity .34s var(--ease), transform .42s var(--pop);
+}
+.card--open .card__where  { transition-delay: .10s; }
+.card--open .card__title  { transition-delay: .14s; }
+.card--open .card__marks  { transition-delay: .19s; }
+.card--open .card__body   { transition-delay: .23s; }
+.card--open .card__foot   { transition-delay: .27s; }
+.card--open .card__close  { transition-delay: .30s; }
+
+@media (max-width: 559px) {
+  .card { --card-pad: 16px; border-radius: 24px; }
+  .card__title { font-size: 19px; }
+  .card__history > div { grid-template-columns: 104px 1fr; gap: 8px; }
+  .card__foot .btn { padding: 13px 12px; font-size: 13.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim--card, .card, .card--settle, .card--away { animation: none; transition: none; }
+  body.is-carded .page { transform: none; filter: none; }
+  .card__where, .card__title, .card__marks, .card__body, .card__foot, .card__close {
+    opacity: 1; transform: none; transition: none;
+  }
 }

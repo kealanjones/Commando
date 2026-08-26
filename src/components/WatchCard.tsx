@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { openedFrom } from '@/lib/expand';
 import type { Task } from '@/lib/types';
 
 /**
@@ -19,6 +20,7 @@ export function WatchCard({
   onOpen: (task: Task) => void;
 }) {
   const [promoting, setPromoting] = useState(false);
+  const ref = useRef<HTMLLIElement>(null);
 
   const promote = () => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -28,9 +30,9 @@ export function WatchCard({
   };
 
   return (
-    <li className={`watch${promoting ? ' watch--promoting' : ''}`} data-stream={task.stream_id}>
+    <li ref={ref} className={`watch${promoting ? ' watch--promoting' : ''}`} data-stream={task.stream_id}>
       <button
-        onClick={() => onOpen(task)}
+        onClick={() => { openedFrom(ref.current); onOpen(task); }}
         style={{ background: 'none', border: 0, padding: 0, textAlign: 'left', cursor: 'pointer' }}
         aria-label={`Open: ${task.title}`}
       >

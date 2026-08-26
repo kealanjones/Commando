@@ -348,3 +348,59 @@ key, `owner_id` included, so deleting a group fails on a not-null constraint
 instead of quietly orphaning its sections. Caught by the RLS proof, which now
 asserts both that a section cannot be filed under another owner's group and that
 removing a heading leaves the work underneath it in place.
+
+
+## The card, and why it grows
+
+An item used to open as a bottom sheet: a panel that slid up over the list
+with no relationship to the thing you touched. It worked, and it told you
+nothing. A sheet is a *different* object arriving; the row and its record are
+the *same* object at two sizes.
+
+So the row lifts off the page. The card is laid out at its final geometry,
+transformed back onto the source rectangle, and released — a FLIP, the same
+technique a photo grid uses to open a photo. The row hands its rectangle over
+through a module-level handoff rather than a prop, because the open call goes
+Today → App → card and threading a DOM node through that would put layout
+detail in three components with no other use for it.
+
+### The contents wait for the shape
+
+Nothing inside the card is painted while it is still the size of a row. Text
+scaled to a fifth of its size and back is a smear, and a smear reads as a
+glitch rather than a transition. The head, title, states, body and footer fade
+up in that order, forty milliseconds apart, once the shape has most of the way
+there — so the eye follows the object, then reads it.
+
+### The curve had to be slowed down
+
+The first attempt used the app's `--pop` easing, which overshoots and is
+almost entirely front-loaded: the card reached full size in about a fifth of
+the transition and the growth was invisible. Measuring it frame by frame
+showed 100% of the travel done by 110ms of a 460ms animation. The curve is now
+`cubic-bezier(.34, .68, .2, 1)`, which passes a third of the way at 76ms and
+is still moving at 180ms. The test asserts that shape rather than the timing,
+because the test's own clock starts after the click resolves.
+
+### Closing measures the row again
+
+The list may have moved while the card was open — something ticked, a filter
+changed, a scroll. So the row is measured again at closing time rather than
+trusting the rectangle taken on the way in, and a row that has gone or
+scrolled far out of view gives nothing back, at which point the card settles
+in place instead of flying to a rectangle that is no longer there.
+
+### The whole row opens it
+
+The dots button was a target you had to aim at. On a phone the natural gesture
+is to touch the thing you are reading, so the body of the row is the control
+now. That forced one other change: the title no longer ticks the checkbox,
+because a tap on a title now means "show me this", and one gesture cannot mean
+two things. The checkbox keeps its own target and its own job.
+
+### The card does not steal the caret
+
+Opening focuses the card, not the title. You opened it to read it — a caret in
+the title puts a ring round the first thing you look at and throws the
+keyboard up on a phone. Every field is still local state seeded once per task,
+which is what stops a realtime event re-rendering a textarea mid-sentence.

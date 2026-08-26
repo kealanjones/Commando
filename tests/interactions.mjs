@@ -10,7 +10,7 @@ await p.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
 await p.waitForTimeout(900);
 
 // ── 1. note typing keeps focus ──────────────────────────────────
-await p.locator('.rowbtn').first().click();
+await p.locator('.task__open').first().click();
 await p.waitForSelector('#sheet-note');
 const note = p.locator('#sheet-note');
 await note.click();
@@ -43,7 +43,7 @@ ok(!(await p.locator(`#${targetId}`).isChecked()), 'undo reopens the task');
 // Today always shows three, so a delete promotes the next item rather
 // than shortening the list: assert on the specific row, not the count.
 const delId = (await p.evaluate(() => document.querySelector('.task .check')?.id));
-await p.locator('.rowbtn').first().click();
+await p.locator('.task__open').first().click();
 await p.waitForSelector('.sheet');
 await p.getByRole('button', { name: 'Delete' }).click();
 await p.waitForTimeout(400);
