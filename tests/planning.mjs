@@ -71,6 +71,31 @@ const loads = (p) => p.locator('.plan__day').evaluateAll((els) => els.map((e) =>
   await p.keyboard.press('Escape');
   await p.waitForTimeout(400);
 
+  // Not everything in a dating queue wants a date.
+  {
+    const before = Number((await p.locator('.shead__meta').first().textContent()).replace(/\D/g, ''));
+    const title = await p.locator('.plan__handtitle').textContent();
+    await p.getByRole('button', { name: 'Already done' }).click();
+    await p.waitForTimeout(500);
+    ok(Number((await p.locator('.shead__meta').first().textContent()).replace(/\D/g, '')) === before - 1,
+      'marking the item in hand done takes it out of the queue without a date');
+    ok((await p.locator('.plan__last').textContent()).includes('marked done'),
+      'and says what happened');
+    await p.getByRole('button', { name: 'Undo' }).click();
+    await p.waitForTimeout(500);
+    ok((await p.locator('.plan__handtitle').textContent()) === title, 'undo brings it back');
+
+    await p.getByRole('button', { name: 'Delete' }).click();
+    await p.waitForTimeout(500);
+    ok(Number((await p.locator('.shead__meta').first().textContent()).replace(/\D/g, '')) === before - 1,
+      'deleting it takes it out too');
+    ok((await p.locator('.plan__last').textContent()).includes('deleted'), 'and says so');
+    await p.getByRole('button', { name: 'Undo' }).click();
+    await p.waitForTimeout(600);
+    ok((await p.locator('.plan__handtitle').textContent()) === title,
+      'and a delete is reversible, like every other delete in this app');
+  }
+
   // Look rather than place, which is the only way to inspect on a phone.
   await p.getByRole('button', { name: 'Look', exact: true }).click();
   await p.waitForTimeout(200);

@@ -106,6 +106,7 @@ anything about a real week.
 | **Place / Look** | Tapping a day places the item in hand on it. Switch to Look to inspect a day instead, which is the only way to do it on a phone. |
 | **Just one stream** | Narrows the queue without narrowing the calendar: you still see the whole week's load while planning one workstream. |
 | **Not yet** | Passes an item over for this sitting. Nothing is written; it is back next time. |
+| **Already done / Delete** | Not everything in a dating queue wants a date. Some are finished and a few should never have been on the list, so both answers sit beside the day chips — and both are reversible from the same line. The date sweep carries the same two, quietly, under each row. |
 
 Placing something shows you what that day now holds, because the consequence of a
 decision is the thing you most want to see straight after making it. There are no

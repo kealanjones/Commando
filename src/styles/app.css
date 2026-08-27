@@ -424,6 +424,9 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
 .btn--primary { background: var(--ink); color: #fff; }
 .btn--ghost { background: var(--card); color: var(--ink-2); box-shadow: var(--softer); }
 .btn--danger { background: var(--danger-tint); color: var(--danger); flex: none; }
+/* Finishing something is a good outcome, so it does not wear a warning. */
+.btn--done { background: var(--per-tint); color: var(--per-deep); flex: none; }
+.btn--done:hover { background: var(--per); color: #fff; }
 
 /* ── browse ────────────────────────────────────────────────────── */
 /* ── the middle level ──────────────────────────────────────────────
@@ -1437,6 +1440,11 @@ body.is-carded .page {
 .sweep__sure--exact { color: var(--s-deep); }
 .sweep__sure--vague { color: var(--danger); }
 .sweep__acts { display: flex; gap: 8px; margin-top: 4px; }
+/* The other two answers, kept quiet so the date stays the loudest thing
+   in the row: most items here want one, and a few want neither. */
+.sweep__else { display: flex; gap: 12px; margin-top: 8px; }
+.linkish--danger { color: var(--danger); }
+.linkish--danger:hover { color: var(--danger); opacity: .78; }
 .sweep__acts .btn { flex: none; padding: 10px 16px; font-size: 13.5px; }
 .sweep__pick { width: auto; max-width: 190px; padding: 9px 12px; font-size: 13.5px; }
 
@@ -1574,7 +1582,15 @@ body.is-carded .page {
 }
 .plan__handtitle:hover { color: var(--s-deep); }
 .plan__handnote { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
-.plan__skip { flex: none; padding: 10px 16px; font-size: 13px; }
+.plan__handacts { display: flex; gap: 8px; flex-wrap: wrap; flex: none; }
+.plan__handacts .btn { flex: none; padding: 10px 15px; font-size: 13px; }
+@media (max-width: 559px) {
+  .plan__handacts { width: 100%; }
+  .plan__handacts .btn { flex: 1; padding: 11px 6px; font-size: 12.5px; white-space: nowrap; }
+}
+@media (max-width: 400px) {
+  .plan__handacts .btn { font-size: 12px; padding: 11px 4px; }
+}
 
 /* ── the days you reach for ────────────────────────────────────── */
 .plan__last {
@@ -1644,6 +1660,7 @@ body.is-carded .page {
 
 .plan__day {
   position: relative; aspect-ratio: 1 / 1; min-height: 40px;
+  min-width: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
   border: 0; cursor: pointer; border-radius: 12px;
   background: var(--load-0); color: var(--load-ink-0);
@@ -1714,6 +1731,15 @@ body.is-carded .page {
   display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline;
 }
 .plan__foot a { color: var(--ink-2); }
+
+/* Seven columns with a 40px floor will not fit a 320px phone. */
+@media (max-width: 360px) {
+  .plan__cal { padding: 12px 12px 12px; }
+  .plan__dow, .plan__grid { gap: 3px; }
+  .plan__day { min-height: 34px; border-radius: 10px; }
+  .plan__num { font-size: 12px; }
+  .plan__count { font-size: 9px; }
+}
 
 @media (min-width: 720px) {
   .plan__cal { padding: 20px 20px 16px; }

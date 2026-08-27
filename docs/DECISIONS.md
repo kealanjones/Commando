@@ -553,3 +553,23 @@ Two details that stop it becoming a trap: the other stream keys keep counting
 the whole register, so they remain a way back rather than a row of zeroes; and
 letting go of the stream lets go of the solo with it, so there is no state you
 can get into where the picture is narrow and nothing on screen says why.
+
+
+## Two answers that are not a date
+
+A dating queue asks one question — *when?* — and for a fair number of items
+that is the wrong question. Some are already finished and were never ticked;
+a few should never have been on the list at all. Without somewhere to say so,
+both get a date they do not deserve, or get passed over every sitting for
+ever, and the queue never actually empties.
+
+So **Already done** and **Delete** sit next to the day chips on the item in
+hand, and quietly under each row of the date sweep. Both are reversible from
+the same line the placement uses, because a decision made at two seconds an
+item is a decision made quickly, and everything made quickly needs taking
+back easily.
+
+Done is tinted green rather than warned about in red: finishing something is a
+good outcome, and the only destructive control on the screen should look like
+the only destructive control on the screen. The delete is the app's ordinary
+soft delete, so it is recoverable long after the undo line has gone.

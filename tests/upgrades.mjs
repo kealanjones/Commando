@@ -53,6 +53,28 @@ const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail
   const titlesNow = await p.locator('.sweep__title').allTextContents();
   ok(!titlesNow.includes(title), `setting a date takes it off the list (${title.slice(0, 40)}…)`);
 
+  // The sweep offers the same two answers for items that want no date.
+  {
+    const rows = await p.locator('.sweep__row').count();
+    const title = await p.locator('.sweep__row').first().locator('.sweep__title').textContent();
+    await p.locator('.sweep__row').first().getByRole('button', { name: 'Already done' }).click();
+    await p.waitForTimeout(500);
+    ok((await p.locator('.sweep__row').count()) === rows - 1,
+      'marking one done takes it off the sweep');
+    ok(await p.locator('.toast', { hasText: 'Done.' }).isVisible(), 'and offers to undo it');
+    await p.locator('.toast button', { hasText: 'Undo' }).click();
+    await p.waitForTimeout(500);
+    const titles = await p.locator('.sweep__title').allTextContents();
+    ok(titles.includes(title), 'which puts it back');
+
+    await p.locator('.sweep__row').first().getByRole('button', { name: 'Delete' }).click();
+    await p.waitForTimeout(500);
+    ok(await p.locator('.toast', { hasText: 'Deleted.' }).isVisible(),
+      'and a delete is offered back the same way');
+    await p.locator('.toast button', { hasText: 'Undo' }).click();
+    await p.waitForTimeout(500);
+  }
+
   await p.goto(`${base}/streams`, { waitUntil: 'networkidle' });
   await p.waitForTimeout(800);
   const dated = await p.locator('.pill--flag, .pill--due').allTextContents();

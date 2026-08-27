@@ -11,7 +11,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useSections, useStreams, useTasks, useUpdateTask } from '@/data/store';
+import { useSections, useSoftDelete, useStreams, useTasks, useUpdateTask } from '@/data/store';
 import { useDecide } from '@/data/review';
 import { pathOf } from '@/lib/tree';
 import {
@@ -25,6 +25,7 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   const { data: streams = [] } = useStreams();
   const decide = useDecide();
   const update = useUpdateTask();
+  const { remove, restore } = useSoftDelete();
 
   const today = startOfDay();
   const [cursor, setCursor] = useState(() => ({ y: today.getFullYear(), m: today.getMonth() }));
@@ -32,8 +33,8 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   const [peek, setPeek] = useState<string | null>(null);
   /** Passed over for this sitting only; nothing is written to say no. */
   const [passed, setPassed] = useState<Set<string>>(new Set());
-  /** The one you just placed, so it can be taken back without a toast. */
-  const [last, setLast] = useState<{ task: Task; due: string } | null>(null);
+  /** The last decision, of whatever kind, so it can be taken back. */
+  const [last, setLast] = useState<Done | null>(null);
   /** Tapping a day either places the item in hand on it, or looks at it. */
   const [looking, setLooking] = useState(false);
 
@@ -65,16 +66,37 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
     decide(task, { kind: 'date', due });
     // No toast: placing thirty items in a sitting would stack thirty of them.
     // What just happened belongs on the screen you are already looking at.
-    setLast({ task, due });
+    setLast({ kind: 'dated', task, due });
     // Show what that day now holds: the consequence of the decision you just
     // made is the thing you most want to see straight after making it.
     setPeek(due);
   };
 
-  /** Straight back to undated, which puts it at the head of the queue again. */
+  /**
+   * Not everything in a dating queue needs a date. A fair number of these
+   * are already done, and a few should never have been on the list — asking
+   * "when?" about those is the wrong question, so both answers are here.
+   */
+  const finish = () => {
+    if (!inHand) return;
+    const task = inHand;
+    update.mutate({ id: task.id, patch: { done: true } });
+    setLast({ kind: 'done', task });
+  };
+
+  const drop = () => {
+    if (!inHand) return;
+    const task = inHand;
+    remove(task.id);
+    setLast({ kind: 'dropped', task });
+  };
+
+  /** Every decision on this screen is reversible from the same line. */
   const undo = () => {
     if (!last) return;
-    update.mutate({ id: last.task.id, patch: { due: null } });
+    if (last.kind === 'dated') update.mutate({ id: last.task.id, patch: { due: null } });
+    else if (last.kind === 'done') update.mutate({ id: last.task.id, patch: { done: false } });
+    else restore(last.task);
     setLast(null);
   };
 
@@ -131,7 +153,11 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
             </button>
             {inHand.context && <p className="plan__handnote">{inHand.context}</p>}
           </div>
-          <button className="btn btn--ghost plan__skip" onClick={pass}>Not yet</button>
+          <div className="plan__handacts">
+            <button className="btn btn--ghost" onClick={pass}>Not yet</button>
+            <button className="btn btn--done" onClick={finish}>Already done</button>
+            <button className="btn btn--danger" onClick={drop}>Delete</button>
+          </div>
         </div>
       ) : (
         <div className="empty">
@@ -147,7 +173,11 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
 
       {last && (
         <p className="plan__last">
-          <b>{last.task.title}</b> → {fmtDay(last.due)}
+          <b>{last.task.title}</b>
+          {' '}
+          {last.kind === 'dated' ? `→ ${fmtDay(last.due)}`
+            : last.kind === 'done' ? '— marked done'
+              : '— deleted'}
           <button className="linkish" onClick={undo}>Undo</button>
         </p>
       )}
@@ -264,6 +294,11 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
     </section>
   );
 }
+
+type Done =
+  | { kind: 'dated'; task: Task; due: string }
+  | { kind: 'done'; task: Task }
+  | { kind: 'dropped'; task: Task };
 
 const countAt = (onDay: Map<string, Task[]>, iso: string) => onDay.get(iso)?.length ?? 0;
 const loadAt = (week: { iso: string; load: number }[], iso: string) =>

@@ -11,7 +11,7 @@
  */
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useSections, useTasks } from '@/data/store';
+import { useSections, useSoftDelete, useTasks, useUpdateTask } from '@/data/store';
 import { useDecide } from '@/data/review';
 import { useToast } from '@/components/Toasts';
 import { pathOf } from '@/lib/tree';
@@ -22,6 +22,8 @@ export function Dates() {
   const { data: tasks = [] } = useTasks();
   const { data: sections = [] } = useSections();
   const decide = useDecide();
+  const update = useUpdateTask();
+  const { remove, restore } = useSoftDelete();
   const { push } = useToast();
 
   /** Skipped for this sitting only — nothing is written to say no. */
@@ -51,6 +53,38 @@ export function Dates() {
   };
 
   const skip = (id: string) => setSkipped((s) => new Set(s).add(id));
+
+  /**
+   * Not every item in here wants a date. Some are already done and a few
+   * should never have been on the list, and asking "when?" about those is
+   * the wrong question.
+   */
+  const finish = (task: Task) => {
+    update.mutate({ id: task.id, patch: { done: true } });
+    setSet((s) => new Set(s).add(task.id));
+    push({
+      message: 'Done.',
+      actionLabel: 'Undo',
+      onAction: () => {
+        update.mutate({ id: task.id, patch: { done: false } });
+        setSet((s) => { const n = new Set(s); n.delete(task.id); return n; });
+      },
+    });
+  };
+
+  const drop = (task: Task) => {
+    remove(task.id);
+    setSet((s) => new Set(s).add(task.id));
+    push({
+      message: 'Deleted.',
+      actionLabel: 'Undo',
+      onAction: () => {
+        restore(task);
+        setSet((s) => { const n = new Set(s); n.delete(task.id); return n; });
+      },
+      duration: 9000,
+    });
+  };
 
   const done = open.length === 0 && openHints.length === 0;
 
@@ -117,6 +151,10 @@ export function Dates() {
                       Set it
                     </button>
                   </div>
+                  <div className="sweep__else">
+                    <button className="linkish" onClick={() => finish(f.task)}>Already done</button>
+                    <button className="linkish linkish--danger" onClick={() => drop(f.task)}>Delete</button>
+                  </div>
                 </div>
               </li>
             ))}
@@ -156,6 +194,10 @@ export function Dates() {
                   />
                   <div className="sweep__acts">
                     <button className="btn btn--ghost" onClick={() => skip(h.task.id)}>Skip</button>
+                  </div>
+                  <div className="sweep__else">
+                    <button className="linkish" onClick={() => finish(h.task)}>Already done</button>
+                    <button className="linkish linkish--danger" onClick={() => drop(h.task)}>Delete</button>
                   </div>
                 </div>
               </li>
