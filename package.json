@@ -15,6 +15,7 @@
     "test:ui": "node tests/interactions.mjs",
     "test:card": "node tests/card.mjs",
     "test:upgrades": "node tests/upgrades.mjs",
+    "test:planning": "node tests/planning.mjs",
     "test:shots": "node tests/screenshots.mjs",
     "build:preview": "ARTIFACT=1 vite build --mode artifact --outDir dist-artifact && node scripts/inline.mjs dist-artifact preview.html",
     "test:intake": "node tests/intake.mjs",
@@ -31,6 +32,7 @@
     "test:tree": "tsx tests/tree.mjs",
     "test:dates": "tsx tests/dates.mjs",
     "test:brief": "tsx tests/brief.mjs",
+    "test:plan": "tsx tests/plan.mjs",
     "test:web": "node tests/web.mjs",
     "test:graph": "tsx tests/graph.mjs",
     "test:dberror": "tsx tests/dberror.mjs"

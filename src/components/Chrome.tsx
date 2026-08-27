@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { Plus } from './icons';
 import { SyncBadge } from './SyncBadge';
 
@@ -49,10 +50,21 @@ export function Header({
 }
 
 export function Nav() {
+  const bar = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+
+  // The bar scrolls on a phone, so the destination you are on has to be
+  // brought into view or you cannot tell where you are.
+  useEffect(() => {
+    const here = bar.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    here?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  }, [pathname]);
+
   return (
-    <nav className="nav" aria-label="Sections">
+    <nav className="nav" aria-label="Sections" ref={bar}>
       <NavLink to="/" end>Today</NavLink>
       <NavLink to="/streams">Streams</NavLink>
+      <NavLink to="/plan">Plan</NavLink>
       <NavLink to="/web">Web</NavLink>
       <NavLink to="/people">People</NavLink>
       <NavLink to="/periphery">Periphery</NavLink>

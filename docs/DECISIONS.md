@@ -485,3 +485,71 @@ means nothing about who owes you what leaves the device to produce one.
 not. Blocks that matter say so when they are empty, and blocks that do not are
 dropped entirely — the difference is set per block rather than guessed at
 render time.
+
+
+## The plan, and the one place colour means quantity
+
+Every other use of colour in this app is structural: a colour tells you which
+stream something belongs to and nothing else. The calendar breaks that rule
+deliberately, and it is the only thing that does.
+
+A day's colour is its load — green through amber to red — because that is the
+one ramp everybody already reads the same way without a key. It is kept well
+away from the five stream colours so the two can never be mistaken for each
+other, and the legend runs *Clear → Full* underneath in case there is any
+doubt.
+
+### The bands are tight at the bottom
+
+One, two and three items are three visibly different days. A scale that only
+turned red at fifteen would be technically a heat map and practically a flat
+wash, because a real Tuesday has three things on it and not thirty. Five bands
+from one item to seven-or-more is what makes the picture say something.
+
+### One item in hand rather than a table of two hundred
+
+The obvious build is a list of undated items with a date picker on each row.
+That is a form, and nobody fills in a two-hundred-row form. One item, a month,
+and a tap places it — which is a decision every two seconds rather than every
+thirty. The queue is ordered so the flagged items come first, then the ones
+with most queued behind them in the same section: dating the thing eleven
+others are stacked behind is worth more than dating a one-off.
+
+### No toasts
+
+Placing thirty items in one sitting would stack thirty toasts. What was just
+placed is named under the item in hand instead, with an Undo beside it, and the
+day it landed on opens automatically — the consequence of the decision is the
+thing you most want to see straight after making it.
+
+### Place and Look
+
+Tapping a day places the item in hand on it, which is right nineteen times in
+twenty. Inspecting a day was originally right-click only, which does not exist
+on a phone, so there is an explicit two-state control instead. It disables
+Place when the queue is empty rather than pretending there is a choice.
+
+### Narrowing the queue, not the calendar
+
+Limiting to one stream filters what you are placing but leaves the month
+showing everything. Planning Commonwealth against a calendar that only knew
+about Commonwealth would hide the ISODP work already on that Thursday, which is
+exactly the collision the screen exists to prevent.
+
+## One stream on its own
+
+The Web's stream keys already dimmed the other streams, which answers "how far
+does this reach outside itself" — the caption even counts it. It does not
+answer "let me just look at this", because fifteen lit dots in a field of
+eighteen ghosts is still a picture of thirty-three things.
+
+So soloing rebuilds the graph from that stream's sections alone. The layout
+re-flows, the link count is recomputed, and the connector list becomes the
+people who hold *that stream* together rather than the register. Anthony is in
+fourteen sections overall and five inside ISODP, and both numbers are true
+about different questions.
+
+Two details that stop it becoming a trap: the other stream keys keep counting
+the whole register, so they remain a way back rather than a row of zeroes; and
+letting go of the stream lets go of the solo with it, so there is no state you
+can get into where the picture is narrow and nothing on screen says why.

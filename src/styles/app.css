@@ -665,9 +665,17 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
   .commit .btn--primary { grid-column: auto; }
 }
 
-/* Four destinations do not fit at 375px at the three-item size. */
-@media (max-width: 420px) {
-  .nav a { font-size: 11.5px; padding: 11px 2px; letter-spacing: -.02em; }
+/* Seven destinations will not fit across a phone at a readable size, and
+   shrinking the labels further makes them unreadable rather than fitting.
+   So the bar scrolls, with the one you are on brought into view. */
+@media (max-width: 560px) {
+  .nav {
+    overflow-x: auto; scrollbar-width: none;
+    gap: 4px; padding-left: 10px; padding-right: 10px;
+    scroll-padding-inline: 10px;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { flex: none; padding: 11px 13px; font-size: 12.5px; letter-spacing: -.015em; }
 }
 
 /* ── review: one decision at a time ────────────────────────────── */
@@ -983,8 +991,14 @@ a.inline { text-decoration: underline; text-underline-offset: 2px; }
 .web__controls .seg { flex: none; }
 .web__keys { display: flex; flex-wrap: wrap; gap: 6px; }
 
+.web__captionrow {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  margin: -2px 0 0;
+}
+.web__solo { flex: none; padding: 6px 13px; font-size: 12px; }
+
 .web__caption {
-  margin: -2px 2px 0; max-width: 68ch;
+  margin: 0 2px; max-width: 68ch; flex: 1; min-width: 220px;
   font-size: 13.5px; line-height: 1.55; color: var(--ink-2);
 }
 
@@ -1509,4 +1523,212 @@ body.is-carded .page {
   background: var(--card); border-radius: var(--r-card); box-shadow: var(--softer);
   font-family: var(--data); font-size: 12px; line-height: 1.65; color: var(--ink-2);
   white-space: pre-wrap; word-break: break-word;
+}
+
+/* ── the plan ──────────────────────────────────────────────────────
+   The heat scale is the one place in this app where colour means
+   quantity rather than which stream something belongs to. It runs
+   green to red because that is the only ramp everybody already reads
+   the same way, and it is kept away from the stream palette so the two
+   can never be confused. */
+:root {
+  --load-0: var(--card);
+  --load-1: #DFF5E4;
+  --load-2: #B9E8C4;
+  --load-3: #FFE3A8;
+  --load-4: #FFB98A;
+  --load-5: #E8654C;
+
+  --load-ink-0: var(--ink-3);
+  --load-ink-1: #17694A;
+  --load-ink-2: #10593D;
+  --load-ink-3: #8A5A00;
+  --load-ink-4: #8A3A0E;
+  --load-ink-5: #FFFFFF;
+}
+
+.plan { display: flex; flex-direction: column; }
+.plan__lede {
+  margin: 0 0 16px; max-width: 62ch;
+  font-size: 14px; line-height: 1.6; color: var(--ink-2);
+}
+
+/* ── the item in hand ──────────────────────────────────────────── */
+.plan__hand {
+  display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap;
+  margin: 6px 0 16px; padding: 18px 18px 17px;
+  background: var(--card); border-radius: var(--r-panel);
+  border-left: 5px solid var(--s); box-shadow: var(--soft);
+  animation: rise .34s var(--pop) backwards;
+}
+.plan__handbody { flex: 1; min-width: 0; }
+.plan__handwhere {
+  margin: 0 0 5px; font-family: var(--data); font-size: 10px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--s-deep);
+}
+.plan__handtitle {
+  display: block; width: 100%; text-align: left;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--ui); font-size: 18px; font-weight: 800;
+  letter-spacing: -.025em; line-height: 1.3; color: var(--ink);
+}
+.plan__handtitle:hover { color: var(--s-deep); }
+.plan__handnote { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+.plan__skip { flex: none; padding: 10px 16px; font-size: 13px; }
+
+/* ── the days you reach for ────────────────────────────────────── */
+.plan__last {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: -6px 2px 14px; font-size: 12.5px; color: var(--ink-3);
+  animation: rise .3s var(--ease) backwards;
+}
+.plan__last b {
+  font-weight: 600; color: var(--ink-2);
+  max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.plan__quick {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px;
+}
+@media (max-width: 559px) {
+  .plan__quick { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px 18px; padding: 0 16px 6px; }
+}
+.plan__chip {
+  flex: none; display: inline-flex; align-items: center; gap: 9px;
+  padding: 11px 13px 11px 16px; cursor: pointer;
+  border: 1.5px solid var(--hair); border-radius: var(--r-pill);
+  background: var(--card); color: var(--ink);
+  font-family: var(--ui); font-size: 13.5px; font-weight: 700; letter-spacing: -.01em;
+  transition: border-color .2s var(--ease), transform .2s var(--pop), box-shadow .2s var(--ease);
+}
+.plan__chip:hover:not(:disabled) { border-color: var(--ink); box-shadow: var(--softer); transform: translateY(-1px); }
+.plan__chip:active:not(:disabled) { transform: scale(.97); }
+.plan__chip:disabled { opacity: .4; cursor: default; }
+.plan__chipn {
+  min-width: 22px; padding: 3px 7px; border-radius: var(--r-pill);
+  font-family: var(--data); font-size: 11px; text-align: center;
+  background: var(--load-0); color: var(--load-ink-0);
+  box-shadow: inset 0 0 0 1px var(--hair);
+}
+.plan__chipn[data-load='1'] { background: var(--load-1); color: var(--load-ink-1); box-shadow: none; }
+.plan__chipn[data-load='2'] { background: var(--load-2); color: var(--load-ink-2); box-shadow: none; }
+.plan__chipn[data-load='3'] { background: var(--load-3); color: var(--load-ink-3); box-shadow: none; }
+.plan__chipn[data-load='4'] { background: var(--load-4); color: var(--load-ink-4); box-shadow: none; }
+.plan__chipn[data-load='5'] { background: var(--load-5); color: var(--load-ink-5); box-shadow: none; }
+
+/* ── the month ─────────────────────────────────────────────────── */
+.plan__cal {
+  /* A month is a fixed amount of information. Letting it stretch to a
+     desktop's full width turns seven columns into seven billboards. */
+  max-width: 600px;
+  padding: 16px 16px 14px; background: var(--card);
+  border-radius: var(--r-panel); box-shadow: var(--soft);
+}
+.plan__month { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+.plan__month h3 {
+  margin: 0; flex: none; min-width: 0;
+  font-size: 16px; font-weight: 800; letter-spacing: -.025em;
+}
+.plan__month .linkish { margin-left: auto; }
+.plan__mode { margin-left: auto; flex: none; }
+.plan__month .linkish + .plan__mode { margin-left: 10px; }
+.plan__mode button { padding: 6px 12px; font-size: 12px; }
+.plan__mode button:disabled { opacity: .45; cursor: default; }
+
+.plan__dow, .plan__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.plan__dow {
+  margin-bottom: 6px;
+  font-family: var(--data); font-size: 9.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-3); text-align: center;
+}
+
+.plan__day {
+  position: relative; aspect-ratio: 1 / 1; min-height: 40px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  border: 0; cursor: pointer; border-radius: 12px;
+  background: var(--load-0); color: var(--load-ink-0);
+  box-shadow: inset 0 0 0 1px var(--hair-2);
+  font-family: var(--data); line-height: 1;
+  transition: transform .18s var(--pop), box-shadow .18s var(--ease), filter .18s var(--ease);
+}
+.plan__day[data-load='1'] { background: var(--load-1); color: var(--load-ink-1); box-shadow: none; }
+.plan__day[data-load='2'] { background: var(--load-2); color: var(--load-ink-2); box-shadow: none; }
+.plan__day[data-load='3'] { background: var(--load-3); color: var(--load-ink-3); box-shadow: none; }
+.plan__day[data-load='4'] { background: var(--load-4); color: var(--load-ink-4); box-shadow: none; }
+.plan__day[data-load='5'] { background: var(--load-5); color: var(--load-ink-5); box-shadow: none; }
+
+.plan__day:hover { transform: scale(1.06); box-shadow: var(--soft); z-index: 1; }
+.plan__day:active { transform: scale(.96); }
+.plan__day:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; z-index: 2; }
+
+.plan__day[data-out] { opacity: .38; }
+/* Muted, not bleached: most of the month you are looking at is behind
+   you, and draining the colour out of it hides the shape of the load. */
+.plan__day[data-past] { filter: saturate(.72); opacity: .82; }
+.plan__day[data-weekend][data-load='0'] { background: var(--hair-2); box-shadow: none; }
+.plan__day[data-today] { box-shadow: inset 0 0 0 2.5px var(--ink); }
+.plan__day[data-peek] { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+.plan__num { font-size: 13px; font-weight: 500; }
+.plan__count { font-size: 9.5px; opacity: .78; }
+.plan__flag {
+  position: absolute; top: 5px; right: 5px;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--danger);
+  box-shadow: 0 0 0 1.5px var(--card);
+}
+
+.plan__key {
+  display: flex; align-items: center; gap: 5px; margin-top: 14px;
+  font-family: var(--data); font-size: 9.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.plan__key i { width: 17px; height: 10px; border-radius: 3px; background: var(--load-0); box-shadow: inset 0 0 0 1px var(--hair); }
+.plan__key i[data-load='1'] { background: var(--load-1); box-shadow: none; }
+.plan__key i[data-load='2'] { background: var(--load-2); box-shadow: none; }
+.plan__key i[data-load='3'] { background: var(--load-3); box-shadow: none; }
+.plan__key i[data-load='4'] { background: var(--load-4); box-shadow: none; }
+.plan__key i[data-load='5'] { background: var(--load-5); box-shadow: none; }
+.plan__key i:first-of-type { margin-left: 4px; }
+.plan__key i:last-of-type { margin-right: 4px; }
+
+/* ── what is on a day ──────────────────────────────────────────── */
+.plan__peek { margin-top: 18px; }
+.plan__peek h3 {
+  margin: 0 0 10px; font-size: 12px; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2);
+}
+.plan__peekrow {
+  background: var(--card); border-radius: var(--r-card);
+  box-shadow: var(--softer); border-left: 3px solid var(--s);
+}
+.plan__peekrow button {
+  display: grid; gap: 3px; width: 100%; text-align: left;
+  background: none; border: 0; cursor: pointer; padding: 12px 14px;
+  font: inherit; color: var(--ink);
+}
+.plan__peekrow button:hover { color: var(--s-deep); }
+.plan__peekwhere { font-family: var(--data); font-size: 10.5px; color: var(--ink-3); }
+
+.plan__foot {
+  margin: 22px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--ink-3);
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline;
+}
+.plan__foot a { color: var(--ink-2); }
+
+@media (min-width: 720px) {
+  .plan__cal { padding: 20px 20px 16px; }
+  .plan__day { aspect-ratio: 1.2 / 1; min-height: 48px; border-radius: 14px; }
+  .plan__num { font-size: 15px; }
+  .plan__count { font-size: 10.5px; }
+}
+
+/* Wide enough for the month and what is on a day to sit together. */
+@media (min-width: 1060px) {
+  .plan__board { display: grid; grid-template-columns: 600px minmax(0, 1fr); gap: 18px; align-items: start; }
+  .plan__peek { margin-top: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan__hand { animation: none; }
+  .plan__day:hover, .plan__chip:hover { transform: none; }
 }

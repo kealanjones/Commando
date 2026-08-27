@@ -21,6 +21,7 @@ the design is for.
 | **People** | Who owes you what. Open one before a catch-up. |
 | **Periphery** | The remembering register. Nothing here can be ticked. |
 | **Intake** | Paste a meeting record; review what it proposes; accept what is real. |
+| **Plan** | Every undated item, one at a time, against a month coloured by how loaded each day already is. |
 | **Brief** | Something the register hands back: text you can paste, for a person or a stream. |
 | **Dates** | The dates you already wrote down, read back out of your own words. |
 
@@ -83,6 +84,33 @@ small enough to read at a glance is left flat.
 Areas are headings, never places: a task cannot be filed *into* Sponsorship, only
 into a section within it, so there is no ambiguity about where anything lives.
 Delete an area and its sections stay, one level up.
+
+### The plan
+
+One item in hand, a month in front of you, and **the load on every day shown as
+colour** — pale where a day is clear, deep red where it is full. Tap a day, or one
+of the named chips above it, and the item takes that date while the next one
+steps forward.
+
+The heat is the point. You can watch yourself over-filling a Tuesday *while you
+are doing it*, which is the one thing a list of two hundred undated items can
+never tell you.
+
+The bands are tight at the bottom on purpose: **one, two and three things are
+three different days**. A scale that only turned red at fifteen would never say
+anything about a real week.
+
+| | |
+|---|---|
+| **The chips** | Today, tomorrow, then whatever is left of this week **by name** — you think in Fridays, not in "+3 days" — plus next week and next month. Each carries the count already on that day. |
+| **Place / Look** | Tapping a day places the item in hand on it. Switch to Look to inspect a day instead, which is the only way to do it on a phone. |
+| **Just one stream** | Narrows the queue without narrowing the calendar: you still see the whole week's load while planning one workstream. |
+| **Not yet** | Passes an item over for this sitting. Nothing is written; it is back next time. |
+
+Placing something shows you what that day now holds, because the consequence of a
+decision is the thing you most want to see straight after making it. There are no
+toasts — placing thirty items in a sitting would stack thirty of them — so what
+you just placed is named under the item in hand, with an Undo beside it.
 
 ### Dates you already wrote down
 
@@ -200,7 +228,12 @@ finished, **a red dot** is work that is pressing, and **a dashed ring** is a
 section you only monitor.
 
 Pick a connector or a thread to see just their reach; pick a stream to see how
-much of it leaks outside itself. Drag a dot to park it, double-click to let it
+much of it leaks outside itself — and then **Only this stream** to drop the rest
+of the register entirely. That is not a filter over the same picture: the graph is
+rebuilt from that stream's sections alone, so the layout, the link count and the
+connectors are all about the stream rather than about the stream's corner of
+everything. ISODP alone is fifteen readable dots; ISODP inside all thirty-three
+is a neighbourhood. Drag a dot to park it, double-click to let it
 go. Selecting a section lists its open work, and tapping an item opens the same
 editor as everywhere else — the map is a way into the register, not a poster of
 it. Arrow keys walk between sections without a mouse; `Escape` clears.
@@ -369,6 +402,8 @@ treat it as you would any other document with your work in it.
 | `npm run test:search` | Search ranking and highlighting |
 | `npm run test:group` | What can and cannot anchor a thread |
 | `npm run test:tree` | Stream → area → section: the shape and the order it reads in |
+| `npm run test:plan` | The month grid, the heat bands, the days you reach for |
+| `npm run test:planning` | Placing work in the browser, and the Web's one-stream view |
 | `npm run test:dates` | Reading dates back out of what was already written down |
 | `npm run test:brief` | What goes in a brief, what stays out, and what it reads like |
 | `npm run test:upgrades` | The sweep and the brief in the browser |
@@ -653,6 +688,7 @@ src/data/review.ts        queue building and the decision mutations
 src/lib/search.ts         ranking and highlighting
 src/lib/grouping.ts       finding the strands the sections miss
 src/lib/tree.ts           stream → area → section, the one place that knows the shape
+src/lib/plan.ts           the month, the heat bands and the queue that needs dating
 src/lib/dates.ts          reading dates out of your own wording
 src/lib/brief.ts          composing something the register can hand back
 src/lib/web.ts            the register as a graph: links, connectors, staleness

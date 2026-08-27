@@ -15,6 +15,7 @@ import { Threads } from '@/routes/Threads';
 import { Web } from '@/routes/Web';
 import { Dates } from '@/routes/Dates';
 import { Brief } from '@/routes/Brief';
+import { Plan } from '@/routes/Plan';
 import { Review } from '@/routes/Review';
 import { People } from '@/routes/People';
 import { NotConfigured, SignIn } from '@/routes/SignIn';
@@ -188,6 +189,7 @@ function Register({ email }: { email: string }) {
             element={<Periphery onOpen={setEditing} onPromote={onPromote} />}
           />
           <Route path="/web" element={<Web onOpenTask={setEditing} />} />
+          <Route path="/plan" element={<Plan onOpenTask={setEditing} />} />
           <Route path="/dates" element={<Dates />} />
           <Route path="/brief" element={<Brief onOpenTask={setEditing} />} />
           <Route path="/intake" element={<Intake />} />

@@ -37,7 +37,7 @@ export function Web({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   const { data: threads = [] } = useThreads();
   const { data: threadLinks = [] } = useThreadLinks();
 
-  const graph = useMemo(
+  const whole = useMemo(
     () => buildGraph({ tasks, sections, streams, people, taskPeople, threads, threadLinks }),
     [tasks, sections, streams, people, taskPeople, threads, threadLinks],
   );
@@ -46,6 +46,8 @@ export function Web({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [focus, setFocus] = useState<Focus>(null);
   const [onlyStream, setOnlyStream] = useState<StreamId | null>(null);
+  /** Highlighting a stream shows how it reaches out; soloing removes the rest. */
+  const [solo, setSolo] = useState(false);
   const [zoom, setZoom] = useState(1);
 
   const stageRef = useRef<HTMLDivElement>(null);
@@ -62,6 +64,21 @@ export function Web({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   const sizeRef = useRef({ w: 0, h: 0 });
 
   const reduced = usePrefersReducedMotion();
+
+  // Soloing rebuilds the graph from that stream's sections alone, so the
+  // connectors, the counts and the layout are all about the stream rather
+  // than about the stream's corner of everything.
+  const graph = useMemo(() => {
+    if (!solo || !onlyStream) return whole;
+    const mine = sections.filter((s) => s.stream_id === onlyStream);
+    const ids = new Set(mine.map((s) => s.id));
+    return buildGraph({
+      tasks: tasks.filter((t) => ids.has(t.section_id)),
+      sections: mine,
+      streams: streams.filter((s) => s.id === onlyStream),
+      people, taskPeople, threads, threadLinks,
+    });
+  }, [whole, solo, onlyStream, tasks, sections, streams, people, taskPeople, threads, threadLinks]);
 
   const nodeById = useMemo(() => new Map(graph.nodes.map((n) => [n.id, n])), [graph]);
   const streamById = useMemo(() => new Map(streams.map((s) => [s.id, s])), [streams]);
@@ -82,7 +99,7 @@ export function Web({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
       );
       return { nodes, edges };
     }
-    if (onlyStream) {
+    if (onlyStream && !solo) {
       const nodes = new Set(graph.nodes.filter((n) => n.stream === onlyStream).map((n) => n.id));
       const edges = new Set(
         graph.edges
@@ -92,7 +109,7 @@ export function Web({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
       return { nodes, edges };
     }
     return null;
-  }, [focus, onlyStream, graph]);
+  }, [focus, onlyStream, solo, graph]);
 
   const linkedIds = useMemo(() => {
     const set = new Set<string>();
@@ -412,7 +429,7 @@ export function Web({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
 
   const clearFilters = () => { setFocus(null); setOnlyStream(null); };
 
-  const caption = describe({ layout, focus, onlyStream, graph, personById, threadById, streamById });
+  const caption = describe({ layout, focus, onlyStream, solo, graph, personById, threadById, streamById });
 
   return (
     <section aria-labelledby="web-head" className="web">
@@ -444,17 +461,36 @@ export function Web({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
               className="chip"
               data-stream={s.id}
               aria-pressed={onlyStream === s.id}
-              onClick={() => { setFocus(null); setOnlyStream(onlyStream === s.id ? null : s.id); }}
+              onClick={() => {
+              setFocus(null);
+              const next = onlyStream === s.id ? null : s.id;
+              setOnlyStream(next);
+              if (!next) setSolo(false);
+              setSelected(null);
+            }}
             >
               <span className="chip__dot" />
               {s.short}
-              <span className="chip__n">{graph.nodes.filter((n) => n.stream === s.id).length}</span>
+              <span className="chip__n">{whole.nodes.filter((n) => n.stream === s.id).length}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <p className="web__caption">{caption}</p>
+      <div className="web__captionrow">
+        <p className="web__caption">{caption}</p>
+        {onlyStream && (
+          <button
+            type="button"
+            className="chip web__solo"
+            data-stream={onlyStream}
+            aria-pressed={solo}
+            onClick={() => { setSolo((v) => !v); setSelected(null); }}
+          >
+            {solo ? 'Show it in context' : 'Only this stream'}
+          </button>
+        )}
+      </div>
 
       {graph.nodes.length === 0 && (
         <div className="empty">
@@ -682,11 +718,12 @@ function SectionCard({
 
 // ── words ───────────────────────────────────────────────────────────
 function describe({
-  layout, focus, onlyStream, graph, personById, threadById, streamById,
+  layout, focus, onlyStream, solo, graph, personById, threadById, streamById,
 }: {
   layout: Layout;
   focus: Focus;
   onlyStream: StreamId | null;
+  solo: boolean;
   graph: ReturnType<typeof buildGraph>;
   personById: Map<string, { name: string; role: string | null }>;
   threadById: Map<string, { title: string; sections: string[]; items: number; streams: StreamId[] }>;
@@ -706,6 +743,13 @@ function describe({
       const where = t.streams.map((s) => streamById.get(s)?.short ?? s).join(', ');
       return `${t.title}. ${t.items} items across ${t.sections.length} sections — ${where}.`;
     }
+  }
+  if (onlyStream && solo) {
+    const s = streamById.get(onlyStream);
+    const mine = graph.nodes;
+    return `${s?.title ?? onlyStream} on its own. ${mine.length} sections, `
+      + `${mine.reduce((a, n) => a + n.open, 0)} to do, `
+      + `${graph.totals.links} ${graph.totals.links === 1 ? 'link' : 'links'} between them.`;
   }
   if (onlyStream) {
     const s = streamById.get(onlyStream);
