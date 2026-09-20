@@ -1,7 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════════
 -- Work Register — seed
 --
--- 255 items across 33 sections (201 tasks, 54 to watch).
+-- 290 items across 39 sections (235 tasks, 55 to watch).
 -- Generated from data/register.seed.ts by scripts/seed-sql.ts. Do not edit
 -- this file by hand — edit the seed source and regenerate.
 --
@@ -80,23 +80,29 @@ begin
     ('isodp-awards', owner, 'isodp', 'Awards', 'isodp-g-programme', false, 13, null),
     ('isodp-prog', owner, 'isodp', 'Programme development', 'isodp-g-programme', false, 14, null),
     ('isodp-accred', owner, 'isodp', 'Accreditation', 'isodp-g-programme', false, 15, null),
-    ('isodp-web', owner, 'isodp', 'Website', null, false, 16, null),
-    ('isodp-hotels', owner, 'isodp', 'Hotels and accommodation', 'isodp-g-logistics', false, 17, null),
-    ('isodp-social', owner, 'isodp', 'Social events', 'isodp-g-logistics', false, 18, null),
-    ('dir-smt', owner, 'dir', 'Senior Management Team', null, false, 19, null),
-    ('dir-crib', owner, 'dir', 'CRIB presentation', null, false, 20, null),
-    ('dir-people', owner, 'dir', 'People compliance', 'dir-g-office', false, 21, null),
-    ('dir-steph', owner, 'dir', 'Line management', 'dir-g-office', false, 22, null),
-    ('dir-office', owner, 'dir', 'Office', 'dir-g-office', false, 23, null),
-    ('dir-restructure', owner, 'dir', 'OTDT and Clinical Services restructure', null, true, 24, null),
-    ('dir-digital', owner, 'dir', 'Digital referral discovery', 'dir-g-performance', false, 25, null),
-    ('dir-perf', owner, 'dir', 'Donation programme and performance', 'dir-g-performance', false, 26, null),
-    ('dir-session', owner, 'dir', 'Session design', 'dir-g-engagement', false, 27, null),
-    ('dir-events', owner, 'dir', 'Events and communications', 'dir-g-engagement', false, 28, null),
-    ('dir-honours', owner, 'dir', 'Honours — Lisa Burnham', null, false, 29, null),
-    ('career-decision', owner, 'career', 'The decision', null, false, 30, null),
-    ('per-grassroot', owner, 'per', 'Grassroot', null, false, 31, null),
-    ('per-property', owner, 'per', 'Property', null, false, 32, null)
+    ('isodp-board', owner, 'isodp', 'Congress Board', null, false, 16, null),
+    ('isodp-web', owner, 'isodp', 'Website', null, false, 17, null),
+    ('isodp-hotels', owner, 'isodp', 'Hotels and accommodation', 'isodp-g-logistics', false, 18, null),
+    ('isodp-social', owner, 'isodp', 'Social events', 'isodp-g-logistics', false, 19, null),
+    ('dir-smt', owner, 'dir', 'Senior Management Team', null, false, 20, null),
+    ('dir-crib', owner, 'dir', 'CRIB presentation', null, false, 21, null),
+    ('dir-people', owner, 'dir', 'People compliance', 'dir-g-office', false, 22, null),
+    ('dir-steph', owner, 'dir', 'Line management', 'dir-g-office', false, 23, null),
+    ('dir-office', owner, 'dir', 'Office', 'dir-g-office', false, 24, null),
+    ('dir-restructure', owner, 'dir', 'OTDT and Clinical Services restructure', null, true, 25, null),
+    ('dir-digital', owner, 'dir', 'Digital referral discovery', 'dir-g-performance', false, 26, null),
+    ('dir-perf', owner, 'dir', 'Donation programme and performance', 'dir-g-performance', false, 27, null),
+    ('dir-session', owner, 'dir', 'Session design', 'dir-g-engagement', false, 28, null),
+    ('dir-events', owner, 'dir', 'Events and communications', 'dir-g-engagement', false, 29, null),
+    ('dir-honours', owner, 'dir', 'Honours — Lisa Burnham', null, false, 30, null),
+    ('career-decision', owner, 'career', 'The decision', null, false, 31, null),
+    ('per-grassroot', owner, 'per', 'Grassroot', null, false, 32, null),
+    ('per-property', owner, 'per', 'Property', null, false, 33, null),
+    ('per-money', owner, 'per', 'Finances', null, false, 34, null),
+    ('per-trips', owner, 'per', 'Trips and travel', null, false, 35, null),
+    ('per-home', owner, 'per', 'Home and admin', null, false, 36, null),
+    ('per-body', owner, 'per', 'Body and mind', null, false, 37, null),
+    ('per-mum', owner, 'per', 'Mum''s list', null, false, 38, null)
   on conflict (owner_id, id) do update
      set stream_id = excluded.stream_id, title = excluded.title,
          parent_id = excluded.parent_id,
@@ -144,7 +150,10 @@ begin
     ('cttl-gov:compile-confirmed-custodian-board-member-list', 'cttl', 'cttl-gov', 'Compile confirmed Custodian Board member list', 'task', null, true, null, 1),
     ('cttl-gov:set-up-regional-coordinator-meeting', 'cttl', 'cttl-gov', 'Set up Regional Coordinator meeting', 'task', null, false, null, 2),
     ('cttl-gov:answer-and-follow-up-with-serbian-contacts', 'cttl', 'cttl-gov', 'Answer and follow up with Serbian contacts', 'task', null, false, null, 3),
-    ('cttl-gov:locate-and-share-latest-logo-use-and-event-recognition-governance-document', 'cttl', 'cttl-gov', 'Locate and share latest logo use and event recognition governance document', 'task', null, false, null, 4),
+    ('cttl-gov:call-dale', 'cttl', 'cttl-gov', 'Call Dale', 'task', null, false, null, 4),
+    ('cttl-gov:contact-radha-about-attending-sessions', 'cttl', 'cttl-gov', 'Contact Radha about attending sessions', 'task', null, false, null, 5),
+    ('cttl-gov:answer-rorys-team', 'cttl', 'cttl-gov', 'Answer Rory''s team', 'task', null, false, null, 6),
+    ('cttl-gov:locate-and-share-latest-logo-use-and-event-recognition-governance-document', 'cttl', 'cttl-gov', 'Locate and share latest logo use and event recognition governance document', 'task', null, false, null, 7),
     ('cttl-gov:custodian-board-attendance', 'cttl', 'cttl-gov', 'Custodian Board attendance', 'watch', null, false, null, 0),
     ('cttl-gov:regional-coordinator-meeting', 'cttl', 'cttl-gov', 'Regional Coordinator meeting', 'watch', null, false, null, 1),
     ('cttl-fell:update-cttl-website-with-fellowship-information', 'cttl', 'cttl-fell', 'Update CTtL website with Fellowship information', 'task', null, true, null, 0),
@@ -260,7 +269,8 @@ begin
     ('isodp-mystery:check-with-suzanne-and-tts-whether-it-originated-through-them', 'isodp', 'isodp-mystery', 'Check with Suzanne and TTS whether it originated through them', 'task', null, false, null, 5),
     ('isodp-mystery:mystery-910-payment', 'isodp', 'isodp-mystery', 'Mystery £910 payment', 'watch', null, false, null, 0),
     ('isodp-budget:add-a-forecast-of-major-expenditure-to-the-budget-tracker', 'isodp', 'isodp-budget', 'Add a forecast of major expenditure to the budget tracker', 'task', null, false, null, 0),
-    ('isodp-budget:upload-the-budget-tracking-document-to-sharepoint', 'isodp', 'isodp-budget', 'Upload the budget tracking document to SharePoint', 'task', null, false, null, 1),
+    ('isodp-budget:do-the-budget', 'isodp', 'isodp-budget', 'Do the budget', 'task', null, true, null, 1),
+    ('isodp-budget:upload-the-budget-tracking-document-to-sharepoint', 'isodp', 'isodp-budget', 'Upload the budget tracking document to SharePoint', 'task', null, false, null, 2),
     ('isodp-abs:find-the-number-of-accepted-oral-abstracts-at-kyoto', 'isodp', 'isodp-abs', 'Find the number of accepted oral abstracts at Kyoto', 'task', null, false, null, 0),
     ('isodp-abs:speak-to-suzanne-about-abstract-categories-awards-and-submission-rules', 'isodp', 'isodp-abs', 'Speak to Suzanne about abstract categories, awards and submission rules', 'task', null, false, null, 1),
     ('isodp-abs:chase-matt-and-dale-for-final-abstract-categories-and-awards-information', 'isodp', 'isodp-abs', 'Chase Matt and Dale for final abstract categories and awards information', 'task', null, false, null, 2),
@@ -284,6 +294,7 @@ begin
     ('isodp-accred:determine-whether-abtc-or-non-physician-accreditation-is-worthwhile', 'isodp', 'isodp-accred', 'Determine whether ABTC or non-physician accreditation is worthwhile', 'task', null, false, null, 2),
     ('isodp-accred:have-anthony-pursue-uk-accreditation-once-programme-and-speakers-are-sufficientl', 'isodp', 'isodp-accred', 'Have Anthony pursue UK accreditation once programme and speakers are sufficiently developed', 'task', 'Keep moving through Dale.', false, null, 3),
     ('isodp-accred:cme-and-abtc-accreditation', 'isodp', 'isodp-accred', 'CME and ABTC accreditation', 'watch', null, false, null, 0),
+    ('isodp-board:prepare-for-the-congress-board', 'isodp', 'isodp-board', 'Prepare for the Congress Board', 'task', null, true, null, 0),
     ('isodp-web:review-lauren-and-candys-initial-website-build', 'isodp', 'isodp-web', 'Review Lauren and Candy''s initial website build', 'task', null, false, null, 0),
     ('isodp-web:respond-with-consolidated-feedback', 'isodp', 'isodp-web', 'Respond with consolidated feedback', 'task', null, false, null, 1),
     ('isodp-web:ensure-development-proceeds-towards-isodp2027-com', 'isodp', 'isodp-web', 'Ensure development proceeds towards isodp2027.com', 'task', null, false, null, 2),
@@ -316,13 +327,18 @@ begin
     ('isodp-social:presidents-dinner', 'isodp', 'isodp-social', 'President''s Dinner', 'watch', null, false, null, 0),
     ('isodp-social:gala-dinner', 'isodp', 'isodp-social', 'Gala Dinner', 'watch', null, false, null, 1),
     ('dir-smt:do-the-smt-summary', 'dir', 'dir-smt', 'Do the SMT summary', 'task', null, false, null, 0),
-    ('dir-smt:arrange-follow-up-discussion-about-restructuring-the-smt-agenda-format', 'dir', 'dir-smt', 'Arrange follow-up discussion about restructuring the SMT agenda format', 'task', null, false, null, 1),
-    ('dir-smt:develop-a-more-useful-future-smt-agenda-structure', 'dir', 'dir-smt', 'Develop a more useful future SMT agenda structure', 'task', null, false, null, 2),
+    ('dir-smt:decide-whether-an-sdtg-summary-is-needed', 'dir', 'dir-smt', 'Decide whether an SDTG summary is needed', 'task', null, false, null, 1),
+    ('dir-smt:arrange-follow-up-discussion-about-restructuring-the-smt-agenda-format', 'dir', 'dir-smt', 'Arrange follow-up discussion about restructuring the SMT agenda format', 'task', null, false, null, 2),
+    ('dir-smt:develop-a-more-useful-future-smt-agenda-structure', 'dir', 'dir-smt', 'Develop a more useful future SMT agenda structure', 'task', null, false, null, 3),
     ('dir-crib:schedule-follow-up-with-mike-on-crib', 'dir', 'dir-crib', 'Schedule follow-up with Mike on CRIB', 'task', null, false, null, 0),
-    ('dir-crib:update-and-consolidate-the-presentation-following-mikes-walkthrough', 'dir', 'dir-crib', 'Update and consolidate the presentation following Mike''s walkthrough', 'task', null, false, null, 1),
-    ('dir-crib:combine-and-streamline-the-slides', 'dir', 'dir-crib', 'Combine and streamline the slides', 'task', 'Programme overview, consent rate, family approach, marketing strategy, corneas', false, null, 2),
-    ('dir-crib:add-clearer-labels-where-needed', 'dir', 'dir-crib', 'Add clearer labels where needed', 'task', null, false, null, 3),
-    ('dir-crib:move-narrative-text-into-speaker-notes-so-it-is-not-visible-to-the-audience', 'dir', 'dir-crib', 'Move narrative text into speaker notes so it is not visible to the audience', 'task', null, false, null, 4),
+    ('dir-crib:start-the-next-crib-agenda', 'dir', 'dir-crib', 'Start the next CRIB agenda', 'task', null, true, null, 1),
+    ('dir-crib:add-anthonys-item-and-dales-to-the-crib-agenda', 'dir', 'dir-crib', 'Add Anthony''s item and Dale''s to the CRIB agenda', 'task', null, false, null, 2),
+    ('dir-crib:print-anthonys-certificate', 'dir', 'dir-crib', 'Print Anthony''s certificate', 'task', null, false, null, 3),
+    ('dir-crib:set-up-a-claude-skill-to-build-the-crib-agenda', 'dir', 'dir-crib', 'Set up a Claude skill to build the CRIB agenda', 'task', null, false, null, 4),
+    ('dir-crib:update-and-consolidate-the-presentation-following-mikes-walkthrough', 'dir', 'dir-crib', 'Update and consolidate the presentation following Mike''s walkthrough', 'task', null, false, null, 5),
+    ('dir-crib:combine-and-streamline-the-slides', 'dir', 'dir-crib', 'Combine and streamline the slides', 'task', 'Programme overview, consent rate, family approach, marketing strategy, corneas', false, null, 6),
+    ('dir-crib:add-clearer-labels-where-needed', 'dir', 'dir-crib', 'Add clearer labels where needed', 'task', null, false, null, 7),
+    ('dir-crib:move-narrative-text-into-speaker-notes-so-it-is-not-visible-to-the-audience', 'dir', 'dir-crib', 'Move narrative text into speaker notes so it is not visible to the audience', 'task', null, false, null, 8),
     ('dir-people:draft-and-send-the-pdpr-compliance-email-to-non-compliant-staff', 'dir', 'dir-people', 'Draft and send the PDPR compliance email to non-compliant staff', 'task', 'Make clear that managers are responsible for arranging PDPRs.', true, null, 0),
     ('dir-people:review-anthonys-previous-conflicts-of-interest-email', 'dir', 'dir-people', 'Review Anthony''s previous Conflicts of Interest email', 'task', null, true, null, 1),
     ('dir-people:check-outstanding-conflicts-of-interest-declarations', 'dir', 'dir-people', 'Check outstanding Conflicts of Interest declarations', 'task', null, false, null, 2),
@@ -361,10 +377,11 @@ begin
     ('dir-session:confirm-mentimeter-works-as-expected', 'dir', 'dir-session', 'Confirm Mentimeter works as expected', 'task', null, false, null, 1),
     ('dir-session:consider-menti-or-an-equivalent-interactive-platform-for-the-sdg-session', 'dir', 'dir-session', 'Consider Menti or an equivalent interactive platform for the SDG session', 'task', null, false, null, 2),
     ('dir-session:think-through-what-the-sdg-session-should-look-like', 'dir', 'dir-session', 'Think through what the SDG session should look like', 'task', null, false, null, 3),
-    ('dir-session:send-sdg-session-ideas-ahead-of-the-follow-up-call', 'dir', 'dir-session', 'Send SDG session ideas ahead of the follow-up call', 'task', null, false, null, 4),
-    ('dir-session:think-through-which-leadership-capabilities-should-underpin-session-design', 'dir', 'dir-session', 'Think through which leadership capabilities should underpin session design', 'task', null, false, null, 5),
-    ('dir-session:find-and-share-notes-containing-anthonys-brainstorming-ideas', 'dir', 'dir-session', 'Find and share notes containing Anthony''s brainstorming ideas', 'task', null, false, null, 6),
-    ('dir-session:reach-out-to-kate-or-mark-taylors-team-if-required-regarding-sdg-planning', 'dir', 'dir-session', 'Reach out to Kate or Mark Taylor''s team if required regarding SDG planning', 'task', null, false, null, 7),
+    ('dir-session:call-anthony-to-discuss-the-sdg-session', 'dir', 'dir-session', 'Call Anthony to discuss the SDG session', 'task', null, true, null, 4),
+    ('dir-session:send-sdg-session-ideas-ahead-of-the-follow-up-call', 'dir', 'dir-session', 'Send SDG session ideas ahead of the follow-up call', 'task', null, false, null, 5),
+    ('dir-session:think-through-which-leadership-capabilities-should-underpin-session-design', 'dir', 'dir-session', 'Think through which leadership capabilities should underpin session design', 'task', null, false, null, 6),
+    ('dir-session:find-and-share-notes-containing-anthonys-brainstorming-ideas', 'dir', 'dir-session', 'Find and share notes containing Anthony''s brainstorming ideas', 'task', null, false, null, 7),
+    ('dir-session:reach-out-to-kate-or-mark-taylors-team-if-required-regarding-sdg-planning', 'dir', 'dir-session', 'Reach out to Kate or Mark Taylor''s team if required regarding SDG planning', 'task', null, false, null, 8),
     ('dir-events:contact-the-nhsbt-filming-and-recording-team-to-pencil-them-in-for-the-donor-rec', 'dir', 'dir-events', 'Contact the NHSBT filming and recording team to pencil them in for the donor recognition event', 'task', null, false, null, 0),
     ('dir-events:prepare-anthonys-speaking-notes-for-the-partner-and-stakeholder-webinar', 'dir', 'dir-events', 'Prepare Anthony''s speaking notes for the partner and stakeholder webinar', 'task', null, false, null, 1),
     ('dir-events:set-up-a-teams-channel-for-the-relevant-three-participants', 'dir', 'dir-events', 'Set up a Teams channel for the relevant three participants', 'task', null, false, null, 2),
@@ -394,7 +411,31 @@ begin
     ('per-grassroot:check-bottles-from-the-pilot-batch-for-the-clumping-issue', 'per', 'per-grassroot', 'Check bottles from the pilot batch for the clumping issue', 'task', null, false, null, 3),
     ('per-grassroot:confirm-whether-the-affected-batch-appears-safe-and-stable', 'per', 'per-grassroot', 'Confirm whether the affected batch appears safe and stable', 'task', null, false, null, 4),
     ('per-grassroot:send-fresh-samples-to-hannah-if-the-current-batch-is-problematic', 'per', 'per-grassroot', 'Send fresh samples to Hannah if the current batch is problematic', 'task', null, false, null, 5),
-    ('per-property:send-tony-links-to-any-property-you-are-seriously-considering-before-making-an-o', 'per', 'per-property', 'Send Tony links to any property you are seriously considering before making an offer', 'task', null, false, null, 0);
+    ('per-property:send-tony-links-to-any-property-you-are-seriously-considering-before-making-an-o', 'per', 'per-property', 'Send Tony links to any property you are seriously considering before making an offer', 'task', null, false, null, 0),
+    ('per-money:do-the-finances', 'per', 'per-money', 'Do the finances', 'task', null, true, null, 0),
+    ('per-money:croatia', 'per', 'per-money', 'Croatia', 'task', null, false, null, 1),
+    ('per-money:wider-marine-finances', 'per', 'per-money', 'Wider Marine finances', 'task', null, false, null, 2),
+    ('per-money:football-tallies', 'per', 'per-money', 'Football tallies', 'task', null, false, null, 3),
+    ('per-money:expenses', 'per', 'per-money', 'Expenses', 'task', null, false, null, 4),
+    ('per-money:settle-the-bills', 'per', 'per-money', 'Settle the bills', 'task', null, false, null, 5),
+    ('per-money:storage-maybe-as-part-of-the-marine-finances', 'per', 'per-money', 'Storage, maybe, as part of the Marine finances', 'watch', null, false, null, 0),
+    ('per-trips:look-at-a-trip-to-vannes', 'per', 'per-trips', 'Look at a trip to Vannes', 'task', null, false, null, 0),
+    ('per-trips:contact-ba', 'per', 'per-trips', 'Contact BA', 'task', null, false, null, 1),
+    ('per-trips:respond-to-enterprise-rent-a-car', 'per', 'per-trips', 'Respond to Enterprise Rent-A-Car', 'task', null, false, null, 2),
+    ('per-home:get-clothes-dry-cleaned', 'per', 'per-home', 'Get clothes dry cleaned', 'task', null, false, null, 0),
+    ('per-home:set-up-fable', 'per', 'per-home', 'Set up Fable', 'task', null, false, null, 1),
+    ('per-home:do-the-music-setup-properly', 'per', 'per-home', 'Do the music setup properly', 'task', null, false, null, 2),
+    ('per-home:organise-files-again', 'per', 'per-home', 'Organise files again', 'task', null, false, null, 3),
+    ('per-home:check-out-h-m-home', 'per', 'per-home', 'Check out H&M Home', 'task', null, false, null, 4),
+    ('per-body:go-for-a-swim', 'per', 'per-body', 'Go for a swim', 'task', null, false, null, 0),
+    ('per-body:physio', 'per', 'per-body', 'Physio?', 'task', null, false, null, 1),
+    ('per-body:choose-a-language-to-start-learning-and-set-it-up', 'per', 'per-body', 'Choose a language to start learning, and set it up', 'task', null, false, null, 2),
+    ('per-mum:railing-on-the-stairs', 'per', 'per-mum', 'Railing on the stairs', 'task', null, false, null, 0),
+    ('per-mum:chase-landine-for-certification-of-the-documents', 'per', 'per-mum', 'Chase Landine for certification of the documents', 'task', null, false, null, 1),
+    ('per-mum:cleaners', 'per', 'per-mum', 'Cleaners', 'task', null, false, null, 2),
+    ('per-mum:apa', 'per', 'per-mum', 'APA', 'task', null, false, null, 3),
+    ('per-mum:direct-debit-for-the-water', 'per', 'per-mum', 'Direct debit for the water', 'task', null, false, null, 4),
+    ('per-mum:gardener', 'per', 'per-mum', 'Gardener', 'task', null, false, null, 5);
 
   -- Changed items — but never a row you have edited.
   with upd as (
@@ -438,6 +479,7 @@ begin
   -- ── who you are waiting on ───────────────────────────────────────
   create temp table _links (natural_key text, person text) on commit drop;
   insert into _links values
+    ('cttl-gov:call-dale', 'Dale'),
     ('cttl-fell:forward-fellowship-document-and-agenda-email-to-dale', 'Dale'),
     ('cttl-fell:send-original-fellowship-submission-document-to-matty', 'Matty'),
     ('cttl-aus:check-with-steph-that-satyas-proposed-flights-can-be-booked-through-nhsbt', 'Steph'),
@@ -511,6 +553,9 @@ begin
     ('isodp-accred:have-anthony-pursue-uk-accreditation-once-programme-and-speakers-are-sufficientl', 'Dale'),
     ('isodp-web:review-lauren-and-candys-initial-website-build', 'Lauren'),
     ('isodp-web:review-lauren-and-candys-initial-website-build', 'Candy'),
+    ('dir-crib:add-anthonys-item-and-dales-to-the-crib-agenda', 'Anthony'),
+    ('dir-crib:add-anthonys-item-and-dales-to-the-crib-agenda', 'Dale'),
+    ('dir-crib:print-anthonys-certificate', 'Anthony'),
     ('dir-people:review-anthonys-previous-conflicts-of-interest-email', 'Anthony'),
     ('dir-steph:finalise-stephs-pdpr', 'Steph'),
     ('dir-steph:try-to-arrange-stephs-blood-donation-visit', 'Steph'),
@@ -523,6 +568,7 @@ begin
     ('dir-digital:send-the-texas-paper-to-laura', 'Laura'),
     ('dir-perf:speak-to-anthony-about-whether-the-organ-donation-session-should-be-postponed-un', 'Anthony'),
     ('dir-perf:respond-to-kanaks-workshop-email-with-the-right-contacts', 'Laura'),
+    ('dir-session:call-anthony-to-discuss-the-sdg-session', 'Anthony'),
     ('dir-session:find-and-share-notes-containing-anthonys-brainstorming-ideas', 'Anthony'),
     ('dir-session:reach-out-to-kate-or-mark-taylors-team-if-required-regarding-sdg-planning', 'Mark Taylor'),
     ('dir-events:prepare-anthonys-speaking-notes-for-the-partner-and-stakeholder-webinar', 'Anthony'),
@@ -548,7 +594,7 @@ begin
 end
 $seed$;
 
--- Confirm. Expect 201 tasks and 54 to watch.
+-- Confirm. Expect 235 tasks and 55 to watch.
 select kind, count(*) as items
   from public.tasks
  where deleted_at is null

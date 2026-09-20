@@ -99,6 +99,9 @@ export const SECTIONS: Section[] = [
  P("Compile confirmed Custodian Board member list",{p:1}),
  "Set up Regional Coordinator meeting",
  "Answer and follow up with Serbian contacts",
+ "Call Dale",
+ "Contact Radha about attending sessions",
+ "Answer Rory's team",
  "Locate and share latest logo use and event recognition governance document"],
  watch:[
  "Custodian Board attendance",
@@ -247,6 +250,7 @@ export const SECTIONS: Section[] = [
 
 {id:'isodp-budget',stream:'isodp',title:'Budget management',group:'isodp-g-finance',items:[
  "Add a forecast of major expenditure to the budget tracker",
+ P("Do the budget",{p:1}),
  "Upload the budget tracking document to SharePoint"]},
 
 {id:'isodp-abs',stream:'isodp',title:'Abstracts',group:'isodp-g-programme',items:[
@@ -283,6 +287,9 @@ export const SECTIONS: Section[] = [
  P("Have Anthony pursue UK accreditation once programme and speakers are sufficiently developed",{note:"Keep moving through Dale."})],
  watch:[
  "CME and ABTC accreditation"]},
+
+{id:'isodp-board',stream:'isodp',title:'Congress Board',items:[
+ P("Prepare for the Congress Board",{p:1})]},
 
 {id:'isodp-web',stream:'isodp',title:'Website',items:[
  "Review Lauren and Candy's initial website build",
@@ -327,11 +334,16 @@ export const SECTIONS: Section[] = [
 // ═══ DIRECTORATE ═══════════════════════════════════════════════════
 {id:'dir-smt',stream:'dir',title:'Senior Management Team',items:[
  "Do the SMT summary",
+ "Decide whether an SDTG summary is needed",
  "Arrange follow-up discussion about restructuring the SMT agenda format",
  "Develop a more useful future SMT agenda structure"]},
 
 {id:'dir-crib',stream:'dir',title:'CRIB presentation',items:[
  "Schedule follow-up with Mike on CRIB",
+ P("Start the next CRIB agenda",{p:1}),
+ "Add Anthony's item and Dale's to the CRIB agenda",
+ "Print Anthony's certificate",
+ "Set up a Claude skill to build the CRIB agenda",
  "Update and consolidate the presentation following Mike's walkthrough",
  P("Combine and streamline the slides",{note:"Programme overview, consent rate, family approach, marketing strategy, corneas"}),
  "Add clearer labels where needed",
@@ -392,6 +404,7 @@ export const SECTIONS: Section[] = [
  "Confirm Mentimeter works as expected",
  "Consider Menti or an equivalent interactive platform for the SDG session",
  "Think through what the SDG session should look like",
+ P("Call Anthony to discuss the SDG session",{p:1}),
  "Send SDG session ideas ahead of the follow-up call",
  "Think through which leadership capabilities should underpin session design",
  "Find and share notes containing Anthony's brainstorming ideas",
@@ -439,4 +452,39 @@ export const SECTIONS: Section[] = [
 
 {id:'per-property',stream:'per',title:'Property',items:[
  "Send Tony links to any property you are seriously considering before making an offer"]},
+
+{id:'per-money',stream:'per',title:'Finances',items:[
+ P("Do the finances",{p:1}),
+ "Croatia",
+ "Wider Marine finances",
+ "Football tallies",
+ "Expenses",
+ "Settle the bills"],
+ watch:[
+ "Storage, maybe, as part of the Marine finances"]},
+
+{id:'per-trips',stream:'per',title:'Trips and travel',items:[
+ "Look at a trip to Vannes",
+ "Contact BA",
+ "Respond to Enterprise Rent-A-Car"]},
+
+{id:'per-home',stream:'per',title:'Home and admin',items:[
+ "Get clothes dry cleaned",
+ "Set up Fable",
+ "Do the music setup properly",
+ "Organise files again",
+ "Check out H&M Home"]},
+
+{id:'per-body',stream:'per',title:'Body and mind',items:[
+ "Go for a swim",
+ "Physio?",
+ "Choose a language to start learning, and set it up"]},
+
+{id:'per-mum',stream:'per',title:"Mum's list",items:[
+ "Railing on the stairs",
+ "Chase Landine for certification of the documents",
+ "Cleaners",
+ "APA",
+ "Direct debit for the water",
+ "Gardener"]},
 ];

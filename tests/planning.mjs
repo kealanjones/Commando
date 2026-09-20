@@ -139,7 +139,7 @@ const loads = (p) => p.locator('.plan__day').evaluateAll((els) => els.map((e) =>
   await p.waitForTimeout(3000);
 
   const all = Number((await p.locator('.shead__meta').first().textContent()).replace(/\D.*/, ''));
-  ok(all === 33, `the whole register is drawn to start with (${all} sections)`);
+  ok(all === 39, `the whole register is drawn to start with (${all} sections)`);
   ok(!(await p.locator('.web__solo').isVisible()),
     'and there is nothing to solo until a stream is picked');
 
@@ -153,7 +153,7 @@ const loads = (p) => p.locator('.plan__day').evaluateAll((els) => els.map((e) =>
   await p.getByRole('button', { name: 'Only this stream' }).click();
   await p.waitForTimeout(2600);
   const solo = Number((await p.locator('.shead__meta').first().textContent()).replace(/\D.*/, ''));
-  ok(solo === 15, `on its own it draws that stream's sections only (${solo})`);
+  ok(solo === 16, `on its own it draws that stream's sections only (${solo})`);
   const caption = await p.textContent('.web__caption');
   ok(/on its own/.test(caption), `and says so (${caption})`);
   await p.screenshot({ path: `${out}/web-solo.png` });
@@ -169,7 +169,7 @@ const loads = (p) => p.locator('.plan__day').evaluateAll((els) => els.map((e) =>
 
   await p.getByRole('button', { name: 'Show it in context' }).click();
   await p.waitForTimeout(2600);
-  ok(Number((await p.locator('.shead__meta').first().textContent()).replace(/\D.*/, '')) === 33,
+  ok(Number((await p.locator('.shead__meta').first().textContent()).replace(/\D.*/, '')) === 39,
     'and it comes back to the whole register');
 
   // Letting go of the stream lets go of soloing with it.
@@ -177,7 +177,7 @@ const loads = (p) => p.locator('.plan__day').evaluateAll((els) => els.map((e) =>
   await p.waitForTimeout(1200);
   await p.getByRole('button', { name: /ISODP 2027/ }).click();
   await p.waitForTimeout(2200);
-  ok(Number((await p.locator('.shead__meta').first().textContent()).replace(/\D.*/, '')) === 33,
+  ok(Number((await p.locator('.shead__meta').first().textContent()).replace(/\D.*/, '')) === 39,
     'unpicking the stream drops the solo with it rather than stranding you');
 
   ok(errs.length === 0, `no page errors (${errs.slice(0, 2).join('; ') || 'none'})`);

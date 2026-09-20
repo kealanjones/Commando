@@ -85,7 +85,7 @@ await p.goto(`${base}/web`, { waitUntil: 'networkidle' });
 await p.waitForTimeout(3000);
 const tally = (await p.locator('.web__caption, .shead__meta').first().textContent()) ?? '';
 const count = Number((await p.locator('.shead__meta').first().textContent() ?? '').replace(/\D.*/, ''));
-ok(count === 33, `the map still draws 33 sections, not 40 with seven empty ones (${count})`);
+ok(count === 39, `the map still draws 39 sections, not 46 with seven empty ones (${count})`);
 ok(tally.length > 0, 'and still has something to say about them');
 
 console.log(fail.length ? `\n${fail.length} FAILING:\n- ` + fail.join('\n- ') : '\nAll grouping checks passed');
