@@ -1,12 +1,18 @@
 export type StreamId = 'cttl' | 'isodp' | 'dir' | 'career' | 'per';
 export type Kind = 'task' | 'watch';
 
+/** Which life a stream belongs to. Every screen is scoped by it. */
+export type Realm = 'work' | 'personal';
+/** What the switch can be set to: one realm, or both at once. */
+export type RealmScope = Realm | 'all';
+
 export interface Stream {
   id: StreamId;
   owner_id: string;
   title: string;
   short: string;
   code: string;
+  realm: Realm;
   position: number;
 }
 

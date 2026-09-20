@@ -26,7 +26,9 @@ const loads = (p) => p.locator('.plan__day').evaluateAll((els) => els.map((e) =>
   // The chips you reach for.
   const chips = await p.locator('.plan__chip span:first-child').allTextContents();
   ok(chips[0] === 'Today' && chips[1] === 'Tomorrow', `today and tomorrow lead (${chips.join(', ')})`);
-  ok(chips.includes('Next week'), 'and there is a longer throw');
+  // On a Sunday "next week" is tomorrow and folds into it, so the longer throw
+  // may be the month.
+  ok(chips.some((c) => /^Next (week|month)$/.test(c)), `and there is a longer throw (${chips.at(-1)})`);
   ok(chips.every((c) => !/Saturday|Sunday/.test(c)), 'nobody is offered a Sunday');
 
   // Placing one takes it out of the queue and darkens its day.

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 
-import { Header, Nav } from '@/components/Chrome';
+import { Header, Modes, Nav } from '@/components/Chrome';
 import { TaskSheet, type SheetPatch } from '@/components/TaskSheet';
 import { AddSheet } from '@/components/AddSheet';
 import { Search } from '@/components/Search';
@@ -22,6 +22,7 @@ import { NotConfigured, SignIn } from '@/routes/SignIn';
 
 import { configured, supabase } from '@/lib/supabase';
 import { DEMO } from '@/lib/demo';
+import { useFocus, useRealm } from '@/lib/modes';
 import { ensureProfile } from '@/lib/profile';
 import {
   useCreateTask, useRealtime, useSections, useSoftDelete, useStreams, useUpdateTask,
@@ -74,6 +75,19 @@ function Register({ email }: { email: string }) {
   const [searching, setSearching] = useState(false);
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [location.pathname]);
+
+  // The page itself wears the modes: the paper changes with the realm and
+  // Focus strips the chrome, both by CSS off these two hooks.
+  const realm = useRealm();
+  const focus = useFocus();
+  useEffect(() => {
+    document.body.dataset.realm = realm;
+    document.body.classList.toggle('is-focus', focus);
+    return () => {
+      delete document.body.dataset.realm;
+      document.body.classList.remove('is-focus');
+    };
+  }, [realm, focus]);
 
   // Cmd/Ctrl+K and plain "/" both open search, the two conventions people
   // already have in their fingers. Ignored while typing into a field.
@@ -162,7 +176,10 @@ function Register({ email }: { email: string }) {
         <Header email={email} onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} />
         {/* Inline in the document so it sits under the header on desktop;
             CSS pins it to the bottom of the viewport on a phone. */}
-        <Nav />
+        <div className="topbar">
+          <Nav />
+          <Modes />
+        </div>
 
         <Routes>
           <Route

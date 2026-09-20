@@ -9,7 +9,8 @@ import { useSuggestions, useThreadsWithItems } from '@/data/threads';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { branchesFor } from '@/lib/tree';
-import type { Section, Task } from '@/lib/types';
+import { useRealm } from '@/lib/modes';
+import type { Realm, Section, Task } from '@/lib/types';
 
 type Filter = 'all' | 'donow' | 'undated' | 'done';
 
@@ -25,6 +26,7 @@ export function Streams({
 }) {
   const { streamId } = useParams();
   const [params, setParams] = useSearchParams();
+  const realm = useRealm();
   const filter = (params.get('filter') as Filter) ?? 'all';
   const person = params.get('person');
 
@@ -167,14 +169,22 @@ export function Streams({
       </div>
       )}
 
-      {visibleStreams.map((h) => {
+      {visibleStreams.map((h, i) => {
         const mySections = sections.filter((s) => s.stream_id === h.id);
         const rows = tasks.filter((t) => t.stream_id === h.id && matches(t));
         const watch = tasks.filter((t) => t.stream_id === h.id && t.kind === 'watch');
         if (rows.length === 0 && watch.length === 0 && (person || filter !== 'all')) return null;
 
+        // With both realms showing, a rule and a word mark where one life
+        // ends and the other begins.
+        const before: Realm | undefined = visibleStreams[i - 1]?.realm;
+        const zone = !streamId && realm === 'all' && before !== h.realm
+          ? <h3 className="zone" data-realm={h.realm}>{h.realm === 'work' ? 'Work' : 'Personal'}</h3>
+          : null;
+
         return (
           <section key={h.id} data-stream={h.id} style={{ marginBottom: 34 }}>
+            {zone}
             <div
               style={{
                 display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16,

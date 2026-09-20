@@ -48,13 +48,20 @@ const P = (t: string, o?: ItemOpts): Item => ({ t, ...o });
  * short — the display name, used wherever space is tight (cards, headers)
  * code  — the pill on a task row
  */
+/**
+ * Which realm a stream belongs to. Career is yours rather than the
+ * office's: it goes with Personal, so a Saturday shows neither the
+ * Directorate nor a sponsor chase.
+ */
+export type Realm = 'work' | 'personal';
+
 export const STREAMS = {
-  cttl:   { title: 'Commonwealth Tribute to Life', short: 'Commonwealth', code: 'CTtL' },
-  isodp:  { title: 'ISODP 2027',                   short: 'ISODP 2027',   code: 'ISODP' },
-  dir:    { title: 'Directorate',                  short: 'Directorate',  code: 'Dir' },
-  career: { title: 'Career',                       short: 'Career',       code: 'Career' },
-  per:    { title: 'Personal',                     short: 'Personal',     code: 'Per' },
-} as const;
+  cttl:   { title: 'Commonwealth Tribute to Life', short: 'Commonwealth', code: 'CTtL',   realm: 'work' },
+  isodp:  { title: 'ISODP 2027',                   short: 'ISODP 2027',   code: 'ISODP',  realm: 'work' },
+  dir:    { title: 'Directorate',                  short: 'Directorate',  code: 'Dir',    realm: 'work' },
+  career: { title: 'Career',                       short: 'Career',       code: 'Career', realm: 'personal' },
+  per:    { title: 'Personal',                     short: 'Personal',     code: 'Per',    realm: 'personal' },
+} as const satisfies Record<string, { title: string; short: string; code: string; realm: Realm }>;
 
 /**
  * The middle level.

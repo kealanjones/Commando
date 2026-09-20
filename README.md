@@ -15,7 +15,7 @@ the design is for.
 
 | | |
 |---|---|
-| **Today** | Five stream cards, one nudge, and three tasks. Nothing else. |
+| **Today** | The stream cards, one nudge, three tasks — and the tally of what got done. With both lives showing, two zones: work, then personal. |
 | **Streams** | Everything, stream → area → section, with filters including who you are waiting on. |
 | **Web** | The same register as a shape: what is connected to what, and what has gone quiet. |
 | **People** | Who owes you what. Open one before a catch-up. |
@@ -24,6 +24,47 @@ the design is for.
 | **Plan** | Every undated item, one at a time, against a month coloured by how loaded each day already is. |
 | **Brief** | Something the register hands back: text you can paste, for a person or a stream. |
 | **Dates** | The dates you already wrote down, read back out of your own words. |
+
+### Work and personal
+
+Two of the five streams are not the job. A switch in the top bar — **Work ·
+Personal · Both** — decides which life the register is, and it is applied
+inside the queries rather than on each screen: in Work the personal streams
+are not dimmed or folded, they are simply not there, on Today, in Streams, in
+the plan, the web, the brief and search alike. The date line names the realm,
+the paper changes colour with it, and the choice survives a reload.
+
+With both showing, Today is drawn in two zones — the work first, then a
+shorter personal one — each ranked on its own, so a mortgage never competes
+with a sponsor for a slot. Streams gets a rule and a word where one life ends
+and the other begins.
+
+Career sits with Personal. It is yours rather than the office's, and a
+Saturday should show neither the Directorate nor a sponsor chase. The realm is
+a column on the stream (`0008_realm.sql`), so it can be moved.
+
+### The tally
+
+What got finished, as a shape. **Today is a ring**: every tick is a wedge in
+the colour of the stream it came from, laid clockwise in the order the day
+happened, drawn as it happens. One thing done is one eighth of the ring, not a
+full circle — a full ring is eight things, and past that the wedges divide and
+the number carries the growth. **The week is a row**: a column of beads per
+day, one bead per finished thing, today's column standing forward, with the
+total and how it compares to last week.
+
+Nothing here is a percentage. The register has no denominator — a congress
+cannot be 40% done — so the tally counts what was finished and lets the shape
+say whether that was a lot. It counts by the moment a thing was ticked, so a
+seeded row that arrived already done never counts as a day's work it was not.
+
+### Focus
+
+The same screens with the chrome taken off. One tap on **Focus** and the
+stream cards, the prompts, the periphery, the notes under each row and the
+stream pills go; the rows grow; what is left is the work, its closing dates,
+and the tally. It is not a different app and it hides nothing you have to go
+looking for — every row is still the row, and it comes off with one tap.
 
 ### The recency dial
 
@@ -458,6 +499,8 @@ supabase db push
 | `0001_schema.sql` | Tables, indexes, the `stream_health` view |
 | `0002_rls.sql` | Row Level Security |
 | `0003_realtime.sql` | Realtime publication |
+| `0004`–`0007` | Intake, review, threads, section groups |
+| `0008_realm.sql` | Work or personal, on each stream |
 
 ### 3. Sign in once
 
@@ -690,6 +733,8 @@ src/lib/search.ts         ranking and highlighting
 src/lib/grouping.ts       finding the strands the sections miss
 src/lib/tree.ts           stream → area → section, the one place that knows the shape
 src/lib/plan.ts           the month, the heat bands and the queue that needs dating
+src/lib/tally.ts          what got finished today and this week, as a shape
+src/lib/modes.ts          the two switches: work / personal / both, and focus
 src/lib/dates.ts          reading dates out of your own wording
 src/lib/brief.ts          composing something the register can hand back
 src/lib/web.ts            the register as a graph: links, connectors, staleness

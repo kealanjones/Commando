@@ -20,7 +20,8 @@ const OWNER = '00000000-0000-0000-0000-000000000000';
 
 export function demoStreams(): Stream[] {
   return Object.entries(STREAMS).map(([id, s], i) => ({
-    id: id as StreamId, owner_id: OWNER, title: s.title, short: s.short, code: s.code, position: i,
+    id: id as StreamId, owner_id: OWNER, title: s.title, short: s.short, code: s.code,
+    realm: s.realm, position: i,
   }));
 }
 
@@ -112,6 +113,40 @@ export function demoTasks(): Task[] {
     (s.items ?? []).forEach((i, idx) => add(i, 'task', idx));
     (s.watch ?? []).forEach((i, idx) => add(i, 'watch', idx));
   }
+
+  // A week of finished things, so the tally has a shape to show without a
+  // database. Extra rows rather than ticked seed rows: the counts every
+  // other screen is checked against stay what they are. Nothing today —
+  // the first tick of the day should be the one that draws the ring.
+  const finished: [StreamId, string, number][] = [
+    ['isodp', 'Sent Isaac the revised registration numbers', 1],
+    ['isodp', 'Booked the room for the sponsorship huddle', 1],
+    ['dir', 'Returned the SMT actions to Anthony', 1],
+    ['cttl', 'Confirmed the Sydney hotel block', 2],
+    ['isodp', 'Chased OrganOx for the signed letter', 2],
+    ['dir', 'Signed off the performance pack', 2],
+    ['dir', 'Booked Steph\u2019s one-to-one', 2],
+    ['per', 'Paid the allotment fee', 3],
+    ['isodp', 'Sent the venue the revised floor plan', 4],
+    ['career', 'Drafted the application paragraph', 5],
+    ['cttl', 'Sent Emirates the fare basis query', 5],
+    ['isodp', 'Read the ILTS sponsorship terms', 6],
+    ['per', 'Renewed the car insurance', 6],
+  ];
+  const stamp = (daysAgo: number) => {
+    const d = new Date(); d.setDate(d.getDate() - daysAgo); d.setHours(14, 0, 0, 0);
+    return d.toISOString();
+  };
+  finished.forEach(([stream, title, daysAgo], i) => {
+    const section = SECTIONS.find((s) => s.stream === stream)!;
+    out.push({
+      id: `done-${i}`, owner_id: OWNER, stream_id: stream, section_id: section.id,
+      natural_key: null, title, kind: 'task', context: null, note: null,
+      done: true, done_at: stamp(daysAgo), do_now: false, due: null, position: 900 + i,
+      user_edited: true, reviewed_at: null, unclear: false, touched_at: stamp(daysAgo),
+      created_at: now, updated_at: now, deleted_at: null,
+    });
+  });
   return out;
 }
 

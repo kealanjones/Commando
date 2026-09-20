@@ -82,7 +82,7 @@ async function main() {
 
   // ── streams ──────────────────────────────────────────────────────
   const streamRows = Object.entries(STREAMS).map(([id, s], i) => ({
-    id, owner_id: owner, title: s.title, short: s.short, code: s.code, position: i,
+    id, owner_id: owner, title: s.title, short: s.short, code: s.code, realm: s.realm, position: i,
   }));
   if (!DRY) {
     const { error } = await db.from('streams').upsert(streamRows, { onConflict: 'owner_id,id' });

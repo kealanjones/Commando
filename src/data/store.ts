@@ -9,7 +9,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { enqueue } from '@/lib/queue';
 import { DEMO } from '@/lib/demo';
-import type { Person, Section, Stream, StreamHealth, Task } from '@/lib/types';
+import { inScope, realmOf, useRealm } from '@/lib/modes';
+import type { Person, Realm, Section, Stream, StreamHealth, Task } from '@/lib/types';
 
 export const keys = {
   streams: ['streams'] as const,
@@ -22,19 +23,51 @@ export const keys = {
 export const QUIET_SCALE_DAYS = 21;
 
 // ── queries ────────────────────────────────────────────────────────
+//
+// Every query below is scoped by the realm switch inside its `select`, so
+// no route has to remember to filter: in Work the personal streams, their
+// sections and their tasks are simply not in the data. The cache itself
+// holds everything, which is what lets the switch be instant.
+
+const streamsQuery = {
+  queryKey: keys.streams,
+  queryFn: async (): Promise<Stream[]> => {
+    const { data, error } = await supabase.from('streams').select('*').order('position');
+    if (error) throw error;
+    return data as Stream[];
+  },
+  staleTime: 5 * 60_000,
+};
+
+/** All streams, whichever realm is showing. The switch itself needs this. */
+export function useAllStreams() {
+  return useQuery(streamsQuery);
+}
+
 export function useStreams() {
+  const realm = useRealm();
   return useQuery({
-    queryKey: keys.streams,
-    queryFn: async (): Promise<Stream[]> => {
-      const { data, error } = await supabase.from('streams').select('*').order('position');
-      if (error) throw error;
-      return data as Stream[];
-    },
-    staleTime: 5 * 60_000,
+    ...streamsQuery,
+    select: useCallback((rows: Stream[]) => rows.filter((s) => inScope(realm, s)), [realm]),
   });
 }
 
+/**
+ * The stream ids in the current realm, as one string so it can be a hook
+ * dependency; null while the switch is on Both, or before the streams have
+ * arrived — an unscoped moment is better than an empty one.
+ */
+function useScope(): Set<string> | null {
+  const realm = useRealm();
+  const { data: streams } = useAllStreams();
+  const ids = realm === 'all' || !streams
+    ? null
+    : streams.filter((s) => inScope(realm, s)).map((s) => s.id).sort().join(',');
+  return useMemo(() => (ids === null ? null : new Set(ids.split(','))), [ids]);
+}
+
 export function useSections() {
+  const scope = useScope();
   return useQuery({
     queryKey: keys.sections,
     queryFn: async (): Promise<Section[]> => {
@@ -43,11 +76,16 @@ export function useSections() {
       if (error) throw error;
       return data as Section[];
     },
+    select: useCallback(
+      (rows: Section[]) => (scope ? rows.filter((r) => scope.has(r.stream_id)) : rows),
+      [scope],
+    ),
     staleTime: 5 * 60_000,
   });
 }
 
 export function useTasks() {
+  const scope = useScope();
   return useQuery({
     queryKey: keys.tasks,
     queryFn: async (): Promise<Task[]> => {
@@ -66,8 +104,11 @@ export function useTasks() {
       return out;
     },
     // Soft-deleted rows stay in the cache so Undo can put them straight
-    // back; every consumer sees the live list only.
-    select: (rows: Task[]) => rows.filter((r) => !r.deleted_at),
+    // back; every consumer sees the live list only, in the realm showing.
+    select: useCallback(
+      (rows: Task[]) => rows.filter((r) => !r.deleted_at && (!scope || scope.has(r.stream_id))),
+      [scope],
+    ),
     staleTime: 30_000,
   });
 }
@@ -237,7 +278,7 @@ export function useHealth(): StreamHealth[] {
  * morning. Rank by real pressure — a date closing, a stream that has gone
  * quiet, work with other items queued behind it — and show the top few.
  */
-export function useToday(limit = 3, keepVisible: string[] = []) {
+export function useToday(limit = 3, keepVisible: string[] = [], realm?: Realm) {
   const { data: tasks = [] } = useTasks();
   const health = useHealth();
   const keepKey = keepVisible.join(',');
@@ -245,13 +286,17 @@ export function useToday(limit = 3, keepVisible: string[] = []) {
   return useMemo(() => {
     const keep = new Set(keepKey ? keepKey.split(',') : []);
     const quiet = new Map(health.map((h) => [h.id, h.daysQuiet ?? 0]));
+    // With the switch on Both, Today is drawn in two zones and each one
+    // ranks its own realm; otherwise the queries have already scoped it.
+    const mine = new Set(health.filter((h) => !realm || realmOf(h) === realm).map((h) => h.id));
     // A task just ticked stays in place, struck through, until its undo
     // window closes. Having it vanish under your thumb makes the undo
     // toast refer to something you can no longer see.
     // Parked items are still work, but they cannot be acted on, so they must
     // not compete for a slot on Today.
     const open = tasks.filter(
-      (t) => t.kind === 'task' && !t.unclear && (!t.done || keep.has(t.id)),
+      (t) => t.kind === 'task' && !t.unclear && mine.has(t.stream_id)
+        && (!t.done || keep.has(t.id)),
     );
 
     // How many other open items sit in the same section: a proxy for how
@@ -302,7 +347,7 @@ export function useToday(limit = 3, keepVisible: string[] = []) {
       datedCount: live.filter((t) => t.due).length,
       totalCount: tasks.length,
     };
-  }, [tasks, health, limit, keepKey]);
+  }, [tasks, health, limit, keepKey, realm]);
 }
 
 /**

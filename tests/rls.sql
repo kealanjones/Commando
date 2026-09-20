@@ -32,6 +32,8 @@ insert into public.profiles (id, email) values
 insert into public.streams (id, owner_id, title, short, code, position) values
   ('cttl',  '11111111-1111-1111-1111-111111111111', 'Commonwealth Tribute to Life', 'Commonwealth', 'CTtL', 0),
   ('isodp', '11111111-1111-1111-1111-111111111111', 'ISODP 2027', 'ISODP 2027', 'ISODP', 1);
+insert into public.streams (id, owner_id, title, short, code, realm, position) values
+  ('per',   '11111111-1111-1111-1111-111111111111', 'Personal', 'Personal', 'Per', 'personal', 4);
 
 insert into public.sections (id, owner_id, stream_id, title, position) values
   ('cttl-gov',    '11111111-1111-1111-1111-111111111111', 'cttl',  'Governance and meetings', 0),
@@ -45,7 +47,7 @@ insert into public.tasks (owner_id, stream_id, section_id, natural_key, title) v
 set role authenticated;
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 select assert((select count(*) from public.tasks) = 2, 'owner sees their own tasks');
-select assert((select count(*) from public.streams) = 2, 'owner sees their own streams');
+select assert((select count(*) from public.streams) = 3, 'owner sees their own streams');
 
 -- ── a second user sees nothing at all ──────────────────────────────
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
@@ -183,6 +185,25 @@ select assert((select count(*) from public.intakes) = 0,
   'a shared-stream collaborator cannot read the transcript');
 select assert((select count(*) from public.intake_items) = 0,
   'a shared-stream collaborator cannot read the proposals');
+
+-- ── a stream is work or personal, and nothing else ─────────────────
+reset role;
+select assert(
+  (select realm from public.streams where id = 'per' and owner_id = '11111111-1111-1111-1111-111111111111') = 'personal',
+  'the personal stream is marked personal');
+select assert(
+  (select realm from public.streams where id = 'cttl' and owner_id = '11111111-1111-1111-1111-111111111111') = 'work',
+  'a stream that says nothing is work: the safe default for a register kept at the office');
+do $$
+begin
+  update public.streams set realm = 'other' where id = 'per';
+  raise exception 'a third realm was accepted';
+exception
+  when check_violation then null;
+end $$;
+select assert(
+  (select realm from public.streams where id = 'per' and owner_id = '11111111-1111-1111-1111-111111111111') = 'personal',
+  'a third realm is refused: there are two lives, not a bucket for the rest');
 
 -- ── RLS is on and forced everywhere ────────────────────────────────
 select assert(

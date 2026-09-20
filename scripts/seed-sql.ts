@@ -107,13 +107,13 @@ begin
   on conflict (id) do nothing;
 
   -- ── streams ──────────────────────────────────────────────────────
-  insert into public.streams (id, owner_id, title, short, code, position) values
+  insert into public.streams (id, owner_id, title, short, code, realm, position) values
 ${Object.entries(STREAMS)
-  .map(([id, s], i) => `    (${q(id)}, owner, ${q(s.title)}, ${q(s.short)}, ${q(s.code)}, ${i})`)
+  .map(([id, s], i) => `    (${q(id)}, owner, ${q(s.title)}, ${q(s.short)}, ${q(s.code)}, ${q(s.realm)}, ${i})`)
   .join(',\n')}
   on conflict (owner_id, id) do update
      set title = excluded.title, short = excluded.short,
-         code = excluded.code, position = excluded.position;
+         code = excluded.code, realm = excluded.realm, position = excluded.position;
 
   -- ── groups ───────────────────────────────────────────────────────
   -- The middle level, written first so the sections below can point at it.

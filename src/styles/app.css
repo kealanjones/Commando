@@ -1758,3 +1758,201 @@ body.is-carded .page {
   .plan__hand { animation: none; }
   .plan__day:hover, .plan__chip:hover { transform: none; }
 }
+
+/* ═══ work and personal ═════════════════════════════════════════════
+   One switch, and the other realm is not dimmed or folded — it is not
+   there. The paper changes with it, so which life you are looking at is
+   ambient before it is read.
+   ═══════════════════════════════════════════════════════════════════ */
+
+body[data-realm='personal'] { --bg: #F0F6F1; }
+body[data-realm='personal'] .avatar { background: var(--per-tint); color: var(--per-deep); }
+body[data-realm='work'] .avatar { background: var(--isodp-tint); color: var(--isodp-deep); }
+body { transition: background .5s var(--ease); }
+
+.topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.modes { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+@media (min-width: 860px) { .modes { margin-bottom: 22px; } }
+.modes__realm button { padding: 8px 14px; font-size: 12.5px; }
+.modes__realm button[data-realm='personal'][aria-pressed='true'] {
+  color: var(--per-deep);
+}
+.modes__realm button[data-realm='work'][aria-pressed='true'] {
+  color: var(--isodp-deep);
+}
+.modes__focus {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  border: 1.5px solid var(--hair); background: var(--card); color: var(--ink-2);
+  border-radius: var(--r-pill); padding: 8px 13px 8px 11px;
+  font-size: 12.5px; font-weight: 700; white-space: nowrap;
+  transition: background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease);
+}
+.modes__focus:hover { border-color: var(--ink-3); }
+.modes__focus[aria-pressed='true'] { background: var(--ink); color: #fff; border-color: var(--ink); }
+@media (max-width: 859px) {
+  /* The nav is pinned to the bottom of a phone, so up here it is the
+     switches alone. */
+  .topbar { display: block; }
+  .modes { justify-content: space-between; }
+}
+
+/* the rail fits whatever is showing, at one card width */
+@media (min-width: 860px) {
+  .rail {
+    grid-template-columns: repeat(var(--rail-n, 5), minmax(0, 1fr));
+    max-width: calc(var(--rail-n, 5) * 216px);
+  }
+}
+
+/* a rule and a word where one life ends and the other begins */
+.zone {
+  display: flex; align-items: center; gap: 10px; margin: 6px 0 12px;
+  font-family: var(--data); font-size: 10.5px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3);
+}
+.zone::before {
+  content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--isodp);
+}
+.zone[data-realm='personal']::before { background: var(--per); }
+.zone::after { content: ''; flex: 1; height: 1px; background: var(--hair); }
+.list + .zone { margin-top: 22px; }
+.zone__none { margin: 0 0 6px; font-size: 13.5px; color: var(--ink-3); }
+.zone__none + .zone { margin-top: 18px; }
+
+/* ═══ the tally ═════════════════════════════════════════════════════
+   Today as a ring, the week as a row. Every finished thing is a wedge or
+   a bead in the colour of the stream it came from, so a day's shape says
+   where the day went as well as how much of it got done.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.tally {
+  display: grid; grid-template-columns: auto 1fr; gap: 18px 22px; align-items: center;
+  background: var(--card); border-radius: var(--r-panel); padding: 18px 20px;
+  box-shadow: var(--softer); margin-top: 26px;
+  animation: rise .5s var(--ease) backwards; animation-delay: .12s;
+}
+.tally__day { position: relative; width: 112px; height: 112px; }
+.tally__ring { position: absolute; inset: 0; transform: rotate(-90deg); overflow: visible; }
+.tally__track { fill: none; stroke: var(--hair-2); stroke-width: 11; }
+.tally[data-today='0'] .tally__track { stroke-dasharray: 2 7; stroke-linecap: round; stroke: var(--hair); }
+.tally__seg {
+  fill: none; stroke: var(--s); stroke-width: 11; stroke-linecap: round;
+  transition: stroke-dasharray .7s var(--ease), stroke-dashoffset .5s var(--ease);
+}
+.tally__centre {
+  position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
+  gap: 1px;
+}
+.tally__n {
+  display: block; font-size: 30px; font-weight: 800; letter-spacing: -.05em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  animation: tallyPop .5s var(--pop);
+}
+.tally[data-today='0'] .tally__n { color: var(--ink-3); }
+.tally__label {
+  font-family: var(--data); font-size: 9.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+@keyframes tallyPop { from { transform: scale(1.35); } 60% { transform: scale(.94); } }
+
+.tally__week { min-width: 0; }
+.tally__days {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end;
+}
+.tally__col { display: flex; flex-direction: column; align-items: center; gap: 7px; min-width: 0; }
+.tally__stack {
+  display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 2px;
+  height: 84px; width: 100%; max-width: 26px;
+  border-bottom: 1.5px solid var(--hair);
+  padding-bottom: 4px;
+}
+.tally__col[data-today] .tally__stack { border-bottom-color: var(--ink); }
+.tally__col[data-future] .tally__stack { border-bottom-style: dashed; }
+.tally__bead {
+  display: block; width: 100%; border-radius: 4px; background: var(--s);
+  /* Beads share the column: as a day fills they thin rather than overflow. */
+  height: min(10px, calc((80px - (var(--n) - 1) * 2px) / var(--n)));
+  flex: none; transform-origin: bottom;
+  animation: beadIn .45s var(--pop) backwards;
+  animation-delay: calc(var(--i) * 40ms);
+}
+.tally__bar {
+  display: grid; place-items: center; width: 100%; height: 80px; border-radius: 6px;
+  background: var(--s); color: var(--s-deep);
+  font-family: var(--data); font-size: 10.5px; font-style: normal; font-weight: 500;
+  animation: beadIn .45s var(--pop) backwards; transform-origin: bottom;
+}
+.tally__none {
+  display: block; width: 6px; height: 6px; border-radius: 50%; margin: 0 auto;
+  background: var(--hair);
+}
+@keyframes beadIn { from { transform: scaleY(0); opacity: 0; } }
+.tally__dow {
+  font-family: var(--data); font-size: 10px; color: var(--ink-3); letter-spacing: .04em;
+}
+.tally__col[data-today] .tally__dow {
+  color: var(--ink); font-weight: 700; position: relative;
+}
+.tally__col[data-today] .tally__dow::after {
+  content: ''; position: absolute; left: 50%; bottom: -6px; width: 4px; height: 4px;
+  border-radius: 50%; background: var(--ink); transform: translateX(-50%);
+}
+.tally__col[data-future] .tally__dow { color: var(--hair); }
+.tally__sum {
+  margin: 14px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.4;
+}
+.tally__sum b { color: var(--ink); font-weight: 800; }
+.tally__cmp { color: var(--ink-3); }
+
+@media (max-width: 400px) {
+  .tally { gap: 14px; padding: 16px; }
+  .tally__day { width: 96px; height: 96px; }
+  .tally__n { font-size: 26px; }
+  .tally__stack { height: 68px; }
+  .tally__bead { height: min(9px, calc((64px - (var(--n) - 1) * 2px) / var(--n))); }
+  .tally__bar { height: 64px; }
+}
+@media (max-width: 340px) {
+  .tally { grid-template-columns: 1fr; justify-items: center; }
+  .tally__week { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tally, .tally__bead, .tally__bar, .tally__n { animation: none; }
+  .tally__seg { transition: none; }
+}
+
+/* ═══ focus ═════════════════════════════════════════════════════════
+   The same screens with the chrome taken off. Not a different app: the
+   stream cards, the prompts, the notes under each row and the greeting
+   go, the rows grow, and what is left is the work and the ticks.
+   ═══════════════════════════════════════════════════════════════════ */
+
+body.is-focus .avatar,
+body.is-focus .prompt,
+body.is-focus .nudge,
+body.is-focus .plan__lede,
+body.is-focus .sweep__lede,
+body.is-focus .groupblock__meta,
+body.is-focus .task__context,
+body.is-focus .task__note,
+body.is-focus .task__meta .pill:not(.pill--due),
+body.is-focus .task__meta .threadchip,
+body.is-focus .task__meta .meta,
+body.is-focus .task__chevron { display: none; }
+body.is-focus .task__meta:not(:has(.pill--due)) { display: none; }
+
+body.is-focus .hello { margin-bottom: 14px; }
+body.is-focus .hello h1 { font-size: 19px; }
+body.is-focus .list { gap: 12px; }
+body.is-focus .task { padding: 18px 20px; border-radius: 22px; }
+body.is-focus .task__title { font-size: 17px; line-height: 1.35; font-weight: 600; }
+body.is-focus .check { width: 24px; height: 24px; margin-top: 2px; }
+body.is-focus .check:checked::after { left: 8px; top: 4px; width: 5px; height: 10px; }
+body.is-focus .today { margin-top: 6px; }
+body.is-focus .tally { margin-top: 30px; }
+@media (min-width: 860px) {
+  body.is-focus .today, body.is-focus .tally { max-width: 720px; }
+  body.is-focus .hello h1 { font-size: 21px; }
+  body.is-focus .task__title { font-size: 18px; }
+}

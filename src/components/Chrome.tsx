@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Plus } from './icons';
 import { SyncBadge } from './SyncBadge';
+import { REALM_LABEL, setFocus, setRealm, useFocus, useRealm } from '@/lib/modes';
+import type { RealmScope } from '@/lib/types';
 
 const initials = (email: string) =>
   (email.split('@')[0] ?? '')
@@ -24,16 +26,21 @@ export function Header({
 }) {
   const name = (email.split('@')[0] ?? '').split(/[.\-_]/)[0] ?? '';
   const pretty = name ? name[0].toUpperCase() + name.slice(1) : 'there';
-  const today = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long',
-  });
+  // The date line names the realm, so a screen full of work says "work" on
+  // it and never has to be inferred from what is missing. The date gives
+  // up its long form to make room on a phone.
+  const realm = useRealm();
+  const today = new Date().toLocaleDateString('en-GB', realm === 'all'
+    ? { weekday: 'long', day: 'numeric', month: 'long' }
+    : { weekday: 'short', day: 'numeric', month: 'short' });
+  const line = subtitle ?? (realm === 'all' ? today : `${REALM_LABEL[realm]} · ${today}`);
 
   return (
     <header className="hello">
       <div className="avatar" aria-hidden="true">{initials(email)}</div>
       <div className="hello__grow">
         <h1>Hi, {pretty}</h1>
-        <div className="hello__date">{subtitle ?? today}</div>
+        <div className="hello__date">{line}</div>
       </div>
       <SyncBadge />
       <button className="iconbtn iconbtn--ghost" onClick={onSearch} aria-label="Search the register">
@@ -70,5 +77,45 @@ export function Nav() {
       <NavLink to="/periphery">Periphery</NavLink>
       <NavLink to="/intake">Intake</NavLink>
     </nav>
+  );
+}
+
+/**
+ * The two switches. Realm decides what the register is; Focus decides how
+ * much of the page is allowed to talk about it.
+ */
+export function Modes() {
+  const realm = useRealm();
+  const focus = useFocus();
+  return (
+    <div className="modes">
+      <div className="seg modes__realm" role="group" aria-label="Which life to show">
+        {(['work', 'personal', 'all'] as RealmScope[]).map((r) => (
+          <button
+            key={r}
+            type="button"
+            data-realm={r}
+            aria-pressed={realm === r}
+            onClick={() => setRealm(r)}
+          >
+            {REALM_LABEL[r]}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="modes__focus"
+        aria-pressed={focus}
+        onClick={() => setFocus(!focus)}
+        title={focus ? 'Show everything again' : 'Strip the page back to the work'}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5" />
+          <circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" />
+        </svg>
+        Focus
+      </button>
+    </div>
   );
 }

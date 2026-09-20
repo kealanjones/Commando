@@ -573,3 +573,79 @@ Done is tinted green rather than warned about in red: finishing something is a
 good outcome, and the only destructive control on the screen should look like
 the only destructive control on the screen. The delete is the app's ordinary
 soft delete, so it is recoverable long after the undo line has gone.
+
+
+## Work and personal are a switch, not a filter
+
+The register had five streams in one list, and two of them were not the job.
+The obvious fix is a filter chip; the trouble with a filter is that it lives
+on one screen. Today would learn it, Streams would not, search would find the
+allotment on a Tuesday, and the brief would put it under "also open" for the
+Director.
+
+So the realm is applied inside the queries. `useStreams`, `useSections` and
+`useTasks` each scope their `select` by the switch, and every screen that
+reads them is scoped without knowing it. The cache still holds everything —
+that is what makes the switch instant and lets an undo on a personal item
+land while you are looking at work — but nothing downstream can see across.
+
+Two values, not a bucket for the rest: a third realm would be a third list,
+which is the problem again. Career goes with Personal because it is yours
+rather than the office's; the column is on the stream so the answer can be
+changed without a release.
+
+The realm shows three ways at once: the switch, the date line, and the paper
+— a faintly green page for Personal. None of them is the fact; all of them
+mean you never infer which life you are in from what is missing.
+
+With both showing, Today is two zones ranked separately. The alternative —
+one ranking with a per-stream cap — let a mortgage outrank a sponsor on a bad
+morning, and the cap was already doing the work of keeping streams apart.
+Naming the zones does it honestly.
+
+
+## The tally, and why it is not a percentage
+
+A progress bar wants a denominator, and this register does not have one. A
+congress is not 40% done; a directorate is never done. Every earlier version
+of "how am I doing" on this app was refused for that reason, and the refusal
+still stands: the tally counts what was finished, and lets the shape say
+whether that was a lot.
+
+Today is a ring because a ring is the one shape that says *the day so far*
+without a scale on it. It is drawn in eight slots so the first tick of the
+morning is a visible wedge rather than an empty circle with a one in it, and
+past eight the wedges divide rather than the ring overflowing. Each wedge
+wears its stream, so a day of ISODP and a day of everything look different
+before you read the number.
+
+The week is beads rather than bars for the same reason: a bar is a quantity, a
+column of beads is a list of things, and each bead is one thing. Past
+fourteen a day is drawn as a bar with a count, because fourteen beads in
+eighty pixels is a smear.
+
+It counts by `done_at`, in local time, over the Monday-to-Sunday week the plan
+already draws. Seeded rows that arrived done have no `done_at` and never
+count; a tick undone takes its wedge back. Nothing is inferred, nothing is
+banked.
+
+The tally sits under the list, not above it. You tick in the list and the
+ring grows just below your thumb, which is the whole reward; above the list it
+would be a score you scroll past on the way to the work.
+
+
+## Focus takes the chrome off, not the information out
+
+The ask was a minimal mode. The risk with a minimal mode is that it becomes a
+second, poorer app: a different layout with different rules that hides things
+you then have to go looking for.
+
+So Focus is one class on the body and a page of CSS. The stream cards, the
+prompts, the nudge, the periphery, the notes under each row and the stream
+pills go; the rows grow; the greeting shrinks. The rows are the same rows,
+the ticks are the same ticks, the tally stays because it is the point. A
+closing date is the one pill still worn, because it is the one that changes
+what you do next.
+
+Everything else — the whole register, the people, the plan — is still one tap
+away on the nav, unchanged. Focus is persisted so a phone can live in it.

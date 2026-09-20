@@ -37,15 +37,15 @@ begin
   on conflict (id) do nothing;
 
   -- ── streams ──────────────────────────────────────────────────────
-  insert into public.streams (id, owner_id, title, short, code, position) values
-    ('cttl', owner, 'Commonwealth Tribute to Life', 'Commonwealth', 'CTtL', 0),
-    ('isodp', owner, 'ISODP 2027', 'ISODP 2027', 'ISODP', 1),
-    ('dir', owner, 'Directorate', 'Directorate', 'Dir', 2),
-    ('career', owner, 'Career', 'Career', 'Career', 3),
-    ('per', owner, 'Personal', 'Personal', 'Per', 4)
+  insert into public.streams (id, owner_id, title, short, code, realm, position) values
+    ('cttl', owner, 'Commonwealth Tribute to Life', 'Commonwealth', 'CTtL', 'work', 0),
+    ('isodp', owner, 'ISODP 2027', 'ISODP 2027', 'ISODP', 'work', 1),
+    ('dir', owner, 'Directorate', 'Directorate', 'Dir', 'work', 2),
+    ('career', owner, 'Career', 'Career', 'Career', 'personal', 3),
+    ('per', owner, 'Personal', 'Personal', 'Per', 'personal', 4)
   on conflict (owner_id, id) do update
      set title = excluded.title, short = excluded.short,
-         code = excluded.code, position = excluded.position;
+         code = excluded.code, realm = excluded.realm, position = excluded.position;
 
   -- ── groups ───────────────────────────────────────────────────────
   -- The middle level, written first so the sections below can point at it.

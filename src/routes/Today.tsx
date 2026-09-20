@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { StreamCard } from '@/components/StreamCard';
 import { TaskCard } from '@/components/TaskCard';
+import { Tally } from '@/components/Tally';
 import { WatchCard } from '@/components/WatchCard';
 import { useHealth, useStreams, useTasks, useToday } from '@/data/store';
 import { useReviewStatus } from '@/data/review';
+import { useFocus, useRealm } from '@/lib/modes';
 import type { Task } from '@/lib/types';
 
 export function Today({
@@ -22,8 +24,25 @@ export function Today({
   const health = useHealth();
   const { data: streams = [] } = useStreams();
   const { data: tasks = [], isLoading } = useTasks();
-  const today = useToday(3, recentlyDone);
   const review = useReviewStatus();
+  const realm = useRealm();
+  const focus = useFocus();
+
+  /**
+   * With the switch on Both, Today is two zones — the work first, then a
+   * shorter personal one — each ranked on its own, so a mortgage never
+   * competes with a sponsor for a slot. On one realm the queries have
+   * already narrowed the register and there is one list.
+   */
+  const both = realm === 'all';
+  const main = useToday(3, recentlyDone, both ? 'work' : undefined);
+  const side = useToday(2, recentlyDone, 'personal');
+  const top = useMemo(
+    () => (both ? [...main.top, ...side.top] : main.top),
+    [both, main.top, side.top],
+  );
+  const flagged = both ? main.flagged + side.flagged : main.flagged;
+  const restCount = both ? main.restCount + side.restCount : main.restCount;
 
   /**
    * Hold the list still while an undo is on offer.
@@ -41,13 +60,19 @@ export function Today({
   const byId = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks]);
   const shown = frozen.current?.length
     ? frozen.current.map((id) => byId.get(id)).filter((t): t is Task => Boolean(t))
-    : today.top;
+    : top;
 
   useEffect(() => {
-    if (!frozen.current) lastTop.current = today.top.map((t) => t.id);
+    if (!frozen.current) lastTop.current = top.map((t) => t.id);
   });
 
   const streamCode = useMemo(() => new Map(streams.map((s) => [s.id, s.code])), [streams]);
+  const personal = useMemo(
+    () => new Set(health.filter((h) => h.realm === 'personal').map((h) => h.id)),
+    [health],
+  );
+  const workRows = both ? shown.filter((t) => !personal.has(t.stream_id)) : shown;
+  const personalRows = both ? shown.filter((t) => personal.has(t.stream_id)) : [];
 
   // Periphery items from streams that have gone quiet surface here first:
   // that is the whole point of watching them.
@@ -70,13 +95,26 @@ export function Today({
     );
   }
 
+  const rows = (list: Task[], offset = 0) => list.map((t, i) => (
+    <TaskCard
+      key={t.id}
+      task={t}
+      index={i + offset}
+      streamLabel={streamCode.get(t.stream_id)}
+      onToggle={onToggle}
+      onOpen={onOpen}
+    />
+  ));
+
   return (
     <>
-      <div className="rail">
-        {health.map((h, i) => <StreamCard key={h.id} health={h} index={i} />)}
-      </div>
+      {!focus && (
+        <div className="rail" style={{ '--rail-n': health.length } as React.CSSProperties}>
+          {health.map((h, i) => <StreamCard key={h.id} health={h} index={i} />)}
+        </div>
+      )}
 
-      {review.waiting > 0 && (
+      {!focus && review.waiting > 0 && (
         <div className="prompt">
           <div>
             <h3>
@@ -96,7 +134,7 @@ export function Today({
         </div>
       )}
 
-      {review.waiting === 0 && review.unclear > 0 && (
+      {!focus && review.waiting === 0 && review.unclear > 0 && (
         <div className="prompt">
           <div>
             <h3>{review.unclear} parked as unclear</h3>
@@ -106,19 +144,19 @@ export function Today({
         </div>
       )}
 
-      {today.datedCount <= 1 && today.openCount > 20 && (
+      {!focus && main.datedCount <= 1 && main.openCount > 20 && (
         <div className="nudge">
           <span className="nudge__dot" />
           <p>
-            {today.datedCount === 0 ? (
+            {main.datedCount === 0 ? (
               <>
-                Nothing in the register has a date. <b>{today.openCount}</b> open items, all
+                Nothing in the register has a date. <b>{main.openCount}</b> open items, all
                 equally urgent — which is to say none of them are.
               </>
             ) : (
               <>
-                <b>{today.datedCount}</b> of {today.openCount} open items{' '}
-                {today.datedCount === 1 ? 'carries' : 'carry'} a date — which is why everything
+                <b>{main.datedCount}</b> of {main.openCount} open items{' '}
+                {main.datedCount === 1 ? 'carries' : 'carry'} a date — which is why everything
                 feels equally urgent.
               </>
             )}
@@ -136,11 +174,13 @@ export function Today({
         </div>
       )}
 
-      <section aria-labelledby="today-head">
+      <section aria-labelledby="today-head" className="today">
         <div className="shead">
           <h2 id="today-head">Today</h2>
           <span className="shead__meta">
-            {shown.filter((t) => !t.done).length} of {today.flagged} flagged
+            {flagged > 0
+              ? `${shown.filter((t) => !t.done).length} of ${flagged} flagged`
+              : `${shown.filter((t) => !t.done).length} pressing`}
           </span>
         </div>
 
@@ -149,30 +189,32 @@ export function Today({
             <h3>Nothing is pressing</h3>
             <p>No dates closing and nothing flagged. Browse a stream when you have a window.</p>
           </div>
+        ) : both ? (
+          <>
+            <h3 className="zone" data-realm="work">Work</h3>
+            {workRows.length > 0
+              ? <ul className="list">{rows(workRows)}</ul>
+              : <p className="zone__none">Nothing pressing at work.</p>}
+            <h3 className="zone" data-realm="personal">Personal</h3>
+            {personalRows.length > 0
+              ? <ul className="list">{rows(personalRows, workRows.length)}</ul>
+              : <p className="zone__none">Nothing personal pressing.</p>}
+          </>
         ) : (
-          <ul className="list">
-            {shown.map((t, i) => (
-              <TaskCard
-                key={t.id}
-                task={t}
-                index={i}
-                streamLabel={streamCode.get(t.stream_id)}
-                onToggle={onToggle}
-                onOpen={onOpen}
-              />
-            ))}
-          </ul>
+          <ul className="list">{rows(shown)}</ul>
         )}
 
-        {today.restCount > 0 && (
+        {restCount > 0 && (
           <Link to="/streams?filter=donow" className="more" style={{ textDecoration: 'none', display: 'inline-block' }}>
-            {today.restCount} more flagged →
+            {restCount} more flagged →
           </Link>
         )}
       </section>
 
-      {peek.length > 0 && (
-        <section aria-labelledby="peek-head" style={{ marginTop: 30 }}>
+      <Tally compact={focus} />
+
+      {!focus && peek.length > 0 && (
+        <section aria-labelledby="peek-head" className="peekat" style={{ marginTop: 30 }}>
           <div className="shead">
             <h2 id="peek-head">Keeping an eye on</h2>
             <Link to="/periphery" className="shead__meta" style={{ textDecoration: 'none' }}>
