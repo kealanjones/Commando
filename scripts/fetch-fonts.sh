@@ -5,8 +5,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
-# Ledger: Geist and Geist Mono. Notebook: Newsreader, Courier Prime, Caveat.
-URL='https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Courier+Prime:wght@400;700&family=Caveat:wght@500&display=swap'
+# Ledger: Geist and Geist Mono. Notebook: Kalam (a readable hand) and Courier Prime.
+URL='https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Kalam:wght@400;700&family=Courier+Prime:wght@400;700&display=swap'
 
 curl -sS -A "$UA" "$URL" -o /tmp/gf.css
 python3 - <<'PY'

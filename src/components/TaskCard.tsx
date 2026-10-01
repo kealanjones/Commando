@@ -1,6 +1,6 @@
 import { memo, useRef } from 'react';
 import { openedFrom } from '@/lib/expand';
-import { useSelectedId } from '@/lib/selection';
+import { useLeaving, useSelectedId } from '@/lib/selection';
 import { isoDay } from '@/lib/today';
 import type { Task } from '@/lib/types';
 
@@ -38,6 +38,7 @@ export const TaskCard = memo(function TaskCard({
 }) {
   const overdue = Boolean(task.due && !task.done && task.due < isoDay(new Date()));
   const selected = useSelectedId() === task.id;
+  const leaving = useLeaving().has(task.id);
   const ref = useRef<HTMLLIElement>(null);
 
   const open = () => {
@@ -49,7 +50,7 @@ export const TaskCard = memo(function TaskCard({
   return (
     <li
       ref={ref}
-      className={`task${task.done ? ' task--done' : ''}`}
+      className={`task${task.done ? ' task--done' : ''}${leaving ? ' task--leaving' : ''}`}
       data-stream={task.stream_id}
       data-task={task.id}
       data-selected={selected || undefined}
@@ -75,7 +76,9 @@ export const TaskCard = memo(function TaskCard({
         aria-current={selected || undefined}
       >
         <span className="task__body">
-          <span className="task__title">{task.title}</span>
+          {/* Inline inside the title, so a strike or a highlighter can be
+              drawn along every line the title wraps onto. */}
+          <span className="task__title"><span className="task__words">{task.title}</span></span>
 
           {!compact && task.context && <span className="task__context">{task.context}</span>}
           {!compact && task.note && <span className="task__note">{task.note}</span>}

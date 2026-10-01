@@ -64,7 +64,7 @@ kbd {
 .index, .deskbar { display: none; }
 
 .page { min-width: 0; transition: transform .34s var(--ease), filter .34s var(--ease); }
-.page__body { padding: 4px 16px calc(var(--nav-h) + 28px); }
+.page__body { position: relative; padding: 4px 16px calc(var(--nav-h) + 28px); }
 
 @media (min-width: 1100px) {
   .shell {
@@ -96,9 +96,12 @@ kbd {
   font-size: 15px; color: var(--ink);
 }
 .index__nav a[aria-current='page'] { font-weight: 600; }
-.index__nav a[aria-current='page'] > span:first-child {
-  text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px;
+.index__nav a > span:first-child {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat;
+  padding-bottom: 3px; transition: background-size var(--t-move) var(--ease);
 }
+.index__nav a:hover > span:first-child { background-size: 30% 2px; }
+.index__nav a[aria-current='page'] > span:first-child { background-size: 100% 2px; }
 .leader { flex: 1; border-bottom: 1px dotted var(--line); transform: translateY(-4px); }
 .index__n { font-family: var(--mono); font-size: 12px; color: var(--pencil); font-variant-numeric: tabular-nums; }
 
@@ -119,11 +122,16 @@ kbd {
 /* ── which life ────────────────────────────────────────────────── */
 .realm { display: flex; gap: 18px; border-bottom: 1px solid var(--hair); }
 .realm button {
-  border: 0; background: none; cursor: pointer; padding: 0 0 9px; margin-bottom: -1px;
-  font-size: 14px; color: var(--pencil); border-bottom: 2px solid transparent;
+  position: relative; border: 0; background: none; cursor: pointer; padding: 0 0 9px; margin-bottom: -1px;
+  font-size: 14px; color: var(--pencil); transition: color var(--t-quick) var(--ease);
 }
+.realm button::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--ink);
+  transform: scaleX(0); transition: transform var(--t-move) var(--ease);
+}
+.realm button[aria-pressed='true']::after { transform: scaleX(1); }
 .realm button:hover { color: var(--ink); }
-.realm button[aria-pressed='true'] { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
+.realm button[aria-pressed='true'] { color: var(--ink); font-weight: 600; }
 
 /* ── the desk bar: search and new, over the list ──────────────── */
 .deskbar {
@@ -165,9 +173,15 @@ kbd {
 .addbar { width: 100%; height: 50px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15.5px; }
 .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 6px -16px 0; }
 .tabs a {
-  text-align: center; padding: 12px 0 14px; font-size: 13px; color: var(--pencil);
+  position: relative; text-align: center; padding: 12px 0 14px; font-size: 13px; color: var(--pencil);
+  transition: color var(--t-quick) var(--ease);
 }
-.tabs a[aria-current='page'] { color: var(--ink); font-weight: 600; box-shadow: inset 0 2px 0 var(--ink); }
+.tabs a::before {
+  content: ''; position: absolute; top: 0; left: 18%; right: 18%; height: 2px; background: var(--ink);
+  transform: scaleX(0); transition: transform var(--t-move) var(--ease);
+}
+.tabs a[aria-current='page'] { color: var(--ink); font-weight: 600; }
+.tabs a[aria-current='page']::before { transform: scaleX(1); }
 
 @media (min-width: 1100px) { .phonetop, .phonebottom { display: none; } }
 
@@ -214,15 +228,17 @@ kbd {
 .task {
   display: grid; grid-template-columns: 52px 22px minmax(0, 1fr); column-gap: 10px;
   align-items: baseline; padding: 12px 0; border-top: 1px solid var(--hair);
-  animation: rise .3s var(--ease) backwards;
-  transition: background .15s var(--ease), opacity .3s var(--ease);
+  animation: rise var(--t-arrive) var(--ease) backwards;
+  transition: background var(--t-quick) var(--ease), opacity var(--t-move) var(--ease);
 }
 .list > .task:first-child { border-top: 0; }
 @media (min-width: 1100px) {
   .task { grid-template-columns: 64px 24px minmax(0, 1fr); column-gap: 12px; }
 }
-.task:hover { background: var(--select); }
+.task { position: relative; z-index: 1; }
+.task:hover { background: color-mix(in srgb, var(--select) 60%, transparent); }
 .task[data-selected] { background: var(--select); }
+@media (min-width: 1100px) { .task[data-selected] { background: transparent; } }
 
 .task__due {
   align-self: stretch; padding-top: 2px; text-align: right; padding-right: 10px;
@@ -235,13 +251,19 @@ kbd {
   appearance: none; -webkit-appearance: none; margin: 0; cursor: pointer; flex: none;
   width: 16px; height: 16px; border: 1.5px solid var(--ink); background: transparent;
   position: relative; transform: translateY(2px);
+  box-shadow: inset 0 0 0 0 var(--ink);
+  transition: box-shadow var(--t-quick) var(--ease), transform var(--t-move) var(--spring);
 }
-.check:hover { background: var(--select); }
-.check:checked { background: var(--ink); }
-.check:checked::after {
+.check:hover { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 18%, transparent); }
+.check:active { transform: translateY(2px) scale(.86); }
+.check:checked { box-shadow: inset 0 0 0 9px var(--ink); }
+.check::after {
   content: ''; position: absolute; left: 4.5px; top: 1px; width: 4px; height: 8px;
-  border: solid var(--paper); border-width: 0 2px 2px 0; transform: rotate(42deg);
+  border: solid var(--paper); border-width: 0 2px 2px 0;
+  transform: rotate(42deg) scale(0); opacity: 0;
+  transition: transform var(--t-move) var(--spring) 60ms, opacity var(--t-quick) var(--ease) 60ms;
 }
+.check:checked::after { transform: rotate(42deg) scale(1); opacity: 1; }
 
 .task__open {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline;
@@ -255,6 +277,12 @@ kbd {
 
 .task__body { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .task__title { font-size: 15.5px; font-weight: 500; letter-spacing: -.01em; line-height: 1.35; }
+.task__words {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat; background-position: 0 56%; background-size: 0 1.5px;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  transition: background-size 420ms var(--ease) 80ms;
+}
 .task__context, .task__note { font-size: 13px; line-height: 1.5; color: var(--pencil); }
 .task__note { font-style: italic; }
 .task__meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
@@ -269,8 +297,14 @@ kbd {
 }
 .task__code { text-align: right; }
 
-.task--done { opacity: .5; }
-.task--done .task__title { text-decoration: line-through; }
+.task--done { opacity: .5; transition: opacity 600ms var(--ease) 300ms; }
+.task--done .task__words { background-size: 100% 1.5px; }
+/* After the undo window, a ticked row folds shut rather than blinking out. */
+.task--leaving { animation: leave 420ms var(--ease-in) forwards; overflow: hidden; }
+@keyframes leave {
+  0%   { max-height: 240px; }
+  100% { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; border-top-color: transparent; transform: translateX(8px); }
+}
 
 .pill {
   font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em;
@@ -374,11 +408,12 @@ li:first-child > .zone { margin-top: 10px; }
 .sectionblock__head:hover h3 { text-decoration: underline; text-underline-offset: 3px; }
 .sectionblock .list { padding-bottom: 8px; }
 
-.chev { width: 16px; height: 16px; flex: none; color: var(--pencil); transition: transform .2s var(--ease); }
+.chev { width: 16px; height: 16px; flex: none; color: var(--pencil); transition: transform var(--t-move) var(--spring); }
 [aria-expanded='true'] > .chev { transform: rotate(90deg); }
-.collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .25s var(--ease); }
+.collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--t-move) var(--ease); }
 .collapse[data-open='true'] { grid-template-rows: 1fr; }
-.collapse > div { overflow: hidden; }
+.collapse > div { overflow: hidden; opacity: 0; transition: opacity var(--t-quick) var(--ease); }
+.collapse[data-open='true'] > div { opacity: 1; transition-delay: 80ms; }
 
 /* ══ people ════════════════════════════════════════════════════════ */
 .person {
@@ -422,7 +457,7 @@ li:first-child > .zone { margin-top: 10px; }
   border: 1.5px solid var(--rule); padding: 26px 24px 20px; background: var(--paper);
   animation: cardIn .25s var(--ease) backwards;
 }
-@keyframes cardIn { from { opacity: 0; transform: translateY(10px); } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(.985); } }
 .rv__card--out-drop { animation: outLeft .22s var(--ease) forwards; }
 .rv__card--out-date, .rv__card--out-done { animation: outUp .22s var(--ease) forwards; }
 .rv__card--out-keep { animation: outFade .22s var(--ease) forwards; }
@@ -610,6 +645,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; }
 /* ══ sheets: add, search, and the card on a phone ══════════════════ */
 .scrim {
   position: fixed; inset: 0; z-index: 70; background: var(--veil);
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
   display: flex; align-items: flex-end; justify-content: center;
   animation: fade .18s var(--ease);
 }
@@ -618,7 +654,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; }
   width: 100%; max-width: 560px; max-height: 94vh; overflow-y: auto;
   background: var(--paper); border-top: 1.5px solid var(--rule);
   padding: 8px 20px calc(22px + var(--safe-b));
-  animation: sheetin .24s var(--ease);
+  animation: sheetin var(--t-arrive) var(--spring);
 }
 @media (min-width: 720px) { .sheet { border: 1.5px solid var(--rule); padding-bottom: 24px; } }
 /* On a phone, adding takes the whole screen: it is the main job there. */
@@ -643,8 +679,10 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; }
 .find {
   width: min(640px, calc(100vw - 20px)); max-height: min(78vh, 680px);
   display: flex; flex-direction: column; overflow: hidden;
-  background: var(--paper); border: 1.5px solid var(--rule); animation: sheetin .2s var(--ease);
+  background: var(--paper); border: 1.5px solid var(--rule); animation: findin var(--t-move) var(--ease);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .35);
 }
+@keyframes findin { from { opacity: 0; transform: translateY(-8px) scale(.985); } }
 .find__bar { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 16px; border-bottom: 1px solid var(--rule); color: var(--pencil); }
 .find__input { flex: 1; min-width: 0; border: 0; background: none; padding: 10px 0; font-size: 17px; color: var(--ink); }
 .find__input:focus { outline: none; }
@@ -751,9 +789,17 @@ body.is-carded .page { transform: scale(.99); filter: saturate(.8); }
 }
 @media (min-width: 1100px) { .toasts { bottom: 24px; } }
 .toast {
+  position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 16px;
-  background: var(--ink); color: var(--on-ink); font-size: 14px; animation: toastin .22s var(--ease);
+  background: var(--ink); color: var(--on-ink); font-size: 14px; animation: toastin var(--t-arrive) var(--spring);
 }
+.toast--leaving { animation: toastout 220ms var(--ease-in) forwards; }
+@keyframes toastout { to { opacity: 0; transform: translateY(10px) scale(.98); } }
+.toast__time {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: currentColor; opacity: .45;
+  transform-origin: left; animation: drain linear forwards;
+}
+@keyframes drain { to { transform: scaleX(0); } }
 .toast p { margin: 0; flex: 1; min-width: 0; }
 .toast button {
   flex: none; border: 1px solid currentColor; background: none; color: inherit; cursor: pointer; padding: 6px 12px;
@@ -983,11 +1029,11 @@ body.is-carded .page { transform: scale(.99); filter: saturate(.8); }
 .nudge p b { color: var(--ink); }
 
 /* ══ motion ════════════════════════════════════════════════════════ */
-@keyframes rise    { from { opacity: 0; transform: translateY(4px); } }
+@keyframes rise    { from { opacity: 0; transform: translateY(6px); } }
 @keyframes fade    { from { opacity: 0; } }
 @keyframes fadeout { to { opacity: 0; } }
-@keyframes sheetin { from { transform: translateY(16px); opacity: 0; } }
-@keyframes toastin { from { transform: translateY(10px); opacity: 0; } }
+@keyframes sheetin { from { transform: translateY(24px); opacity: 0; } }
+@keyframes toastin { from { transform: translateY(18px) scale(.97); opacity: 0; } }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes pulse   { 50% { opacity: .3; } }
 
@@ -1000,40 +1046,304 @@ body.is-carded .page { transform: scale(.99); filter: saturate(.8); }
   .card__where, .card__title, .card__marks, .card__body, .card__foot, .card__close { opacity: 1; transform: none; }
 }
 
+/* ══ motion ════════════════════════════════════════════════════════
+   Quiet, quick and always going somewhere: things arrive on a long
+   ease-out, things you press answer with a small spring, and nothing
+   moves that you did not cause. All of it stops for reduced motion. */
+
+/* A page arrives rather than appears. */
+.route { animation: routein var(--t-arrive) var(--ease) both; }
+@keyframes routein { from { opacity: 0; transform: translateY(8px); } }
+
+/* The selection glides from row to row at a desk. */
+.glide {
+  position: absolute; top: 0; left: 16px; right: 16px; height: 0; z-index: 0;
+  background: var(--select); opacity: 0; pointer-events: none;
+  transition: transform var(--t-move) var(--spring), height var(--t-move) var(--ease), opacity var(--t-quick) var(--ease);
+}
+@media (min-width: 1100px) { .glide { left: 36px; right: 36px; } }
+.glide[data-on] { opacity: 1; }
+.glide[data-instant] { transition: opacity var(--t-quick) var(--ease); }
+
+/* Counts roll the way they went. */
+.num { display: inline-grid; overflow: hidden; vertical-align: bottom; line-height: inherit; }
+.num > * { grid-area: 1 / 1; }
+.num__in { animation: numin 360ms var(--ease) both; }
+.num__out::before { content: attr(data-v); }
+.num__out { animation: numout 360ms var(--ease) forwards; }
+.num[data-dir='down'] .num__in { animation-name: numindown; }
+.num[data-dir='down'] .num__out { animation-name: numoutdown; }
+.num:not([data-dir]) .num__in { animation: none; }
+@keyframes numin      { from { transform: translateY(80%); opacity: 0; } }
+@keyframes numout     { to   { transform: translateY(-80%); opacity: 0; } }
+@keyframes numindown  { from { transform: translateY(-80%); opacity: 0; } }
+@keyframes numoutdown { to   { transform: translateY(80%); opacity: 0; } }
+
+/* Anything you press gives a little, then springs back. */
+.btn, .chip, .daychip, .tinytoggle, .mark, .plan__chip, .rv__act, .iconbtn, .rowbtn,
+.seg button, .deskbar__search, .addbar {
+  transition: transform var(--t-move) var(--spring), background var(--t-quick) var(--ease),
+              color var(--t-quick) var(--ease), border-color var(--t-quick) var(--ease), opacity var(--t-quick) var(--ease);
+}
+.btn:active, .chip:active, .daychip:active, .tinytoggle:active, .mark:active, .plan__chip:active:not(:disabled),
+.rv__act:active, .iconbtn:active, .rowbtn:active, .seg button:active, .addbar:active {
+  transform: scale(.965); transition-duration: 90ms;
+}
+.mark[aria-pressed='true'], .daychip[aria-pressed='true'], .chip[aria-pressed='true'] { animation: chosen var(--t-move) var(--spring); }
+@keyframes chosen { 40% { transform: scale(1.06); } }
+
+/* Links draw their underline in from the left. */
+.srow__body b, .person__body b, .hub__body b, .index__stream .index__name {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size var(--t-move) var(--ease);
+}
+.srow:hover .srow__body b, .person:hover .person__body b, .hub:hover .hub__body b,
+.index__stream:hover .index__name { background-size: 100% 1px; }
+.srow, .person, .hub, .index__stream, .find__row button, .sectionblock__head {
+  transition: background var(--t-quick) var(--ease);
+}
+.srow__n, .hub__n, .person__disc { transition: transform var(--t-move) var(--spring); }
+.srow:hover .srow__n, .hub:hover .hub__n, .person:hover .person__disc { transform: translateX(-3px); }
+
+/* The folio's contents settle in, top to bottom, when an item opens. */
+.folio__head, .folio__fields > div, .folio__foot { animation: folioin var(--t-arrive) var(--ease) both; }
+.folio__fields > div:nth-child(1) { animation-delay: 40ms; }
+.folio__fields > div:nth-child(2) { animation-delay: 70ms; }
+.folio__fields > div:nth-child(3) { animation-delay: 100ms; }
+.folio__fields > div:nth-child(4) { animation-delay: 130ms; }
+.folio__fields > div:nth-child(n+5) { animation-delay: 160ms; }
+.folio__foot { animation-delay: 120ms; }
+.folio--empty > * { animation: folioin var(--t-arrive) var(--ease) both; }
+@keyframes folioin { from { opacity: 0; transform: translateY(8px); } }
+
+/* The date in the index sets itself on arrival. */
+.index__day, .phonetop__day { animation: dayin 700ms var(--ease) both; }
+@keyframes dayin { from { opacity: 0; transform: translateY(14px); letter-spacing: -.02em; } }
+
+/* A day that has just been given an item takes it with a nod. */
+.plan__day[data-peek] { animation: land var(--t-move) var(--spring); }
+@keyframes land { 40% { transform: scale(1.08); } }
+.plan__hand { animation: cardIn var(--t-arrive) var(--ease) both; }
+.plan__last, .rv__done { animation: routein var(--t-arrive) var(--ease) both; }
+
+/* Inputs and fields come into focus rather than flick. */
+.input, .textarea, .select, .folio__note, .find__bar, .deskbar__search { transition: border-color var(--t-quick) var(--ease), box-shadow var(--t-quick) var(--ease); }
+.folio__title, .card__title { transition: box-shadow var(--t-quick) var(--ease); }
+
+/* Theme changes cross-fade where the browser can (lib/modes.ts). */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 380ms; animation-timing-function: var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  .route, .num__in, .num__out, .folio__head, .folio__fields > div, .folio__foot,
+  .index__day, .phonetop__day, .task--leaving { animation: none !important; }
+  .glide { transition: none; }
+}
+
 /* ══ the notebook ══════════════════════════════════════════════════
-   The same page, kept by hand: dates in the margin are written, the
-   margin itself is a red line, the row you are on is highlighted rather
-   than shaded, and the open item is an index card pinned beside the list. */
+   A notepad, kept by hand. Ruled paper with a little grain; every row
+   is a whole number of lines, so writing sits on the rules; a double
+   red margin with dates written in it; punched holes down the binding;
+   a highlighter for the line you are on and a pen stroke through what
+   is done. The open item is an index card taped beside the page, and
+   a toast is a sticky note. */
+
+[data-paper='notebook'] { --line-h: 32px; }
+
+[data-paper='notebook'] body { background-image: var(--grain); }
+
+/* ── the ruling ───────────────────────────────────────────────── */
+[data-paper='notebook'] .list {
+  background-image: repeating-linear-gradient(to bottom,
+    transparent 0, transparent calc(var(--line-h) - 1px),
+    var(--hair) calc(var(--line-h) - 1px), var(--hair) var(--line-h));
+}
+[data-paper='notebook'] .task {
+  padding: 0; border-top: 0; align-items: start; min-height: var(--line-h);
+}
+[data-paper='notebook'] .task:hover,
+[data-paper='notebook'] .task[data-selected] { background: transparent; }
+[data-paper='notebook'] .glide { display: none; }
+[data-paper='notebook'] .task__body { gap: 0; }
+[data-paper='notebook'] .task__title,
+[data-paper='notebook'] .task__context,
+[data-paper='notebook'] .task__note,
+[data-paper='notebook'] .task__meta,
+[data-paper='notebook'] .task__where,
+[data-paper='notebook'] .task__code,
+[data-paper='notebook'] .task__due { line-height: var(--line-h); }
+[data-paper='notebook'] .task__title { font-size: 18.5px; font-weight: 400; letter-spacing: 0; }
+[data-paper='notebook'] .task__context,
+[data-paper='notebook'] .task__note { font-size: 15.5px; font-style: normal; }
+[data-paper='notebook'] .task__meta { gap: 0 10px; }
+[data-paper='notebook'] .task__where { font-size: 15px; }
+[data-paper='notebook'] .task__code { font-size: 11px; }
+
+/* the double red margin, with the date written in it */
 [data-paper='notebook'] .task__due {
-  font-family: var(--hand); font-size: 19px; line-height: .9;
-  margin: -12px 0; padding-top: 12px; padding-bottom: 12px;
+  align-self: stretch; padding: 0 10px 0 0; border-right: 3px double var(--margin);
+  font-family: var(--hand); font-size: 16px; letter-spacing: 0; text-transform: none;
 }
-[data-paper='notebook'] .task[data-selected],
-[data-paper='notebook'] .task:hover { background: none; }
-[data-paper='notebook'] .task[data-selected] .task__title,
-[data-paper='notebook'] .find__row--on .find__title { background: var(--select); box-shadow: -4px 0 0 var(--select), 4px 0 0 var(--select); }
-[data-paper='notebook'] .task__title { font-size: 17px; font-weight: 400; letter-spacing: 0; }
-[data-paper='notebook'] .colhead { border-bottom-color: var(--hair); }
+[data-paper='notebook'] .colhead span:first-child { border-right: 3px double var(--margin); }
+@media (max-width: 1099px) {
+  [data-paper='notebook'] .task { grid-template-columns: 58px 22px minmax(0, 1fr); }
+  [data-paper='notebook'] .task__due { font-size: 14px; padding-right: 6px; }
+}
+[data-paper='notebook'] .colhead { border-bottom: 0; }
+
+/* a box drawn by hand, and a tick that overshoots it */
+[data-paper='notebook'] .check {
+  width: 17px; height: 17px; margin-top: 7px; transform: rotate(-2deg);
+  border: 2px solid var(--ink); border-radius: 3px 6px 4px 7px / 6px 3px 7px 4px;
+}
+[data-paper='notebook'] .check:active { transform: rotate(-2deg) scale(.86); }
+[data-paper='notebook'] .check:checked { box-shadow: none; }
+[data-paper='notebook'] .check::after {
+  left: 5px; top: -6px; width: 6px; height: 15px; border-color: var(--ink); border-width: 0 2.5px 2.5px 0;
+}
+[data-paper='notebook'] .check:checked::after { transform: rotate(38deg) scale(1); }
+
+/* a highlighter swipes across the line you are on; a pen goes through what is done */
+[data-paper='notebook'] .task__words {
+  background-image: linear-gradient(var(--select), var(--select)), linear-gradient(currentColor, currentColor);
+  background-position: 0 70%, 0 58%;
+  background-size: 0 62%, 0 2px;
+  padding: 0 2px; margin: 0 -2px;
+  transition: background-size 420ms var(--ease);
+}
+[data-paper='notebook'] .task[data-selected] .task__words { background-size: 100% 62%, 0 2px; }
+[data-paper='notebook'] .task:hover:not([data-selected]):not(.task--done) .task__words { background-size: 14px 62%, 0 2px; }
+[data-paper='notebook'] .task.task--done .task__words { background-size: 0 62%, 100% 2px; }
+[data-paper='notebook'] .task.task--done[data-selected] .task__words { background-size: 100% 62%, 100% 2px; }
+[data-paper='notebook'] .task--done { opacity: .6; }
+
+/* ── headings in pen ──────────────────────────────────────────── */
+[data-paper='notebook'] .shead,
+[data-paper='notebook'] .pagehead,
+[data-paper='notebook'] .stream__head { border-bottom: 2px solid var(--rule); }
+[data-paper='notebook'] .shead h2,
+[data-paper='notebook'] .pagehead h1,
+[data-paper='notebook'] .stream__head h2 {
+  font-size: 44px; line-height: 1.05;
+  background: linear-gradient(transparent 58%, var(--select) 58%, var(--select) 88%, transparent 88%);
+  padding: 0 6px; margin-left: -6px;
+}
+[data-paper='notebook'] .tgroup__head {
+  border-bottom: 0; padding-bottom: 2px;
+  font-family: var(--hand); font-size: 19px; font-weight: 700; letter-spacing: 0; text-transform: none;
+  text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px;
+}
+[data-paper='notebook'] .tgroup[data-tone='due'] .tgroup__head { text-decoration-style: wavy; text-decoration-color: var(--red); }
+[data-paper='notebook'] .tgroup__n { font-family: var(--mono); font-size: 12px; text-decoration: none; display: inline-block; }
+[data-paper='notebook'] .groupblock__head h3,
+[data-paper='notebook'] .zone { font-family: var(--hand); font-size: 17px; font-weight: 700; letter-spacing: 0; text-transform: none; }
+[data-paper='notebook'] .sectionblock__head h3 { font-size: 18px; }
+[data-paper='notebook'] .srow__body b,
+[data-paper='notebook'] .person__body b,
+[data-paper='notebook'] .hub__body b { font-size: 19px; font-weight: 400; }
+[data-paper='notebook'] .srow__n,
+[data-paper='notebook'] .hub__n,
+[data-paper='notebook'] .person__disc,
 [data-paper='notebook'] .index__day,
-[data-paper='notebook'] .phonetop__day { font-weight: 400; font-style: italic; letter-spacing: -.03em; }
-[data-paper='notebook'] .realm button[aria-pressed='true'],
-[data-paper='notebook'] .index__nav a[aria-current='page'] > span:first-child {
-  border-bottom-color: transparent; font-style: italic;
-  text-decoration: underline wavy var(--red); text-decoration-thickness: 1.5px; text-underline-offset: 6px;
+[data-paper='notebook'] .phonetop__day { font-family: var(--hand); font-weight: 700; letter-spacing: 0; }
+
+/* ── the binding: punched holes down the page ─────────────────── */
+@media (min-width: 1100px) {
+  [data-paper='notebook'] .page {
+    background:
+      radial-gradient(circle at 18px 50%, var(--desk) 0, var(--desk) 6px,
+        color-mix(in srgb, var(--ink) 25%, var(--desk)) 6.5px, transparent 7.5px) 0 20px / 36px 40px repeat-y,
+      var(--grain), var(--paper);
+  }
+  [data-paper='notebook'] .page__body { padding-left: 64px; }
+  [data-paper='notebook'] .deskbar { padding-left: 64px; background: transparent; }
+  /* the left page of the spread, with the gutter's shadow */
+  [data-paper='notebook'] .index {
+    border-right: 0;
+    background: var(--grain), color-mix(in srgb, var(--ink) 4%, var(--paper));
+    box-shadow: inset -22px 0 26px -22px rgba(0, 0, 0, .28);
+  }
 }
-[data-paper='notebook'] .tabs a[aria-current='page'] { box-shadow: none; font-style: italic; text-decoration: underline wavy var(--red); text-underline-offset: 6px; }
-[data-paper='notebook'] .btn--primary,
-[data-paper='notebook'] .rv__act--go {
-  font-family: var(--mono); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 13.5px;
+/* on a phone it is a reporter's pad, bound across the top */
+@media (max-width: 1099px) {
+  [data-paper='notebook'] .phonetop {
+    padding-top: calc(30px + var(--safe-t));
+    background: radial-gradient(circle at 50% 14px, var(--desk) 0, var(--desk) 5px,
+      color-mix(in srgb, var(--ink) 25%, var(--desk)) 5.5px, transparent 6.5px) 0 var(--safe-t) / 30px 30px repeat-x;
+  }
 }
-[data-paper='notebook'] .folio-pane { background: color-mix(in srgb, var(--ink) 3%, var(--paper)); }
+
+/* ── the index card, taped beside the page ────────────────────── */
+[data-paper='notebook'] .folio-pane { border-left: 0; background: var(--grain), var(--desk); }
 [data-paper='notebook'] .folio {
-  margin: 26px 22px; min-height: 0; background: var(--paper);
+  position: relative; margin: 34px 26px; min-height: 0;
+  background-color: var(--card); background-image:
+    repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--hair) 31px, var(--hair) 32px);
+  background-position: 0 4px;
   box-shadow: var(--card-shadow); transform: var(--card-tilt);
-  border-top: 1.5px solid var(--margin);
+  border-top: 2px solid var(--margin);
+}
+[data-paper='notebook'] .folio::before {
+  content: ''; position: absolute; top: -14px; left: 50%; width: 96px; height: 26px; margin-left: -48px;
+  background: var(--tape); transform: rotate(2.5deg); box-shadow: 0 1px 1px rgba(0, 0, 0, .08);
 }
 [data-paper='notebook'] .folio--empty { transform: none; box-shadow: none; background: none; border: 0; }
-[data-paper='notebook'] .folio__foot { position: static; }
-[data-paper='notebook'] .folio__note { font-family: var(--hand); font-size: 22px; line-height: 1.35; }
-[data-paper='notebook'] .folio__title, [data-paper='notebook'] .card__title { font-weight: 500; letter-spacing: -.01em; }
-[data-paper='notebook'] .total { border-bottom-style: double; }
+[data-paper='notebook'] .folio--empty::before { display: none; }
+[data-paper='notebook'] .folio__head { border-bottom-color: var(--margin); }
+[data-paper='notebook'] .folio__title { font-size: 26px; font-weight: 700; letter-spacing: 0; line-height: 1.25; }
+[data-paper='notebook'] .folio__fields > div { border-bottom-color: transparent; }
+[data-paper='notebook'] .folio__text { font-size: 17px; }
+[data-paper='notebook'] .folio__foot { position: static; background: transparent; border-top-color: var(--margin); }
+[data-paper='notebook'] .folio__note,
+[data-paper='notebook'] .card__note {
+  border: 0; padding: 0 2px; font-family: var(--hand); font-size: 18px; line-height: 32px;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--hair) 31px, var(--hair) 32px);
+}
+[data-paper='notebook'] .folio__note:focus,
+[data-paper='notebook'] .card__note:focus { box-shadow: none; }
+
+/* ── pen-and-ink controls ─────────────────────────────────────── */
+[data-paper='notebook'] .btn,
+[data-paper='notebook'] .rv__act,
+[data-paper='notebook'] .seg { border-width: 2px; border-radius: 240px 14px 220px 14px / 14px 220px 14px 240px; }
+[data-paper='notebook'] .seg { overflow: hidden; }
+[data-paper='notebook'] .btn--primary,
+[data-paper='notebook'] .rv__act--go,
+[data-paper='notebook'] .addbar {
+  font-family: var(--mono); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 13.5px;
+}
+[data-paper='notebook'] .chip,
+[data-paper='notebook'] .daychip,
+[data-paper='notebook'] .tinytoggle,
+[data-paper='notebook'] .mark,
+[data-paper='notebook'] .plan__chip { border-width: 1.5px; border-radius: 12px 4px 10px 5px / 5px 10px 4px 12px; }
+[data-paper='notebook'] .input,
+[data-paper='notebook'] .select,
+[data-paper='notebook'] .deskbar__search {
+  border: 0; border-bottom: 1.5px solid var(--ink); background-color: transparent;
+}
+[data-paper='notebook'] .input--date { border: 1.5px solid var(--line); border-radius: 6px 3px 6px 3px; }
+[data-paper='notebook'] .realm button[aria-pressed='true']::after,
+[data-paper='notebook'] .tabs a[aria-current='page']::before { background: var(--red); height: 2.5px; border-radius: 2px; }
+[data-paper='notebook'] .index__nav a > span:first-child { background-image: linear-gradient(var(--red), var(--red)); }
+[data-paper='notebook'] .index__nav a,
+[data-paper='notebook'] .index__stream { font-size: 17px; }
+
+/* ── paper things ─────────────────────────────────────────────── */
+[data-paper='notebook'] .toast {
+  background: var(--note); color: var(--ink); transform: rotate(-.8deg);
+  box-shadow: 0 10px 22px -12px rgba(0, 0, 0, .45); font-family: var(--hand); font-size: 17px;
+}
+[data-paper='notebook'] .toast button { font-family: var(--mono); border-radius: 8px 3px 8px 3px; }
+[data-paper='notebook'] .toast--warn { background: var(--red); color: #FFFFFF; }
+[data-paper='notebook'] .card,
+[data-paper='notebook'] .find,
+[data-paper='notebook'] .sheet,
+[data-paper='notebook'] .rv__card,
+[data-paper='notebook'] .brief__sheet {
+  border: 0; background-color: var(--card); background-image: var(--grain);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .1), 0 24px 48px -24px rgba(0, 0, 0, .45);
+}
+[data-paper='notebook'] .rv__card { border-top: 2px solid var(--margin); transform: rotate(-.4deg); }
+[data-paper='notebook'] .rv__title { font-size: 30px; font-weight: 700; }
+[data-paper='notebook'] .plan__grid { border-top-width: 2px; }
+[data-paper='notebook'] .empty h3 { font-size: 24px; }

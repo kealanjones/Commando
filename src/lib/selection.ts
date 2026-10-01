@@ -20,6 +20,10 @@ function subscribe(onChange: () => void) {
 export const useWide = (): boolean =>
   useSyncExternalStore(subscribe, () => Boolean(window.matchMedia?.(WIDE_QUERY).matches), () => false);
 
+/** Rows that have just been ticked and are folding away. */
+export const LeavingContext = createContext<ReadonlySet<string>>(new Set());
+export const useLeaving = () => useContext(LeavingContext);
+
 /** The selected item's id, for rows to mark themselves. */
 export const SelectedContext = createContext<string | null>(null);
 export const useSelectedId = () => useContext(SelectedContext);

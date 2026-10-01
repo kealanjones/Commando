@@ -32,6 +32,14 @@ with a notebook version of the same page alongside it.
   holds the values, app.css never names a colour. The notebook's few extra
   touches (written margin dates, highlighter, index card) sit in one block
   at the end of app.css.
+- **Motion that settles.** A long ease-out for arrivals, a small spring for
+  presses and choices, nothing that moves on its own. The two that carry
+  meaning: the selection glides (you can see where you went), and a ticked
+  row strikes through, waits out its undo, then folds shut — undoing calls
+  the fold off.
+- **A notebook that is a notebook.** The first version was the ledger in a
+  serif with a red line. Now it is ruled, written by hand, bound with holes,
+  and the rows are sized in whole lines so the writing sits on the rules.
 - **Keys at the desk.** J/K, X, U, D, N, / — shown in the empty folio, so
   they are learnt by looking rather than from a help page.
 

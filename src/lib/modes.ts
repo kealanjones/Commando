@@ -9,7 +9,7 @@
  * Paper and light: which look the register wears. Ledger or Notebook, and
  * light, dark, or whatever the device is set to.
  */
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { STREAMS } from '@data/register.seed';
 import type { Realm, RealmScope, Stream } from './types';
 
@@ -62,6 +62,7 @@ export const setLight = (l: Light) => light.set(l);
 export function useApplyLook() {
   const p = usePaper();
   const l = useLight();
+  const first = useRef(true);
   useEffect(() => {
     const root = document.documentElement;
     const media = window.matchMedia?.('(prefers-color-scheme: dark)');
@@ -72,7 +73,16 @@ export function useApplyLook() {
       const paperColour = getComputedStyle(root).getPropertyValue('--paper').trim();
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', paperColour || '#FFFFFF');
     };
-    apply();
+    // A change of paper or light cross-fades the whole page where the
+    // browser can; the first paint simply is what it is.
+    type VT = Document & { startViewTransition?: (cb: () => void) => unknown };
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (!first.current && !still && (document as VT).startViewTransition) {
+      (document as VT).startViewTransition!(apply);
+    } else {
+      apply();
+    }
+    first.current = false;
     if (l !== 'system' || !media) return;
     media.addEventListener('change', apply);
     return () => media.removeEventListener('change', apply);

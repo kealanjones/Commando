@@ -134,9 +134,15 @@ const streamRows = async (p) => {
   const second = (await p.locator('.task__title').nth(1).textContent()).trim();
   ok((await p.locator('#folio-title').inputValue()) === second, `it opens in the folio (${second.slice(0, 40)}…)`);
   ok((await p.locator('.task[data-selected]').count()) === 1, 'and the row is marked as the one you are on');
+  ok((await p.locator('.glide[data-on]').count()) === 1, 'a highlight sits behind the selected row');
+  const glideAt = () => p.locator('.glide').evaluate((g) => new DOMMatrix(getComputedStyle(g).transform).m42);
+  const before1 = await glideAt();
 
   await p.keyboard.press('j');
-  await p.waitForTimeout(200);
+  await p.waitForTimeout(450);
+  const after1 = await glideAt();
+  const rowTop = await p.locator('.task[data-selected]').evaluate((r) => r.getBoundingClientRect().top - r.closest('.page__body').getBoundingClientRect().top);
+  ok(after1 > before1 && Math.abs(after1 - rowTop) < 2, `and glides down to the next one (${Math.round(before1)} → ${Math.round(after1)})`);
   const third = (await p.locator('.task__title').nth(2).textContent()).trim();
   ok((await p.locator('#folio-title').inputValue()) === third, 'J moves down the list and the folio follows');
   await p.keyboard.press('k');
@@ -145,8 +151,11 @@ const streamRows = async (p) => {
 
   const before = Number((await p.locator('.tcount b').first().textContent()));
   await p.keyboard.press('x');
-  await p.waitForTimeout(400);
-  ok(Number((await p.locator('.tcount b').first().textContent())) === before - 1, 'X marks it done');
+  await p.waitForTimeout(80);
+  ok(Number((await p.locator('.tcount b').first().textContent())) === before - 1, 'X marks it done, and the count reads true even mid-roll');
+  await p.waitForTimeout(600);
+  const strike = await p.locator('.task[data-selected] .task__words').evaluate((w) => getComputedStyle(w).backgroundSize);
+  ok(/^100%/.test(strike), `a line is drawn through it (${strike})`);
   await p.locator('.toast button', { hasText: 'Undo' }).last().click();
   await p.waitForTimeout(400);
 
@@ -189,7 +198,15 @@ const streamRows = async (p) => {
   await p.waitForTimeout(200);
   ok((await look())[0] === 'notebook', 'Notebook changes the paper');
   const face = await p.evaluate(() => getComputedStyle(document.body).fontFamily);
-  ok(/Newsreader/.test(face), `and the type with it (${face.split(',')[0]})`);
+  ok(/Kalam/.test(face), `and the type with it, a hand (${face.split(',')[0]})`);
+  await p.goto(`${base}/`, { waitUntil: 'networkidle' });
+  await p.waitForTimeout(600);
+  const ruled = await p.evaluate(() => getComputedStyle(document.querySelector('.list')).backgroundImage);
+  ok(/repeating-linear-gradient/.test(ruled), 'the notebook\'s lists are ruled');
+  const rowH = await p.evaluate(() => [...document.querySelectorAll('.today .task')].slice(0, 4).map((r) => r.getBoundingClientRect().height));
+  ok(rowH.every((h) => Math.abs(h / 32 - Math.round(h / 32)) < .05), `and every row is a whole number of lines (${rowH.map(Math.round).join(', ')})`);
+  await p.goto(`${base}/settings`, { waitUntil: 'networkidle' });
+  await p.waitForTimeout(400);
   await p.reload({ waitUntil: 'networkidle' });
   await p.waitForTimeout(500);
   ok(JSON.stringify(await look()) === '["notebook","light"]', 'and both survive a reload');

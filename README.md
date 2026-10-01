@@ -40,14 +40,26 @@ The list can be driven from the keyboard:
 | `/` or `Cmd/Ctrl+K` | Search |
 | `Esc` | Put the folio down |
 
+**Motion** is quiet and always going somewhere. Pages arrive rather than
+appear; the selection glides from row to row; ticking fills the box with
+ink, springs the tick out and draws a line through the title, and once the
+undo has run out (a line on the toast drains to show how long is left) the
+row folds shut. Counts roll the way they went, switches underline with a
+line that grows, anything pressed gives a little and springs back, and a
+change of paper or light cross-fades the page. All of it stops for
+reduced motion.
+
 **On a phone** it is one column: the date and which life at the top, and at
 the bottom a full-width **Add an item** — adding is the main job there — over
 the four tabs. An item opens as a card that grows out of its row.
 
-**Settings** holds the paper and the light. **Ledger** is white and black;
-**Notebook** is ruled paper, blue-black ink, a red margin with dates written
-in it, a highlighter on the row you are on, and the open item as an index
-card. Either can **follow the device** into dark, or be fixed light or dark.
+**Settings** holds the paper and the light. **Ledger** is white and black.
+**Notebook** is a notepad kept by hand: ruled paper with a little grain, a
+handwritten face (Kalam), every row a whole number of lines so writing sits
+on the rules, a double red margin with the dates written in it, punched holes
+down the binding (across the top on a phone), a highlighter that swipes
+across the line you are on, a pen stroke through what is done, the open item
+as an index card taped beside the page, and toasts as sticky notes. Either can **follow the device** into dark, or be fixed light or dark.
 All of it is kept on the device; none of it is written to the register.
 
 Meeting notes come in from **Add → Paste meeting notes instead**.
