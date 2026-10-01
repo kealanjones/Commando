@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 
@@ -84,17 +84,8 @@ function Register({ email }: { email: string }) {
   /** The folio, at a desk: an id, so it always shows the live row. */
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [recentlyDone, setRecentlyDone] = useState<string[]>([]);
-  /** Ticked rows in their last moment on screen, folding shut. */
+  /** Struck rows in their last moment on screen, folding shut. */
   const [leaving, setLeaving] = useState<ReadonlySet<string>>(new Set());
-  /** The fold timers per row, so an undo can call them off. */
-  const folds = useRef(new Map<string, number[]>());
-  const keep = useCallback((id: string) => {
-    folds.current.get(id)?.forEach((t) => window.clearTimeout(t));
-    folds.current.delete(id);
-    setRecentlyDone((ids) => ids.filter((x) => x !== id));
-    setLeaving((s) => { if (!s.has(id)) return s; const n = new Set(s); n.delete(id); return n; });
-  }, []);
   const [searching, setSearching] = useState(false);
 
   const selected = useMemo(
@@ -116,37 +107,42 @@ function Register({ email }: { email: string }) {
     return () => { delete document.body.dataset.realm; };
   }, [realm]);
 
+  // A ticked row stays on the page, struck through, until it is cleared.
+  // Either way round, a fresh tick starts it uncleared.
   const onToggle = useCallback(
     (task: Task) => {
       const next = !task.done;
-      update.mutate({ id: task.id, patch: { done: next } });
-
-      if (!next) { keep(task.id); return; }
-
-      // Hold the row on screen for as long as the undo is offered, then
-      // let it fold shut rather than blink out.
-      keep(task.id);
-      setRecentlyDone((ids) => [...ids, task.id]);
-      folds.current.set(task.id, [
-        window.setTimeout(() => setLeaving((s) => new Set(s).add(task.id)), 4800),
-        window.setTimeout(() => {
-          folds.current.delete(task.id);
-          setRecentlyDone((ids) => ids.filter((id) => id !== task.id));
-          setLeaving((s) => { const n = new Set(s); n.delete(task.id); return n; });
-        }, 5250),
-      ]);
-
+      update.mutate({ id: task.id, patch: { done: next, cleared_at: null } });
+      if (!next) return;
       push({
         message: 'Done.',
         actionLabel: 'Undo',
-        onAction: () => {
-          update.mutate({ id: task.id, patch: { done: false } });
-          keep(task.id);
-        },
+        onAction: () => update.mutate({ id: task.id, patch: { done: false } }),
         duration: 5000,
       });
     },
-    [update, push, keep],
+    [update, push],
+  );
+
+  /** Fold the struck rows shut, then file them away. Undo brings them back. */
+  const clearDone = useCallback(
+    (list: Task[]) => {
+      const ids = list.filter((t) => t.done && !t.cleared_at).map((t) => t.id);
+      if (!ids.length) return;
+      setLeaving((s) => new Set([...s, ...ids]));
+      window.setTimeout(() => {
+        const at = new Date().toISOString();
+        ids.forEach((id) => update.mutate({ id, patch: { cleared_at: at } }));
+        setLeaving((s) => { const n = new Set(s); ids.forEach((id) => n.delete(id)); return n; });
+        push({
+          message: `Cleared ${ids.length}.`,
+          actionLabel: 'Undo',
+          onAction: () => ids.forEach((id) => update.mutate({ id, patch: { cleared_at: null } })),
+          duration: 5000,
+        });
+      }, 420);
+    },
+    [update, push],
   );
 
   const onDelete = useCallback(
@@ -234,15 +230,15 @@ function Register({ email }: { email: string }) {
           <DeskBar onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} />
 
           <div className="page__body">
-            {wide && <Glide selectedId={selectedId} watch={`${location.pathname}|${tasks.length}|${recentlyDone.join()}|${leaving.size}`} />}
+            {wide && <Glide selectedId={selectedId} watch={`${location.pathname}|${tasks.length}|${leaving.size}`} />}
             {/* Keyed by address, so each page arrives rather than appears. */}
             <div className="route" key={location.pathname}>
             <Routes>
-              <Route path="/" element={<Today onToggle={onToggle} onOpen={onOpen} recentlyDone={recentlyDone} />} />
-              <Route path="/streams" element={<Streams onToggle={onToggle} onOpen={onOpen} />} />
-              <Route path="/streams/:streamId" element={<Streams onToggle={onToggle} onOpen={onOpen} />} />
+              <Route path="/" element={<Today onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
+              <Route path="/streams" element={<Streams onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
+              <Route path="/streams/:streamId" element={<Streams onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
               <Route path="/people" element={<People />} />
-              <Route path="/people/:personId" element={<Person onToggle={onToggle} onOpen={onOpen} />} />
+              <Route path="/people/:personId" element={<Person onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
               <Route path="/people/:personId/review" element={<Review />} />
               <Route path="/review" element={<ReviewHub />} />
               <Route path="/review/decide" element={<Review />} />

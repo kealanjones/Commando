@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { TaskCard } from '@/components/TaskCard';
+import { ClearDone } from '@/components/ClearDone';
 import { usePeople, useStreams, useTasks } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
+import { lingers } from '@/lib/today';
 import type { Task } from '@/lib/types';
 
 /**
@@ -13,9 +15,11 @@ import type { Task } from '@/lib/types';
 export function Person({
   onToggle,
   onOpen,
+  onClearDone,
 }: {
   onToggle: (t: Task) => void;
   onOpen: (t: Task) => void;
+  onClearDone: (list: Task[]) => void;
 }) {
   const { personId = '' } = useParams();
   const { data: people = [] } = usePeople();
@@ -30,9 +34,11 @@ export function Person({
     const ids = new Set(links.filter((l) => l.person_id === personId).map((l) => l.task_id));
     const age = (t: Task) => t.touched_at ?? t.created_at;
     return tasks
-      .filter((t) => ids.has(t.id) && !t.done)
+      .filter((t) => ids.has(t.id) && !t.deleted_at && (!t.done || lingers(t)))
       .sort((a, b) => age(a).localeCompare(age(b)));
   }, [links, tasks, personId]);
+  const struck = theirs.filter(lingers);
+  const open = theirs.length - struck.length;
 
   return (
     <section aria-labelledby="person-head">
@@ -43,13 +49,14 @@ export function Person({
           <h2 id="person-head">{person?.name ?? 'Someone'}</h2>
           <p className="stream__meta">
             {person?.role ? `${person.role} · ` : ''}
-            {theirs.length} open
+            {open} open
           </p>
         </div>
         {theirs.length > 0 && (
           <div className="stream__acts">
+            <ClearDone struck={struck} onClear={onClearDone} />
             <Link to={`/brief?person=${personId}`} className="btn btn--ghost">Brief</Link>
-            <Link to={`/people/${personId}/review`} className="btn btn--primary">Go through them</Link>
+            {open > 0 && <Link to={`/people/${personId}/review`} className="btn btn--primary">Go through them</Link>}
           </div>
         )}
       </div>

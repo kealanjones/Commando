@@ -81,6 +81,10 @@ Earlier versions had a second kind of thing ("watch" items with no checkbox)
 and a third state ("not clear yet"). Migration `0009_one_kind.sql` folds both
 back into ordinary items; nothing is deleted.
 
+A ticked item stays where it was, struck through, as a record of what got
+done. **Clear done** (next to the count, and on a stream or a person) takes
+the struck ones off the page; they are still under a stream's **Done**.
+
 ### Work and personal
 
 The switch in the header decides which life the register is. It is applied
@@ -212,6 +216,7 @@ supabase db push
 | `0004`–`0007` | Intake, review, threads, section groups |
 | `0008_realm.sql` | Work or personal, on each stream |
 | `0009_one_kind.sql` | One kind of item: watch items become ordinary items, parked items go back into play |
+| `0010_cleared.sql` | Done items stay on the page, struck through, until **Clear done** |
 
 ### 3. Sign in once
 

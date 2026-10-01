@@ -44,22 +44,36 @@ await p.locator('.toast button', { hasText: 'Undo' }).click();
 await p.waitForTimeout(400);
 ok(!(await p.locator(`#${targetId}`).isChecked()), 'undo reopens the task');
 
-// ── 3b. once the undo has gone, a ticked row folds away ─────────
+// ── 3b. a ticked row stays, struck, until Clear done ───────────
 {
-  // The row ticked and undone above must still be here once its old
-  // timers would have run out.
-  await p.waitForTimeout(5400);
-  ok((await p.locator(`#${targetId}`).count()) === 1 && !(await p.locator(`#${targetId}`).isChecked()),
-    'an undone tick does not fold its row away later');
+  ok((await p.locator('.cleardone').count()) === 0, 'with nothing struck, there is nothing to clear');
 
   const id = await p.evaluate(() => document.querySelector('.task .check')?.id);
   await p.locator(`#${id}`).click();
-  await p.waitForTimeout(4950);
+  await p.waitForTimeout(5800);
+  ok((await p.locator(`#${id}`).count()) === 1 && (await p.locator(`#${id}`).isChecked()),
+    'long after the undo has gone, the ticked row is still there');
+  ok(await p.locator(`#${id}`).evaluate((c) => c.closest('.task').classList.contains('task--done')),
+    'struck through');
+  ok((await p.locator('.cleardone').textContent()).includes('1'), 'Clear done shows how many it will take');
+
+  await p.locator('.cleardone').click();
+  await p.waitForTimeout(150);
   ok(await p.locator(`#${id}`).evaluate((c) => c.closest('.task').classList.contains('task--leaving')),
-    'just before it goes, the row starts to fold');
+    'clearing folds the struck row shut');
   await p.waitForTimeout(700);
   ok((await p.locator(`#${id}`).count()) === 0, 'and then it is gone');
-  await p.locator('.toast button', { hasText: 'Undo' }).count();
+  ok((await p.locator('.cleardone').count()) === 0, 'and so is the button');
+  ok(await p.locator('.toast', { hasText: 'Cleared 1.' }).isVisible(), 'clearing offers Undo');
+  await p.locator('.toast button', { hasText: 'Undo' }).click();
+  await p.waitForTimeout(500);
+  ok((await p.locator(`#${id}`).count()) === 1 && (await p.locator(`#${id}`).isChecked()),
+    'undo puts it back, still struck');
+
+  // Reopening it takes it off the struck list again.
+  await p.locator(`#${id}`).click();
+  await p.waitForTimeout(400);
+  ok((await p.locator('.cleardone').count()) === 0, 'reopening it leaves nothing to clear');
 }
 
 // ── 4. delete is reversible ─────────────────────────────────────

@@ -200,6 +200,29 @@ kbd {
   text-transform: uppercase; color: var(--pencil); white-space: nowrap;
 }
 .tcount b { color: var(--ink); font-weight: 500; }
+.shead__side { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+/* Ticked items stay struck through until this takes them off. The label
+   gets struck on hover, the way the rows it clears were. */
+.cleardone {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink);
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase;
+  cursor: pointer; white-space: nowrap;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat; background-position: 12px 50%; background-size: 0 1.5px;
+  transition: border-color var(--t-quick) var(--ease), background-size var(--t-move) var(--ease),
+    transform var(--t-quick) var(--spring);
+  animation: rise var(--t-arrive) var(--ease) both;
+}
+.cleardone:hover { border-color: var(--ink); background-size: calc(100% - 24px) 1.5px; }
+.cleardone:active { transform: scale(.96); }
+.cleardone:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.cleardone__n {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px;
+  border-radius: 999px; background: var(--ink); color: var(--on-ink); font-size: 11px; letter-spacing: 0;
+}
+[data-paper='notebook'] .cleardone { font-family: var(--hand); font-size: 15px; letter-spacing: 0; text-transform: none; border-style: dashed; }
 
 /* The ledger's column heads — only where the columns exist. */
 .colhead { display: none; }

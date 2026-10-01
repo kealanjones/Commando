@@ -3,8 +3,10 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Chevron } from '@/components/icons';
 import { TaskCard } from '@/components/TaskCard';
 import { Num } from '@/components/Motion';
+import { ClearDone } from '@/components/ClearDone';
 import { useHealth, usePeople, useSections, useTasks } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
+import { lingers } from '@/lib/today';
 import { branchesFor } from '@/lib/tree';
 import { useRealm } from '@/lib/modes';
 import type { Realm, Section, StreamHealth, Task } from '@/lib/types';
@@ -18,14 +20,16 @@ import type { Realm, Section, StreamHealth, Task } from '@/lib/types';
 export function Streams({
   onToggle,
   onOpen,
+  onClearDone,
 }: {
   onToggle: (t: Task) => void;
   onOpen: (t: Task) => void;
+  onClearDone: (list: Task[]) => void;
 }) {
   const { streamId } = useParams();
   const health = useHealth();
   const stream = streamId ? health.find((h) => h.id === streamId) : undefined;
-  if (streamId && stream) return <StreamDetail stream={stream} onToggle={onToggle} onOpen={onOpen} />;
+  if (streamId && stream) return <StreamDetail stream={stream} onToggle={onToggle} onOpen={onOpen} onClearDone={onClearDone} />;
   return <StreamIndex health={health} />;
 }
 
@@ -87,10 +91,12 @@ function StreamDetail({
   stream,
   onToggle,
   onOpen,
+  onClearDone,
 }: {
   stream: StreamHealth;
   onToggle: (t: Task) => void;
   onOpen: (t: Task) => void;
+  onClearDone: (list: Task[]) => void;
 }) {
   const [params, setParams] = useSearchParams();
   const filter: Filter = params.get('filter') === 'done' ? 'done' : 'open';
@@ -117,7 +123,10 @@ function StreamDetail({
   };
 
   const mySections = sections.filter((s) => s.stream_id === stream.id);
-  const rows = tasks.filter((t) => t.stream_id === stream.id && (filter === 'done' ? t.done : !t.done));
+  // Open keeps today's ticks on show, struck through, until they are cleared.
+  const rows = tasks.filter((t) => t.stream_id === stream.id && !t.deleted_at
+    && (filter === 'done' ? t.done : !t.done || lingers(t)));
+  const struck = filter === 'open' ? rows.filter(lingers) : [];
 
   const cards = (sec: Section) => {
     const items = rows.filter((t) => t.section_id === sec.id);
@@ -154,7 +163,10 @@ function StreamDetail({
             {` · ${quiet(stream.daysQuiet)}`}
           </p>
         </div>
-        <Link to={`/brief?stream=${stream.id}`} className="btn btn--ghost">Brief</Link>
+        <div className="stream__acts">
+          <ClearDone struck={struck} onClear={onClearDone} />
+          <Link to={`/brief?stream=${stream.id}`} className="btn btn--ghost">Brief</Link>
+        </div>
       </div>
 
       <div className="seg stream__filter" role="group" aria-label="Show">

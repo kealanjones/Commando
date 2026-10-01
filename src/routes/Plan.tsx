@@ -80,7 +80,7 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   const finish = () => {
     if (!inHand) return;
     const task = inHand;
-    update.mutate({ id: task.id, patch: { done: true } });
+    update.mutate({ id: task.id, patch: { done: true, cleared_at: null } });
     setLast({ kind: 'done', task });
   };
 
