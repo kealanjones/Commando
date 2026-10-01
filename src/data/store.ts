@@ -9,8 +9,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { enqueue } from '@/lib/queue';
 import { DEMO } from '@/lib/demo';
-import { inScope, realmOf, useRealm } from '@/lib/modes';
-import type { Person, Realm, Section, Stream, StreamHealth, Task } from '@/lib/types';
+import { inScope, useRealm } from '@/lib/modes';
+import { isoDay, todayGroups } from '@/lib/today';
+import type { Person, Section, Stream, StreamHealth, Task } from '@/lib/types';
 
 export const keys = {
   streams: ['streams'] as const,
@@ -18,9 +19,6 @@ export const keys = {
   tasks: ['tasks'] as const,
   people: ['people'] as const,
 };
-
-/** How many days of silence empties the recency dial completely. */
-export const QUIET_SCALE_DAYS = 21;
 
 // ── queries ────────────────────────────────────────────────────────
 //
@@ -146,15 +144,14 @@ export function useRealtime() {
 
 // ── mutations ──────────────────────────────────────────────────────
 type Patch = Partial<Pick<Task,
-  'title' | 'note' | 'done' | 'do_now' | 'due' | 'kind' | 'section_id' | 'stream_id'
-  | 'deleted_at' | 'reviewed_at' | 'unclear'>>;
+  'title' | 'note' | 'done' | 'do_now' | 'due' | 'section_id' | 'stream_id'
+  | 'deleted_at' | 'reviewed_at'>>;
 
 /**
  * Fields whose editing means the seed file no longer owns this row.
  *
- * Deliberately excludes due, do_now, kind and unclear: those are review
- * decisions, and deciding something should be watched rather than done must
- * not stop the seed file owning its wording.
+ * Deliberately excludes due and do_now: those are planning decisions, and
+ * giving something a date must not stop the seed file owning its wording.
  */
 const CONTENT_FIELDS = ['title', 'note', 'section_id', 'stream_id'] as const;
 const isContentEdit = (p: Patch) => CONTENT_FIELDS.some((f) => f in p);
@@ -204,7 +201,7 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: async (input: {
       title: string; stream_id: Task['stream_id']; section_id: string;
-      kind?: Task['kind']; do_now?: boolean; due?: string | null; note?: string | null;
+      do_now?: boolean; due?: string | null; note?: string | null;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
       const now = new Date().toISOString();
@@ -215,7 +212,7 @@ export function useCreateTask() {
         section_id: input.section_id,
         natural_key: null,          // user-created: the seed must never touch it
         title: input.title,
-        kind: input.kind ?? 'task',
+        kind: 'task',
         context: null,
         note: input.note ?? null,
         done: false, done_at: null,
@@ -246,108 +243,39 @@ export function useHealth(): StreamHealth[] {
   const { data: streams = [] } = useStreams();
   const { data: tasks = [] } = useTasks();
 
-  return useMemo(
-    () =>
-      streams.map((s) => {
-        const mine = tasks.filter((t) => t.stream_id === s.id);
-        const open = mine.filter((t) => t.kind === 'task' && !t.done);
-        const touched = mine
-          .map((t) => t.touched_at)
-          .filter((v): v is string => Boolean(v))
-          .sort()
-          .at(-1) ?? null;
-        return {
-          ...s,
-          openTasks: open.length,
-          doneTasks: mine.filter((t) => t.kind === 'task' && t.done).length,
-          watchItems: mine.filter((t) => t.kind === 'watch').length,
-          doNow: open.filter((t) => t.do_now).length,
-          dated: open.filter((t) => t.due).length,
-          lastTouchedAt: touched,
-          daysQuiet: daysSince(touched),
-        };
-      }),
-    [streams, tasks],
-  );
+  return useMemo(() => {
+    const today = isoDay(new Date());
+    return streams.map((s) => {
+      const mine = tasks.filter((t) => t.stream_id === s.id);
+      const open = mine.filter((t) => !t.done);
+      const touched = mine
+        .map((t) => t.touched_at)
+        .filter((v): v is string => Boolean(v))
+        .sort()
+        .at(-1) ?? null;
+      return {
+        ...s,
+        openTasks: open.length,
+        doneTasks: mine.length - open.length,
+        overdue: open.filter((t) => t.due && t.due < today).length,
+        doNow: open.filter((t) => t.do_now).length,
+        dated: open.filter((t) => t.due).length,
+        lastTouchedAt: touched,
+        daysQuiet: daysSince(touched),
+      };
+    });
+  }, [streams, tasks]);
 }
 
-/**
- * The three things on Today.
- *
- * Eighteen items carry a do-now flag, which is a week rather than a
- * morning. Rank by real pressure — a date closing, a stream that has gone
- * quiet, work with other items queued behind it — and show the top few.
- */
-export function useToday(limit = 3, keepVisible: string[] = [], realm?: Realm) {
-  const { data: tasks = [] } = useTasks();
-  const health = useHealth();
+/** Today's three groups, in the realm showing. See lib/today.ts. */
+export function useToday(keepVisible: string[] = []) {
+  const { data: tasks = [], isLoading } = useTasks();
   const keepKey = keepVisible.join(',');
-
-  return useMemo(() => {
-    const keep = new Set(keepKey ? keepKey.split(',') : []);
-    const quiet = new Map(health.map((h) => [h.id, h.daysQuiet ?? 0]));
-    // With the switch on Both, Today is drawn in two zones and each one
-    // ranks its own realm; otherwise the queries have already scoped it.
-    const mine = new Set(health.filter((h) => !realm || realmOf(h) === realm).map((h) => h.id));
-    // A task just ticked stays in place, struck through, until its undo
-    // window closes. Having it vanish under your thumb makes the undo
-    // toast refer to something you can no longer see.
-    // Parked items are still work, but they cannot be acted on, so they must
-    // not compete for a slot on Today.
-    const open = tasks.filter(
-      (t) => t.kind === 'task' && !t.unclear && mine.has(t.stream_id)
-        && (!t.done || keep.has(t.id)),
-    );
-
-    // How many other open items sit in the same section: a proxy for how
-    // much is waiting on this one.
-    const sectionLoad = new Map<string, number>();
-    for (const t of open) sectionLoad.set(t.section_id, (sectionLoad.get(t.section_id) ?? 0) + 1);
-
-    // A kept-visible done task is scored as if it were still open, so it
-    // holds its slot for the length of the undo window instead of sinking
-    // to the bottom of the list under your thumb.
-    const score = (t: (typeof open)[number]) => {
-      let n = 0;
-      if (t.due) {
-        const days = Math.ceil((new Date(t.due).getTime() - Date.now()) / 86_400_000);
-        n += days <= 0 ? 1000 : Math.max(0, 400 - days * 8);
-      }
-      if (t.do_now) n += 120;
-      n += Math.min(80, (quiet.get(t.stream_id) ?? 0) * 5);
-      n += Math.min(40, (sectionLoad.get(t.section_id) ?? 0) * 3);
-      return n;
-    };
-
-    const ranked = [...open].sort((a, b) => score(b) - score(a));
-
-    // Never let one stream own the whole list. A morning that is entirely
-    // Commonwealth tells you nothing about the other four.
-    const perStream = new Map<string, number>();
-    const spread: typeof ranked = [];
-    for (const t of ranked) {
-      if (spread.length >= limit) break;
-      const n = perStream.get(t.stream_id) ?? 0;
-      if (n >= 2) continue;
-      perStream.set(t.stream_id, n + 1);
-      spread.push(t);
-    }
-    // If the cap left room (few streams in play), backfill by rank.
-    for (const t of ranked) {
-      if (spread.length >= limit) break;
-      if (!spread.includes(t)) spread.push(t);
-    }
-
-    const live = open.filter((t) => !t.done);
-    return {
-      top: spread,
-      flagged: live.filter((t) => t.do_now).length,
-      restCount: Math.max(0, live.filter((t) => t.do_now).length - spread.length),
-      openCount: live.length,
-      datedCount: live.filter((t) => t.due).length,
-      totalCount: tasks.length,
-    };
-  }, [tasks, health, limit, keepKey, realm]);
+  const groups = useMemo(
+    () => todayGroups(tasks, new Date(), new Set(keepKey ? keepKey.split(',') : [])),
+    [tasks, keepKey],
+  );
+  return { ...groups, isLoading };
 }
 
 /**

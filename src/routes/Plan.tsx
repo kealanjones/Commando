@@ -51,7 +51,7 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   const onDay = useMemo(() => {
     const at = new Map<string, Task[]>();
     for (const t of tasks) {
-      if (t.kind !== 'task' || t.done || t.deleted_at || !t.due) continue;
+      if (t.done || t.deleted_at || !t.due) continue;
       at.set(t.due, [...(at.get(t.due) ?? []), t]);
     }
     return at;
@@ -115,14 +115,14 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
 
   return (
     <section aria-labelledby="plan-head" className="plan">
+      <Link to="/review" className="back">← Review</Link>
       <div className="shead">
         <h2 id="plan-head">Plan</h2>
         <span className="shead__meta">{left} still undated</span>
       </div>
 
       <p className="plan__lede">
-        One at a time: pick a day for the item in hand and the next one steps forward.
-        The darker a day, the more you have already put on it.
+        Pick a day for the item in hand. The darker a day, the more is already on it.
       </p>
 
       <div className="filters" role="group" aria-label="Limit to one stream">
@@ -167,7 +167,7 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
               ? 'Nothing left undated in this stream.'
               : 'Every open item now carries a date, so Today can rank by what is actually closing.'}
           </p>
-          <p style={{ marginTop: 12 }}><Link to="/">Back to Today</Link></p>
+          <p style={{ marginTop: 12 }}><Link to="/review" className="inline">Back to Review</Link></p>
         </div>
       )}
 
@@ -278,15 +278,9 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
       </div>
 
       <p className="plan__foot">
-        {left > 0 && (
-          <>
-            {left} {left === 1 ? 'item' : 'items'} still to place.
-            {' '}<Link to="/dates">Some may already say when, in their own words.</Link>
-          </>
-        )}
         {passed.size > 0 && (
           <>
-            {' '}{passed.size} passed over this sitting.
+            {passed.size} passed over this sitting.
             <button className="linkish" onClick={() => setPassed(new Set())}>Bring them back</button>
           </>
         )}

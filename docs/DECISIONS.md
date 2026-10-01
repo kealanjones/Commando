@@ -13,6 +13,33 @@ Revised twice at the design checkpoint stage.
   task-app reference the user supplied. The structure and the computed signals
   from v2 all survive; only the register changed.
 
+## v4 — focus (October 2026)
+
+By September the register had grown nine destinations, two switches, a
+second kind of item, a third state, a map, a tally and a date sweep. Each was
+argued for well on its own. Together they made the thing it was built to fix:
+too much going on, and no clear place to look. v4 cuts back to what was
+actually used.
+
+- **Four tabs: Today, Streams, People, Review.** Plan and the weekly deck
+  live under Review; Brief is a button on a person and on a stream; Intake is
+  reached from **+**. Nothing else is a destination.
+- **Today is a list.** Overdue, due today, flagged urgent — three headings,
+  rows that are a title and a date, a count at the bottom. No stream cards,
+  prompts, nudges, periphery or tally above or around it. Being on Today is
+  explained by a date or a flag you set, never by a score.
+- **One kind of item.** Watch items and *not clear yet* are gone; migration
+  0009 turns both into ordinary items without deleting anything. Undated and
+  unflagged, they never reach Today — they wait in their section.
+- **Streams is a breakdown.** One line per stream, then stream → area →
+  section → item. Filters are Open and Done.
+- **Cut outright:** the Web, threads, the tally, Focus mode, the date sweep
+  and the periphery. Their code is deleted rather than hidden; git history
+  has it.
+
+The sections below are the reasoning for v1–v3. Where they describe a screen
+v4 removed, they are history.
+
 ## Structure — three destinations
 
 Conventional navigation beats novelty here.

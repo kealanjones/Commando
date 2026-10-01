@@ -12,7 +12,7 @@
 import { GROUPS, SECTIONS, STREAMS } from '@data/register.seed';
 import { KNOWN_PEOPLE } from '@data/people';
 import { naturalKey } from './slug';
-import type { IntakeItem, Person, Section, Stream, StreamId, Task, Thread } from './types';
+import type { IntakeItem, Person, Section, Stream, StreamId, Task } from './types';
 
 export const DEMO = import.meta.env.VITE_DEMO === '1';
 
@@ -59,7 +59,7 @@ export function demoTaskPeople(tasks: Task[]): { task_id: string; person_id: str
       'u',
     );
     for (const t of tasks) {
-      if (t.kind === 'task' && re.test(`${t.title} ${t.context ?? ''}`)) {
+      if (re.test(`${t.title} ${t.context ?? ''}`)) {
         out.push({ task_id: t.id, person_id: `demo-person-${i}` });
       }
     }
@@ -71,7 +71,7 @@ export function demoTasks(): Task[] {
   const now = new Date().toISOString();
   const out: Task[] = [];
 
-  // Illustrative activity so all five dials have something to show. A real
+  // Illustrative activity so "touched" and "quiet" have something to show. A real
   // install starts with touched_at null on every row and fills in as it is
   // used — nothing here is inferred from the seed data.
   const touchedDaysAgo: Partial<Record<StreamId, number>> = {
@@ -83,23 +83,24 @@ export function demoTasks(): Task[] {
   };
 
   for (const s of SECTIONS) {
-    const add = (raw: string | { t: string; p?: 1; due?: string; note?: string }, kind: Task['kind'], idx: number) => {
+    const add = (raw: string | { t: string; p?: 1; due?: string; note?: string }, tag: 'task' | 'watch', idx: number) => {
       const it = typeof raw === 'string' ? { t: raw } : raw;
       const quiet = touchedDaysAgo[s.stream as StreamId];
       out.push({
-        id: `${s.id}-${kind}-${idx}`,
+        id: `${s.id}-${tag}-${idx}`,
         owner_id: OWNER,
         stream_id: s.stream as StreamId,
         section_id: s.id,
         natural_key: naturalKey(s.id, it.t),
         title: it.t,
-        kind,
+        kind: 'task',
         context: it.note ?? null,
         note: null,
         done: false, done_at: null,
         do_now: it.p === 1,
         due: it.due ?? null,
-        position: idx,
+        // Former watch items follow the section's tasks (0009).
+        position: tag === 'watch' ? (s.items?.length ?? 0) + idx : idx,
         user_edited: false,
         reviewed_at: null,
         unclear: false,
@@ -114,10 +115,10 @@ export function demoTasks(): Task[] {
     (s.watch ?? []).forEach((i, idx) => add(i, 'watch', idx));
   }
 
-  // A week of finished things, so the tally has a shape to show without a
-  // database. Extra rows rather than ticked seed rows: the counts every
-  // other screen is checked against stay what they are. Nothing today —
-  // the first tick of the day should be the one that draws the ring.
+  // A week of finished things, so the Done filter has something to show
+  // without a database. Extra rows rather than ticked seed rows: the counts
+  // every other screen is checked against stay what they are. Nothing today,
+  // so "done today" starts at zero.
   const finished: [StreamId, string, number][] = [
     ['isodp', 'Sent Isaac the revised registration numbers', 1],
     ['isodp', 'Booked the room for the sponsorship huddle', 1],
@@ -151,37 +152,6 @@ export function demoTasks(): Task[] {
 }
 
 /**
- * Two ready-made threads, so the Web has both kinds of link to draw in
- * fixture mode. Real threads are created by accepting a suggestion; these
- * exist only so the drawing can be seen and tested without a database.
- */
-export function demoThreads(): { threads: Thread[]; links: { task_id: string; thread_id: string }[] } {
-  const now = new Date().toISOString();
-  const strands = [
-    { id: 'demo-thread-sydney', title: 'Sydney', anchor: 'Sydney' },
-    { id: 'demo-thread-payment', title: 'The payment route', anchor: 'payment' },
-  ];
-
-  const threads: Thread[] = strands.map((s) => ({
-    id: s.id, owner_id: OWNER, title: s.title, anchor: s.anchor,
-    created_at: now, deleted_at: null,
-  }));
-
-  const links: { task_id: string; thread_id: string }[] = [];
-  for (const s of strands) {
-    for (const section of SECTIONS) {
-      section.items.forEach((raw, idx) => {
-        const text = typeof raw === 'string' ? raw : raw.t;
-        if (text.includes(s.anchor)) {
-          links.push({ task_id: `${section.id}-task-${idx}`, thread_id: s.id });
-        }
-      });
-    }
-  }
-  return { threads, links };
-}
-
-/**
  * Fixture-mode extraction.
  *
  * Returns a fixed set of proposals so the triage screen can be seen and
@@ -193,7 +163,7 @@ export function demoExtraction(text: string, label?: string) {
   const mk = (
     n: number,
     title: string,
-    kind: 'task' | 'watch',
+    kind: 'task',
     sectionId: string | null,
     streamId: StreamId | null,
     extra: Partial<IntakeItem> = {},
@@ -236,22 +206,13 @@ export function demoExtraction(text: string, label?: string) {
       confidence: 'medium',
       evidence: 'We should not book anything until the QEII confirms the room.',
     }),
-    mk(3, 'Getinge are reorganising their European marketing team this autumn', 'watch', 'isodp-leads', 'isodp', {
-      confidence: 'high',
-      evidence: 'Their marketing lead mentioned a reorganisation coming in the autumn.',
-      context: 'Could stall the platinum sponsorship conversation; no action while it plays out.',
-    }),
-    mk(4, 'DHSC have not yet responded on the TransNovo governance question', 'watch', 'isodp-china', 'isodp', {
-      confidence: 'medium',
-      evidence: 'Still nothing back from DHSC on the governance side.',
-    }),
-    mk(5, 'Chase Belaal for an update on Satya\'s Australia trip', 'task', 'cttl-aus', 'cttl', {
+    mk(3, 'Chase Belaal for an update on Satya\'s Australia trip', 'task', 'cttl-aus', 'cttl', {
       confidence: 'high',
       waiting_on: ['Belaal'],
       evidence: 'Someone needs to chase Belaal again about the Australia arrangements.',
       duplicate_of: 'cttl-aus-task-2',
     }),
-    mk(6, 'Decide whether the Fellowship interview panel needs an external member', 'task', null, null, {
+    mk(4, 'Decide whether the Fellowship interview panel needs an external member', 'task', null, null, {
       confidence: 'low',
       evidence: 'There was a question about whether we need someone external on the panel.',
     }),
@@ -264,11 +225,9 @@ export function demoExtraction(text: string, label?: string) {
     summary:
       `${label ? label + '. ' : ''}Mostly the sponsor payment route, which is still the blocker — ` +
       `Isaac needs revised numbers this week and Suzanne has prior experience worth borrowing. ` +
-      `Two things worth watching rather than acting on. (Fixture mode: these proposals are fixed, ` +
+      `(Fixture mode: these proposals are fixed, ` +
       `not read from your ${text.trim().split(/\s+/).length} words.)`,
     count: items.length,
-    tasks: items.filter((i) => i.kind === 'task').length,
-    watch: items.filter((i) => i.kind === 'watch').length,
     duplicates: items.filter((i) => i.duplicate_of).length,
   };
 }

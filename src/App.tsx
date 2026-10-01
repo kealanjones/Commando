@@ -1,28 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 
-import { Header, Modes, Nav } from '@/components/Chrome';
+import { Header, Nav } from '@/components/Chrome';
 import { TaskSheet, type SheetPatch } from '@/components/TaskSheet';
 import { AddSheet } from '@/components/AddSheet';
 import { Search } from '@/components/Search';
 import { useToast } from '@/components/Toasts';
 import { Today } from '@/routes/Today';
 import { Streams } from '@/routes/Streams';
-import { Periphery } from '@/routes/Periphery';
 import { Intake } from '@/routes/Intake';
-import { Threads } from '@/routes/Threads';
-import { Web } from '@/routes/Web';
-import { Dates } from '@/routes/Dates';
 import { Brief } from '@/routes/Brief';
 import { Plan } from '@/routes/Plan';
 import { Review } from '@/routes/Review';
+import { ReviewHub } from '@/routes/ReviewHub';
 import { People } from '@/routes/People';
+import { Person } from '@/routes/Person';
 import { NotConfigured, SignIn } from '@/routes/SignIn';
 
 import { configured, supabase } from '@/lib/supabase';
 import { DEMO } from '@/lib/demo';
-import { useFocus, useRealm } from '@/lib/modes';
+import { useRealm } from '@/lib/modes';
 import { ensureProfile } from '@/lib/profile';
 import {
   useCreateTask, useRealtime, useSections, useSoftDelete, useStreams, useUpdateTask,
@@ -51,15 +49,16 @@ export default function App() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  if (DEMO) return <Register email="kealan.jones@example.com" />;
+  if (DEMO) return <Register />;
   if (!configured) return <NotConfigured />;
   if (!ready) return null;
   if (!session) return <SignIn />;
-  return <Register email={session.user.email ?? ''} />;
+  return <Register />;
 }
 
-function Register({ email }: { email: string }) {
+function Register() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { push } = useToast();
   useRealtime();
 
@@ -76,18 +75,12 @@ function Register({ email }: { email: string }) {
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [location.pathname]);
 
-  // The page itself wears the modes: the paper changes with the realm and
-  // Focus strips the chrome, both by CSS off these two hooks.
+  // The page wears the realm, so which life is showing is ambient.
   const realm = useRealm();
-  const focus = useFocus();
   useEffect(() => {
     document.body.dataset.realm = realm;
-    document.body.classList.toggle('is-focus', focus);
-    return () => {
-      delete document.body.dataset.realm;
-      document.body.classList.remove('is-focus');
-    };
-  }, [realm, focus]);
+    return () => { delete document.body.dataset.realm; };
+  }, [realm]);
 
   // Cmd/Ctrl+K and plain "/" both open search, the two conventions people
   // already have in their fingers. Ignored while typing into a field.
@@ -137,18 +130,6 @@ function Register({ email }: { email: string }) {
     [update, push],
   );
 
-  const onPromote = useCallback(
-    (task: Task) => {
-      update.mutate({ id: task.id, patch: { kind: 'task' } });
-      push({
-        message: `Moved into ${streams.find((s) => s.id === task.stream_id)?.title ?? 'the stream'}.`,
-        actionLabel: 'Undo',
-        onAction: () => update.mutate({ id: task.id, patch: { kind: 'watch' } }),
-      });
-    },
-    [update, push, streams],
-  );
-
   const onDelete = useCallback(
     (task: Task) => {
       remove(task.id);
@@ -173,47 +154,25 @@ function Register({ email }: { email: string }) {
       <a className="skip" href="#main">Skip to content</a>
 
       <main className="page" id="main">
-        <Header email={email} onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} />
+        <Header onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} />
         {/* Inline in the document so it sits under the header on desktop;
             CSS pins it to the bottom of the viewport on a phone. */}
-        <div className="topbar">
-          <Nav />
-          <Modes />
-        </div>
+        <Nav />
 
         <Routes>
-          <Route
-            path="/"
-            element={
-              <Today
-                onToggle={onToggle}
-                onOpen={setEditing}
-                onPromote={onPromote}
-                recentlyDone={recentlyDone}
-              />
-            }
-          />
-          <Route
-            path="/streams"
-            element={<Streams onToggle={onToggle} onOpen={setEditing} onPromote={onPromote} />}
-          />
-          <Route
-            path="/streams/:streamId"
-            element={<Streams onToggle={onToggle} onOpen={setEditing} onPromote={onPromote} />}
-          />
-          <Route
-            path="/periphery"
-            element={<Periphery onOpen={setEditing} onPromote={onPromote} />}
-          />
-          <Route path="/web" element={<Web onOpenTask={setEditing} />} />
-          <Route path="/plan" element={<Plan onOpenTask={setEditing} />} />
-          <Route path="/dates" element={<Dates />} />
+          <Route path="/" element={<Today onToggle={onToggle} onOpen={setEditing} recentlyDone={recentlyDone} />} />
+          <Route path="/streams" element={<Streams onToggle={onToggle} onOpen={setEditing} />} />
+          <Route path="/streams/:streamId" element={<Streams onToggle={onToggle} onOpen={setEditing} />} />
+          <Route path="/people" element={<People />} />
+          <Route path="/people/:personId" element={<Person onToggle={onToggle} onOpen={setEditing} />} />
+          <Route path="/people/:personId/review" element={<Review />} />
+          <Route path="/review" element={<ReviewHub />} />
+          <Route path="/review/decide" element={<Review />} />
+          <Route path="/review/plan" element={<Plan onOpenTask={setEditing} />} />
           <Route path="/brief" element={<Brief onOpenTask={setEditing} />} />
           <Route path="/intake" element={<Intake />} />
-          <Route path="/review" element={<Review />} />
-          <Route path="/people" element={<People />} />
-          <Route path="/threads" element={<Threads onOpenTask={setEditing} />} />
-          <Route path="/people/:personId" element={<Review />} />
+          {/* Old addresses, so a bookmark or the installed app still lands. */}
+          <Route path="/plan" element={<Navigate to="/review/plan" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -242,6 +201,7 @@ function Register({ email }: { email: string }) {
             create.mutate(input);
             push({ message: 'Added.' });
           }}
+          onIntake={() => { setAdding(false); navigate('/intake'); }}
           onClose={() => setAdding(false)}
         />
       )}

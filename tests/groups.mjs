@@ -78,15 +78,6 @@ ok(metas.some((m) => m.includes('›')),
   `a result says which area it came from (${metas.find((m) => m.includes('›')) ?? metas[0]})`);
 await p.screenshot({ path: `${out}/phone-groupsearch.png` });
 
-// ── the web leaves the headings out ─────────────────────────────────
-await p.keyboard.press('Escape');
-await p.goto(`${base}/web`, { waitUntil: 'networkidle' });
-await p.waitForTimeout(3000);
-const tally = (await p.locator('.web__caption, .shead__meta').first().textContent()) ?? '';
-const count = Number((await p.locator('.shead__meta').first().textContent() ?? '').replace(/\D.*/, ''));
-ok(count === 39, `the map still draws 39 sections, not 46 with seven empty ones (${count})`);
-ok(tally.length > 0, 'and still has something to say about them');
-
 console.log(fail.length ? `\n${fail.length} FAILING:\n- ` + fail.join('\n- ') : '\nAll grouping checks passed');
 await b.close();
 process.exit(fail.length ? 1 : 0);

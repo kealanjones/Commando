@@ -42,7 +42,7 @@ function mentioned(text: string): string[] {
 
 type Row = {
   key: string; stream: string; section: string; title: string;
-  kind: 'task' | 'watch'; context: string | null; doNow: boolean;
+  kind: 'task'; context: string | null; doNow: boolean;
   due: string | null; pos: number; people: string[];
 };
 
@@ -50,7 +50,7 @@ const rows: Row[] = [];
 const seen = new Set<string>();
 
 for (const s of SECTIONS) {
-  const push = (raw: string | Item, kind: 'task' | 'watch', pos: number) => {
+  const push = (raw: string | Item, kind: 'task', pos: number) => {
     const it = norm(raw);
     const key = naturalKey(s.id, it.t);
     if (seen.has(key)) throw new Error(`Duplicate natural key: ${key}`);
@@ -62,16 +62,15 @@ for (const s of SECTIONS) {
     });
   };
   (s.items ?? []).forEach((i, n) => push(i, 'task', n));
-  (s.watch ?? []).forEach((i, n) => push(i, 'watch', n));
+  // Former watch items are ordinary items now (0009), listed after the rest.
+  (s.watch ?? []).forEach((i, n) => push(i, 'task', (s.items?.length ?? 0) + n));
 }
 
-const tasks = rows.filter((r) => r.kind === 'task').length;
-const watch = rows.length - tasks;
 
 const sql = `-- ═══════════════════════════════════════════════════════════════════
 -- Work Register — seed
 --
--- ${rows.length} items across ${SECTIONS.length} sections (${tasks} tasks, ${watch} to watch).
+-- ${rows.length} items across ${SECTIONS.length} sections.
 -- Generated from data/register.seed.ts by scripts/seed-sql.ts. Do not edit
 -- this file by hand — edit the seed source and regenerate.
 --
@@ -216,16 +215,14 @@ ${rows
 end
 $seed$;
 
--- Confirm. Expect ${tasks} tasks and ${watch} to watch.
-select kind, count(*) as items
+-- Confirm. Expect at least ${rows.length} open items.
+select count(*) as items
   from public.tasks
- where deleted_at is null
- group by kind
- order by kind;
+ where deleted_at is null;
 `;
 
 writeFileSync('supabase/seed.sql', sql);
 console.log(
-  `supabase/seed.sql  ${rows.length} items (${tasks} tasks, ${watch} watch) ` +
+  `supabase/seed.sql  ${rows.length} items ` +
     `across ${SECTIONS.length} sections in ${GROUPS.length} groups`,
 );

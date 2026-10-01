@@ -8,6 +8,7 @@ export function AddSheet({
   sections,
   defaultSectionId,
   onCreate,
+  onIntake,
   onClose,
 }: {
   streams: Stream[];
@@ -15,13 +16,14 @@ export function AddSheet({
   defaultSectionId?: string;
   onCreate: (input: {
     title: string; section_id: string; stream_id: Task['stream_id'];
-    kind: Task['kind']; do_now: boolean; due: string | null;
+    do_now: boolean; due: string | null;
   }) => void;
+  /** Leave for meeting intake instead: several items from one record. */
+  onIntake: () => void;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState('');
   const [sectionId, setSectionId] = useState(defaultSectionId ?? sections[0]?.id ?? '');
-  const [kind, setKind] = useState<Task['kind']>('task');
   const [doNow, setDoNow] = useState(false);
   const [due, setDue] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
@@ -46,7 +48,7 @@ export function AddSheet({
     if (!t || !section) { titleRef.current?.focus(); return; }
     onCreate({
       title: t, section_id: section.id, stream_id: section.stream_id,
-      kind, do_now: doNow, due: due || null,
+      do_now: doNow, due: due || null,
     });
     onClose();
   };
@@ -101,19 +103,14 @@ export function AddSheet({
 
         <div className="field">
           <button type="button" className="toggle" aria-pressed={doNow} onClick={() => setDoNow((v) => !v)}>
-            Do now<span className="toggle__knob" />
-          </button>
-        </div>
-        <div className="field">
-          <button
-            type="button" className="toggle" aria-pressed={kind === 'watch'}
-            onClick={() => setKind((k) => (k === 'watch' ? 'task' : 'watch'))}
-          >
-            Just something to remember<span className="toggle__knob" />
+            Urgent<span className="toggle__knob" />
           </button>
         </div>
 
         <div className="actions">
+          <button type="button" className="linkish actions__aside" onClick={onIntake}>
+            Paste meeting notes instead
+          </button>
           <button type="button" className="btn btn--ghost" onClick={onClose}>Cancel</button>
           <button type="submit" className="btn btn--primary">Add</button>
         </div>

@@ -18,8 +18,6 @@ export interface ExtractResult {
   intake_id: string;
   summary: string;
   count: number;
-  tasks: number;
-  watch: number;
   duplicates: number;
 }
 
@@ -129,8 +127,6 @@ export function useImportProposals() {
         intake_id: intakeId,
         summary: parsed.summary,
         count: items.length,
-        tasks: items.filter((i) => i.kind === 'task').length,
-        watch: items.filter((i) => i.kind === 'watch').length,
         duplicates: items.filter((i) => i.duplicate_of).length,
         items,
       };
@@ -177,7 +173,7 @@ export function useAcceptItems() {
         section_id: i.section_id!,
         natural_key: null,           // not seeded content: the seed must never touch it
         title: i.title,
-        kind: i.kind,
+        kind: 'task',
         context: i.context,
         note: null,
         done: false, done_at: null,

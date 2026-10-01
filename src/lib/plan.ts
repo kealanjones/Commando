@@ -65,7 +65,7 @@ export function loadOf(count: number): Load {
 
 /** Open, actionable items only — a finished task is not load. */
 export const isLoad = (t: Task) =>
-  t.kind === 'task' && !t.done && !t.deleted_at && t.due !== null;
+  !t.done && !t.deleted_at && t.due !== null;
 
 /** How many open items land on each day. */
 export function loadByDay(tasks: Task[]): Map<string, { count: number; pressing: number }> {
@@ -179,18 +179,18 @@ export function weekAhead(tasks: Task[], today = startOfDay()): WeekShape[] {
 }
 
 /**
- * What still needs a date: open, actionable, undated, and not parked.
+ * What still needs a date: open and undated.
  *
  * Ordered so the ones with the most behind them come first — dating the item
  * that eleven others are queued behind is worth more than dating a one-off.
  */
 export function undated(tasks: Task[]): Task[] {
-  const live = tasks.filter((t) => t.kind === 'task' && !t.done && !t.deleted_at);
+  const live = tasks.filter((t) => !t.done && !t.deleted_at);
   const perSection = new Map<string, number>();
   for (const t of live) perSection.set(t.section_id, (perSection.get(t.section_id) ?? 0) + 1);
 
   return live
-    .filter((t) => t.due === null && !t.unclear)
+    .filter((t) => t.due === null)
     .sort((a, b) =>
       Number(b.do_now) - Number(a.do_now)
       || (perSection.get(b.section_id) ?? 0) - (perSection.get(a.section_id) ?? 0)

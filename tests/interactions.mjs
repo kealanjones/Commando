@@ -22,8 +22,14 @@ await p.screenshot({ path: `${out}/phone-sheet.png` });
 
 // ── 2. save persists ────────────────────────────────────────────
 await p.getByRole('button', { name: 'Save' }).click();
-await p.waitForTimeout(400);
-ok(await p.locator('.task__note').first().isVisible(), 'note renders on the card after save');
+await p.waitForTimeout(600);
+// Today keeps its rows to a title and a date, so the note is checked by
+// opening the item again rather than by reading it off the row.
+await p.locator('.task__open').first().click();
+await p.waitForSelector('#sheet-note');
+ok((await p.locator('#sheet-note').inputValue()) === phrase, 'note is still there when the item is opened again');
+await p.keyboard.press('Escape');
+await p.waitForTimeout(600);
 
 // ── 3. complete is reversible, and the list holds still ─────────
 const orderBefore = await p.evaluate(() => [...document.querySelectorAll('.task .check')].map((c) => c.id));
@@ -39,8 +45,7 @@ await p.waitForTimeout(400);
 ok(!(await p.locator(`#${targetId}`).isChecked()), 'undo reopens the task');
 
 // ── 4. delete is reversible ─────────────────────────────────────
-// Today always shows three, so a delete promotes the next item rather
-// than shortening the list: assert on the specific row, not the count.
+// Assert on the specific row, not the count.
 const delId = (await p.evaluate(() => document.querySelector('.task .check')?.id));
 await p.locator('.task__open').first().click();
 await p.waitForSelector('.sheet');
@@ -52,7 +57,7 @@ await p.waitForTimeout(500);
 ok((await p.locator(`#${delId}`).count()) === 1, 'undo restores the deleted row');
 
 // ── 5. nav does not cover the last item ─────────────────────────
-await p.goto('http://127.0.0.1:4173/streams', { waitUntil: 'networkidle' });
+await p.goto('http://127.0.0.1:4173/streams/isodp', { waitUntil: 'networkidle' });
 await p.waitForTimeout(700);
 await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 await p.waitForTimeout(500);
@@ -86,7 +91,7 @@ const rm = await b.newContext({ viewport: { width: 375, height: 812 }, reducedMo
 const p2 = await rm.newPage();
 await p2.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
 await p2.waitForTimeout(500);
-const dur = await p2.evaluate(() => getComputedStyle(document.querySelector('.scard')).animationDuration);
+const dur = await p2.evaluate(() => getComputedStyle(document.querySelector('.task')).animationDuration);
 ok(parseFloat(dur) < 0.01, `prefers-reduced-motion collapses animation (${dur})`);
 
 // ── 8. item count ───────────────────────────────────────────────

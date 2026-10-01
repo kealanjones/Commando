@@ -119,13 +119,13 @@ const frames_ = (p) => p.evaluate(() => window.__frames);
 
   ok(await p.locator('.card__block--quoted').isVisible(), 'the detail the register carried is shown');
   ok(await p.locator('#sheet-note').isVisible(), 'and a place for your own note');
-  ok((await p.locator('.mark').count()) === 3, 'the three states are one tap each');
+  ok((await p.locator('.mark').count()) === 1, 'urgent is the one flag, one tap');
 
   const nowPressed = await p.locator('.mark--now').getAttribute('aria-pressed');
   await p.locator('.mark--now').click();
   await p.waitForTimeout(200);
   ok((await p.locator('.mark--now').getAttribute('aria-pressed')) !== nowPressed,
-    'do-now toggles on the card itself');
+    'urgent toggles on the card itself');
 
   const foldHeight = () => p.evaluate(() =>
     document.querySelector('.card__more').parentElement

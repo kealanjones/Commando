@@ -11,3 +11,13 @@ for f in supabase/migrations/0*.sql; do
   psql -h "$PGH" -p "$PGP" -U postgres -d reg_test -v ON_ERROR_STOP=1 -q -f "$f"
 done
 psql -h "$PGH" -p "$PGP" -U postgres -d reg_test -v ON_ERROR_STOP=1 -f tests/rls.sql 2>&1 | grep -E 'PASS|FAIL|ERROR'
+
+# 0009 rewrites data, so prove it on a register that has the old shapes in
+# it: migrate to 0008, add watch and parked items, then let the test apply it.
+psql -h "$PGH" -p "$PGP" -U postgres -q -c "drop database if exists reg_mig;" -c "create database reg_mig;"
+psql -h "$PGH" -p "$PGP" -U postgres -d reg_mig -v ON_ERROR_STOP=1 -q -f tests/supabase-shim.sql
+for f in supabase/migrations/0*.sql; do
+  case "$f" in *0009_one_kind.sql) continue;; esac
+  psql -h "$PGH" -p "$PGP" -U postgres -d reg_mig -v ON_ERROR_STOP=1 -q -f "$f"
+done
+psql -h "$PGH" -p "$PGP" -U postgres -d reg_mig -v ON_ERROR_STOP=1 -f tests/one_kind.sql 2>&1 | grep -E 'PASS|FAIL|ERROR'

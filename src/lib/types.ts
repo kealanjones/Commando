@@ -1,4 +1,8 @@
 export type StreamId = 'cttl' | 'isodp' | 'dir' | 'career' | 'per';
+/**
+ * Legacy. Since 0009 every item is a task; 'watch' only survives in a
+ * database that has not run that migration, and the app treats it the same.
+ */
 export type Kind = 'task' | 'watch';
 
 /** Which life a stream belongs to. Every screen is scoped by it. */
@@ -49,7 +53,7 @@ export interface Task {
   user_edited: boolean;
   touched_at: string | null;
   reviewed_at: string | null;
-  /** "I do not know what this means yet." Still work; just not actionable. */
+  /** Legacy, always false since 0009. */
   unclear: boolean;
   created_at: string;
   updated_at: string;
@@ -66,7 +70,7 @@ export interface Person {
 export interface StreamHealth extends Stream {
   openTasks: number;
   doneTasks: number;
-  watchItems: number;
+  overdue: number;
   doNow: number;
   dated: number;
   lastTouchedAt: string | null;
@@ -114,8 +118,8 @@ export interface IntakeItem {
   created_at: string;
 }
 
-export type ReviewReason = 'overdue' | 'unfinishable' | 'unclear' | 'urgent_undated' | 'stale';
-export type ReviewMode = 'weekly' | 'unclear' | 'person';
+export type ReviewReason = 'overdue' | 'unfinishable' | 'urgent_undated' | 'stale';
+export type ReviewMode = 'weekly' | 'person';
 
 export interface ReviewCard {
   task: Task;
@@ -128,19 +132,7 @@ export interface ReviewCard {
 
 export type Decision =
   | { kind: 'date'; due: string }
-  | { kind: 'watch' }
   | { kind: 'drop' }
-  | { kind: 'unclear' }
-  | { kind: 'clear' }
   | { kind: 'done' }
   | { kind: 'chased' }
   | { kind: 'keep' };
-
-export interface Thread {
-  id: string;
-  owner_id: string;
-  title: string;
-  anchor: string | null;
-  created_at: string;
-  deleted_at: string | null;
-}

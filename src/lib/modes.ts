@@ -1,15 +1,10 @@
 /**
- * The two switches that change what every screen is.
+ * The realm switch: work, personal, or both. It is applied inside the
+ * queries, so a route never has to remember to filter — in Work, the
+ * personal streams are not dimmed or folded, they are simply not there.
  *
- * Realm: work, personal, or both. It is applied inside the queries, so a
- * route never has to remember to filter — in Work, the personal streams
- * are not dimmed or folded, they are simply not there.
- *
- * Focus: the same screens with the chrome taken off. What is left is the
- * work and the ticks.
- *
- * Both are yours, on this device, and survive a reload. Neither is written
- * to the register: which life you are looking at is not a fact about it.
+ * It is yours, on this device, and survives a reload. It is not written to
+ * the register: which life you are looking at is not a fact about it.
  */
 import { useSyncExternalStore } from 'react';
 import { STREAMS } from '@data/register.seed';
@@ -41,15 +36,10 @@ function setting<T extends string>(key: string, initial: T, valid: readonly T[])
 }
 
 const realm = setting<RealmScope>('commando.realm', 'all', ['work', 'personal', 'all']);
-const focus = setting<'on' | 'off'>('commando.focus', 'off', ['on', 'off']);
 
 export const useRealm = (): RealmScope =>
   useSyncExternalStore(realm.subscribe, realm.get, () => 'all');
 export const setRealm = (r: RealmScope) => realm.set(r);
-
-export const useFocus = (): boolean =>
-  useSyncExternalStore(focus.subscribe, focus.get, () => 'off') === 'on';
-export const setFocus = (on: boolean) => focus.set(on ? 'on' : 'off');
 
 export const REALM_LABEL: Record<RealmScope, string> = {
   work: 'Work', personal: 'Personal', all: 'Both',

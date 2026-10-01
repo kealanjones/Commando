@@ -9,10 +9,8 @@ export interface SheetPatch {
   note?: string | null;
   due?: string | null;
   do_now?: boolean;
-  kind?: Task['kind'];
   section_id?: string;
   stream_id?: Task['stream_id'];
-  unclear?: boolean;
 }
 
 /** How long the card takes to grow, and to fall back into the list. */
@@ -52,9 +50,7 @@ export function TaskSheet({
   const [note, setNote] = useState(task.note ?? '');
   const [due, setDue] = useState(task.due ?? '');
   const [doNow, setDoNow] = useState(task.do_now);
-  const [kind, setKind] = useState<Task['kind']>(task.kind);
   const [sectionId, setSectionId] = useState(task.section_id);
-  const [unclear, setUnclear] = useState(task.unclear);
   const [more, setMore] = useState(false);
 
   const scrimRef = useRef<HTMLDivElement>(null);
@@ -71,9 +67,7 @@ export function TaskSheet({
     setNote(task.note ?? '');
     setDue(task.due ?? '');
     setDoNow(task.do_now);
-    setKind(task.kind);
     setSectionId(task.section_id);
-    setUnclear(task.unclear);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id]);
 
@@ -194,10 +188,8 @@ export function TaskSheet({
       note: note.trim() ? note.trim() : null,
       due: due || null,
       do_now: doNow,
-      kind,
       section_id: sectionId,
       stream_id: streamId,
-      unclear,
     });
     close();
   };
@@ -205,7 +197,7 @@ export function TaskSheet({
   const dirty =
     title.trim() !== task.title || (note.trim() || null) !== (task.note ?? null)
     || (due || null) !== (task.due ?? null) || doNow !== task.do_now
-    || kind !== task.kind || sectionId !== task.section_id || unclear !== task.unclear;
+    || sectionId !== task.section_id;
 
   return (
     <div
@@ -250,23 +242,7 @@ export function TaskSheet({
               aria-pressed={doNow}
               onClick={() => setDoNow((v) => !v)}
             >
-              <span className="mark__dot" />Do now
-            </button>
-            <button
-              type="button"
-              className="mark"
-              aria-pressed={unclear}
-              onClick={() => setUnclear((v) => !v)}
-            >
-              <span className="mark__dot" />Not clear yet
-            </button>
-            <button
-              type="button"
-              className="mark"
-              aria-pressed={kind === 'watch'}
-              onClick={() => setKind((k) => (k === 'watch' ? 'task' : 'watch'))}
-            >
-              <span className="mark__dot" />Keep tabs only
+              <span className="mark__dot" />Urgent
             </button>
           </div>
         </div>

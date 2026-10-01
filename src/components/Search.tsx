@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Close } from './icons';
 import { usePeople, useSections, useStreams, useTasks } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
@@ -23,7 +22,6 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
   const { data: streams = [] } = useStreams();
   const { data: people = [] } = usePeople();
   const { data: links = [] } = useTaskPeople();
-  const navigate = useNavigate();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -64,8 +62,6 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
     listRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
   }, [cursor]);
 
-  const jump = (to: string) => { onClose(); navigate(to); };
-
   return (
     <div className="scrim scrim--top" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="find" role="dialog" aria-modal="true" aria-label="Search the register">
@@ -92,12 +88,6 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
         {q.trim() === '' ? (
           <div className="find__hint">
             <p>Search everything — task titles, your notes, the detail from the seed, section names, and who you are waiting on.</p>
-            <div className="find__jumps">
-              <button className="chip" onClick={() => jump('/streams?filter=donow')}>Everything flagged</button>
-              <button className="chip" onClick={() => jump('/streams?filter=undated')}>Nothing dated</button>
-              <button className="chip" onClick={() => jump('/people')}>Waiting on</button>
-              <button className="chip" onClick={() => jump('/review?mode=unclear')}>Parked as unclear</button>
-            </div>
           </div>
         ) : hits.length === 0 ? (
           <div className="find__hint">
@@ -127,9 +117,7 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
                     <span className="find__meta">
                       <i className="find__dot" />
                       {hit.section ? pathOf(sections, hit.section.id) : 'Unfiled'}
-                      {hit.task.kind === 'watch' && ' · watching'}
                       {hit.task.done && ' · done'}
-                      {hit.task.unclear && ' · parked'}
                       {hit.people.length > 0 && ` · ${hit.people.join(', ')}`}
                     </span>
                     {(hit.via === 'context' || hit.via === 'note') && (

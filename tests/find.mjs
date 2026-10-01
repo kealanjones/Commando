@@ -30,8 +30,8 @@ await p.keyboard.press('Control+k');
 await p.waitForSelector('.find');
 ok(true, 'Ctrl+K opens it');
 
-// before typing, useful jumps rather than a blank box
-ok((await p.locator('.find__jumps .chip').count()) === 4, 'the empty state offers jumps');
+// before typing, a line on what it searches rather than a blank box
+ok(await p.locator('.find__hint').isVisible(), 'the empty state says what it searches');
 
 // ranking and highlighting
 await p.locator('.find__input').fill('belaal');

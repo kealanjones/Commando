@@ -9,7 +9,7 @@
  * required — the brief you want most is the one you write on the train.
  */
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { usePeople, useSections, useStreams, useTasks } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
 import { useToast } from '@/components/Toasts';
@@ -29,34 +29,24 @@ export function Brief({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
 
   const since = Number(params.get('since')) || 14;
   const [copied, setCopied] = useState(false);
-  const [allPeople, setAllPeople] = useState(false);
 
-  /** Only people who actually have open work: the rest brief as nothing. */
-  const withWork = useMemo(() => {
-    const open = new Set(
-      tasks.filter((t) => t.kind === 'task' && !t.done && !t.deleted_at).map((t) => t.id),
-    );
+  // Opened from a person or a stream; with neither, the person holding the
+  // most of your open work is the brief you are most likely to want.
+  const busiest = useMemo(() => {
+    const open = new Set(tasks.filter((t) => !t.done && !t.deleted_at).map((t) => t.id));
     const count = new Map<string, number>();
     for (const l of taskPeople) {
       if (open.has(l.task_id)) count.set(l.person_id, (count.get(l.person_id) ?? 0) + 1);
     }
-    return people
-      .map((p) => ({ ...p, open: count.get(p.id) ?? 0 }))
-      .filter((p) => p.open > 0)
-      .sort((a, b) => b.open - a.open);
-  }, [people, taskPeople, tasks]);
+    return [...count.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  }, [tasks, taskPeople]);
 
-  const shown = allPeople ? withWork : withWork.filter((p) => p.open > 1);
-  const hidden = withWork.length - shown.length;
-
-  // The brief you are most likely to want is the one for whoever is holding
-  // the most of your work, so that is where it opens.
   const subject: Subject = params.get('person')
     ? { kind: 'person', id: params.get('person')! }
     : params.get('stream')
       ? { kind: 'stream', id: params.get('stream')! }
-      : withWork[0]
-        ? { kind: 'person', id: withWork[0].id }
+      : busiest
+        ? { kind: 'person', id: busiest }
         : { kind: 'stream', id: streams[0]?.id ?? '' };
 
   const brief = useMemo(
@@ -64,11 +54,9 @@ export function Brief({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
     [subject.kind, subject.id, since, tasks, sections, streams, people, taskPeople],
   );
 
-  const choose = (next: Partial<{ person: string; stream: string; since: string }>) => {
+  const setSince = (w: number) => {
     const p = new URLSearchParams(params);
-    if (next.person) { p.set('person', next.person); p.delete('stream'); }
-    if (next.stream) { p.set('stream', next.stream); p.delete('person'); }
-    if (next.since) p.set('since', next.since);
+    p.set('since', String(w));
     setParams(p, { replace: true });
     setCopied(false);
   };
@@ -88,48 +76,15 @@ export function Brief({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
 
   return (
     <section aria-labelledby="brief-head" className="brief" data-stream={streamId}>
+      <Link
+        to={subject.kind === 'person' ? `/people/${subject.id}` : `/streams/${subject.id}`}
+        className="back"
+      >
+        ← Back
+      </Link>
       <div className="shead">
         <h2 id="brief-head">Brief</h2>
-        <span className="shead__meta">for a person, or a stream</span>
-      </div>
-
-      <p className="brief__lede">
-        Everything so far has been about getting work in and keeping it straight. This is the
-        part that comes back out — paste it into a message, an email or the monthly report.
-      </p>
-
-      <div className="filters" role="group" aria-label="Who the brief is about">
-        {shown.map((p) => (
-          <button
-            key={p.id}
-            className="chip"
-            aria-pressed={subject.kind === 'person' && subject.id === p.id}
-            onClick={() => choose({ person: p.id })}
-          >
-            {p.name}
-            <span className="chip__n">{p.open}</span>
-          </button>
-        ))}
-        {hidden > 0 && (
-          <button className="chip" onClick={() => setAllPeople(true)}>
-            {hidden} more
-          </button>
-        )}
-      </div>
-
-      <div className="filters" role="group" aria-label="Or a stream">
-        {streams.map((s) => (
-          <button
-            key={s.id}
-            className="chip"
-            data-stream={s.id}
-            aria-pressed={subject.kind === 'stream' && subject.id === s.id}
-            onClick={() => choose({ stream: s.id })}
-          >
-            <span className="chip__dot" />
-            {s.short}
-          </button>
-        ))}
+        <span className="shead__meta">text you can paste</span>
       </div>
 
       <div className="brief__sheet">
@@ -154,7 +109,7 @@ export function Brief({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
                 key={w}
                 type="button"
                 aria-pressed={since === w}
-                onClick={() => choose({ since: String(w) })}
+                onClick={() => setSince(w)}
               >
                 {w} days
               </button>

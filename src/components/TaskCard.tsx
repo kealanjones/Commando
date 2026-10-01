@@ -21,7 +21,7 @@ export const TaskCard = memo(function TaskCard({
   task,
   streamLabel,
   waitingOn,
-  threads,
+  compact = false,
   index = 0,
   onToggle,
   onOpen,
@@ -29,7 +29,8 @@ export const TaskCard = memo(function TaskCard({
   task: Task;
   streamLabel?: string;
   waitingOn?: string[];
-  threads?: string[];
+  /** Title, stream and date only: for Today, where the row is a reminder. */
+  compact?: boolean;
   index?: number;
   onToggle: (task: Task) => void;
   onOpen: (task: Task) => void;
@@ -64,8 +65,8 @@ export const TaskCard = memo(function TaskCard({
         <span className="task__body">
           <span className="task__title">{task.title}</span>
 
-          {task.context && <span className="task__context">{task.context}</span>}
-          {task.note && <span className="task__note">{task.note}</span>}
+          {!compact && task.context && <span className="task__context">{task.context}</span>}
+          {!compact && task.note && <span className="task__note">{task.note}</span>}
 
           <span className="task__meta">
             {streamLabel && <span className="pill">{streamLabel}</span>}
@@ -75,11 +76,7 @@ export const TaskCard = memo(function TaskCard({
                 {fmtDue(task.due)}
               </span>
             )}
-            {!task.due && task.do_now && <span className="pill pill--flag">do now</span>}
-            {task.unclear && <span className="pill">unclear</span>}
-            {threads?.map((t) => (
-              <span className="threadchip" key={t}>{t}</span>
-            ))}
+            {!compact && task.do_now && <span className="pill pill--flag">urgent</span>}
             {waitingOn && waitingOn.length > 0 && (
               <span className="meta">
                 waiting on <b>{waitingOn.join(', ')}</b>
