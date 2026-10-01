@@ -13,6 +13,28 @@ Revised twice at the design checkpoint stage.
   task-app reference the user supplied. The structure and the computed signals
   from v2 all survive; only the register changed.
 
+## v5 — Ledger Desk (October 2026)
+
+v4 fixed what the app does; v5 replaces how it looks. Four directions were
+drawn on real data (a ruled ledger, a dark dense one, one-thing-at-a-time,
+and a three-pane desk); the ledger page in the desk's layout was chosen,
+with a notebook version of the same page alongside it.
+
+- **Laptop first, phone for adding.** That is how it is used. At 1100px and
+  up it is three panes — index, list, folio — and the selected item opens in
+  the folio beside the list rather than over it. The phone is one column
+  with a full-width Add at the bottom.
+- **A ruled page.** Square corners, rules for structure instead of cards
+  and shadows, dates in the left margin, totals under a double rule.
+- **No colour for meaning but red.** Streams became codes. The plan's load
+  is ink laid over paper, darker as a day fills, so it reads on every paper.
+- **Two papers, each light and dark,** from one set of rules: tokens.css
+  holds the values, app.css never names a colour. The notebook's few extra
+  touches (written margin dates, highlighter, index card) sit in one block
+  at the end of app.css.
+- **Keys at the desk.** J/K, X, U, D, N, / — shown in the empty folio, so
+  they are learnt by looking rather than from a help page.
+
 ## v4 — focus (October 2026)
 
 By September the register had grown nine destinations, two switches, a

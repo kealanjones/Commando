@@ -45,6 +45,9 @@ function StreamIndex({ health }: { health: StreamHealth[] }) {
           {health.reduce((n, h) => n + h.openTasks, 0)} open
         </span>
       </div>
+      <div className="colhead colhead--streams" aria-hidden="true">
+        <span>Code</span><span>Stream</span><span>Open</span>
+      </div>
       <ul className="list">
         {health.map((h, i) => {
           // With both lives showing, a word marks where one ends.
@@ -58,7 +61,7 @@ function StreamIndex({ health }: { health: StreamHealth[] }) {
                 </h3>
               )}
               <Link to={`/streams/${h.id}`} className="srow" data-stream={h.id}>
-                <span className="srow__bar" aria-hidden="true" />
+                <span className="srow__code">{h.code}</span>
                 <span className="srow__body">
                   <b>{h.title}</b>
                   <span className="srow__meta">
@@ -67,11 +70,7 @@ function StreamIndex({ health }: { health: StreamHealth[] }) {
                     <span>{quiet(h.daysQuiet)}</span>
                   </span>
                 </span>
-                <span className="srow__n">
-                  {h.openTasks}
-                  <small>open</small>
-                </span>
-                <Chevron />
+                <span className="srow__n">{h.openTasks}</span>
               </Link>
             </li>
           );
@@ -217,6 +216,9 @@ function GroupBlock({
       </button>
       <div className="collapse" data-open={open} id={id}>
         <div className="groupblock__body">{children}</div>
+      </div>
+      <div className="total">
+        <span>Total</span><span>{count}</span>
       </div>
     </div>
   );

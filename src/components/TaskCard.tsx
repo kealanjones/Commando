@@ -1,25 +1,24 @@
 import { memo, useRef } from 'react';
 import { openedFrom } from '@/lib/expand';
+import { useSelectedId } from '@/lib/selection';
+import { isoDay } from '@/lib/today';
 import type { Task } from '@/lib/types';
 
-const fmtDue = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-
-const daysUntil = (iso: string) =>
-  Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+/** "28 AUG": a date in the margin, the way a diary is kept. */
+const marginDate = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
 
 /**
- * A row, and the thing it becomes.
+ * A row of the register.
  *
- * The whole body opens the item — a small dots button was a target you had
- * to aim at, and on a phone the natural gesture is to touch the thing you
- * are reading. The checkbox keeps its own target and its own job: the title
- * no longer ticks it, because a tap on a title now means "show me this",
- * and one gesture cannot mean two things.
+ * Read left to right like a ledger line: when it is due, in the margin;
+ * the box to tick; what it is; where it is filed; which stream. The whole
+ * body opens the item. The checkbox keeps its own target and its own job.
  */
 export const TaskCard = memo(function TaskCard({
   task,
   streamLabel,
+  where,
   waitingOn,
   compact = false,
   index = 0,
@@ -28,18 +27,21 @@ export const TaskCard = memo(function TaskCard({
 }: {
   task: Task;
   streamLabel?: string;
+  /** The section it is filed in, shown in its own column at a desk. */
+  where?: string;
   waitingOn?: string[];
-  /** Title, stream and date only: for Today, where the row is a reminder. */
+  /** Title, place and date only: for Today, where the row is a reminder. */
   compact?: boolean;
   index?: number;
   onToggle: (task: Task) => void;
   onOpen: (task: Task) => void;
 }) {
-  const overdue = task.due ? daysUntil(task.due) < 0 : false;
+  const overdue = Boolean(task.due && !task.done && task.due < isoDay(new Date()));
+  const selected = useSelectedId() === task.id;
   const ref = useRef<HTMLLIElement>(null);
 
   const open = () => {
-    // Hand the card the rectangle to grow out of.
+    // Hand the card the rectangle to grow out of (narrow screens).
     openedFrom(ref.current);
     onOpen(task);
   };
@@ -50,8 +52,13 @@ export const TaskCard = memo(function TaskCard({
       className={`task${task.done ? ' task--done' : ''}`}
       data-stream={task.stream_id}
       data-task={task.id}
-      style={{ animationDelay: `${Math.min(index, 8) * 0.04}s` }}
+      data-selected={selected || undefined}
+      style={{ animationDelay: `${Math.min(index, 8) * 0.025}s` }}
     >
+      <span className={`task__due${overdue ? ' task__due--late' : ''}`}>
+        {task.due ? marginDate(task.due) : ''}
+      </span>
+
       <input
         type="checkbox"
         className="check"
@@ -61,35 +68,30 @@ export const TaskCard = memo(function TaskCard({
         aria-label={`${task.done ? 'Reopen' : 'Complete'}: ${task.title}`}
       />
 
-      <button className="task__open" onClick={open} aria-label={`Open: ${task.title}`}>
+      <button
+        className="task__open"
+        onClick={open}
+        aria-label={`Open: ${task.title}`}
+        aria-current={selected || undefined}
+      >
         <span className="task__body">
           <span className="task__title">{task.title}</span>
 
           {!compact && task.context && <span className="task__context">{task.context}</span>}
           {!compact && task.note && <span className="task__note">{task.note}</span>}
 
-          <span className="task__meta">
-            {streamLabel && <span className="pill">{streamLabel}</span>}
-            {task.due && (
-              <span className={overdue ? 'pill pill--due' : 'pill pill--flag'}>
-                {overdue ? 'overdue ' : 'due '}
-                {fmtDue(task.due)}
-              </span>
-            )}
-            {!compact && task.do_now && <span className="pill pill--flag">urgent</span>}
-            {waitingOn && waitingOn.length > 0 && (
-              <span className="meta">
-                waiting on <b>{waitingOn.join(', ')}</b>
-              </span>
-            )}
-          </span>
+          {((!compact && task.do_now) || (waitingOn && waitingOn.length > 0) || where) && (
+            <span className="task__meta">
+              {!compact && task.do_now && <span className="pill pill--flag">Urgent</span>}
+              {where && <span className="task__wheresmall">{where}</span>}
+              {waitingOn && waitingOn.length > 0 && (
+                <span className="meta">waiting on <b>{waitingOn.join(', ')}</b></span>
+              )}
+            </span>
+          )}
         </span>
-        <span className="task__chevron" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m9 6 6 6-6 6" />
-          </svg>
-        </span>
+        {where && <span className="task__where">{where}</span>}
+        {streamLabel && <span className="pill task__code">{streamLabel}</span>}
       </button>
     </li>
   );

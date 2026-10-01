@@ -2,7 +2,8 @@
  * The card: the row lifting off the page, and dropping back into it.
  *
  * The geometry is what makes this feel like one object rather than two, so
- * it is asserted numerically rather than eyeballed.
+ * it is asserted numerically rather than eyeballed. At a desk (1100px and
+ * up) an item opens in the folio instead, so the card is tested at 1024.
  */
 import { launch, out } from './browser.mjs';
 
@@ -40,7 +41,7 @@ const frames_ = (p) => p.evaluate(() => window.__frames);
 
 // ── 1. it grows out of the row you touched ──────────────────────────
 {
-  const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } });
+  const ctx = await b.newContext({ viewport: { width: 1024, height: 900 } });
   const p = await ctx.newPage();
   const errs = [];
   p.on('pageerror', (e) => errs.push(String(e)));
@@ -108,7 +109,7 @@ const frames_ = (p) => p.evaluate(() => window.__frames);
 
 // ── 3. everything about the item is on it ───────────────────────────
 {
-  const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } });
+  const ctx = await b.newContext({ viewport: { width: 1024, height: 900 } });
   const p = await ctx.newPage();
   const errs = [];
   p.on('pageerror', (e) => errs.push(String(e)));
@@ -158,7 +159,7 @@ const frames_ = (p) => p.evaluate(() => window.__frames);
 
 // ── 4. opened from somewhere with no row to grow from ───────────────
 {
-  const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } });
+  const ctx = await b.newContext({ viewport: { width: 1024, height: 900 } });
   const p = await ctx.newPage();
   const errs = [];
   p.on('pageerror', (e) => errs.push(String(e)));
@@ -210,7 +211,7 @@ const frames_ = (p) => p.evaluate(() => window.__frames);
 
 // ── 6. reduced motion ───────────────────────────────────────────────
 {
-  const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  const ctx = await b.newContext({ viewport: { width: 1024, height: 900 }, reducedMotion: 'reduce' });
   const p = await ctx.newPage();
   const errs = [];
   p.on('pageerror', (e) => errs.push(String(e)));

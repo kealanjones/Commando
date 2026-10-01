@@ -10,14 +10,47 @@ in its place, until you go and look.
 
 | | |
 |---|---|
-| **Today** | What is overdue, what is due today, and what you flagged urgent. One list, three headings, and a count at the bottom. Nothing else. |
+| **Today** | What is overdue, what is due today, and what you flagged urgent. One list, three headings, and a count beside the title. Nothing else. |
 | **Streams** | Every stream on one line — how much is open, what is overdue, when you last touched it. Open one and it is broken down area by area, section by section. |
 | **People** | Who owes you what. Open a person before a catch-up: everything that names them, a **Brief** to paste, and **Go through them** one at a time. |
 | **Review** | The weekly review — a short deck of things that have gone stale, one decision each — and **Plan**, for giving undated items a day against a calendar of how busy each day already is. |
 
-The header carries the date, the **Work · Personal · Both** switch, search
-(`/` or `Cmd/Ctrl+K`), and **+** to add an item. Meeting notes come in from
-**+ → Paste meeting notes instead**.
+## The look: Ledger Desk
+
+A ruled page: square corners, a black rule between panes and under a
+heading, a hairline between rows, a double rule under a total, and the date
+of each item in the left margin like a diary. Streams are short codes rather
+than colours; red means overdue and nothing else.
+
+**At a desk** (1100px and wider) the register is three panes: the **index**
+on the left (the date, which life, the four places with what is in them,
+every stream), the **list** in the middle, and the **folio** on the right,
+where the selected item opens. Edits in the folio land as you make them —
+toggles and dates at once, the title and note when you leave the field.
+The list can be driven from the keyboard:
+
+| | |
+|---|---|
+| `J` `K` | Move down and up the list |
+| `↵` | Edit the title |
+| `X` | Done (with Undo) |
+| `U` | Urgent on or off |
+| `D` | Give it a date |
+| `N` | New item |
+| `/` or `Cmd/Ctrl+K` | Search |
+| `Esc` | Put the folio down |
+
+**On a phone** it is one column: the date and which life at the top, and at
+the bottom a full-width **Add an item** — adding is the main job there — over
+the four tabs. An item opens as a card that grows out of its row.
+
+**Settings** holds the paper and the light. **Ledger** is white and black;
+**Notebook** is ruled paper, blue-black ink, a red margin with dates written
+in it, a highlighter on the row you are on, and the open item as an index
+card. Either can **follow the device** into dark, or be fixed light or dark.
+All of it is kept on the device; none of it is written to the register.
+
+Meeting notes come in from **Add → Paste meeting notes instead**.
 
 ## One kind of item
 
@@ -100,8 +133,8 @@ Unit suites run directly; browser suites need the demo build being served
 | `npm run test:api` | The `/api/extract` guards: auth, method, missing key |
 | `npm run test:dberror` | That a failed write explains itself |
 | `npm run test:ui` | Notes, ticking, undo, delete, keyboard, reduced motion |
-| `npm run test:modes` | Work and personal on every screen; Today's count |
-| `npm run test:card` | The item card: growing out of a row and back into it |
+| `npm run test:modes` | Work and personal; Today's count; the desk and its keys; paper and light |
+| `npm run test:card` | The item card on narrower screens: growing out of a row and back into it |
 | `npm run test:review` | The Review tab, the deck, and a person's page |
 | `npm run test:planning` | Placing work on days in the browser |
 | `npm run test:brief-ui` | The brief, from a person and from a stream |
@@ -383,8 +416,8 @@ data/register.seed.ts     the seed source of truth — edit this
 data/people.ts            names extracted into the waiting-on dimension
 supabase/migrations/      schema, RLS, realtime
 scripts/seed.ts           idempotent reconciling seeder
-src/routes/               Today, Streams, People, Person, Review, Plan, Brief, Intake, sign-in
-src/components/           the header and nav, item rows, the item card, sheets, search, toasts
+src/routes/               Today, Streams, People, Person, Review, Plan, Brief, Intake, Settings, sign-in
+src/components/           the index and phone bars, rows, the folio, the card, sheets, search, toasts
 src/data/store.ts         queries, optimistic mutations, derived signals
 src/data/review.ts        the review queue and the decision mutations
 src/data/intake.ts        extraction call and triage state
@@ -393,10 +426,11 @@ src/lib/tree.ts           stream → area → section, the one place that knows 
 src/lib/plan.ts           the month, the load bands and the queue that needs dating
 src/lib/brief.ts          composing something the register can hand back
 src/lib/search.ts         ranking and highlighting
-src/lib/modes.ts          the work / personal / both switch
+src/lib/modes.ts          which life, which paper, which light
+src/lib/selection.ts      where an item opens: the folio at a desk, the card on a phone
 src/lib/queue.ts          the offline write queue
 api/extract.ts            reads a meeting server-side; holds the Anthropic key
-src/styles/tokens.css     the design system: colour, type, radii, motion
+src/styles/tokens.css     the two papers, light and dark: every colour and face
 DEPLOY.md                 the deployment runbook
 tests/                    unit and browser checks, plus the RLS proof (rls.sql)
 docs/DECISIONS.md         why it works the way it does

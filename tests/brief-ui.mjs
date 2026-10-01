@@ -71,7 +71,7 @@ const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail
   // A line in the brief is still a way into the work.
   await p.locator('.brief__block li button').first().click();
   await p.waitForTimeout(700);
-  ok(await p.isVisible('.card'), 'a line opens the item it is about');
+  ok(await p.isVisible('#folio-title'), 'a line opens the item it is about, in the folio at a desk');
   await p.keyboard.press('Escape');
   await p.waitForTimeout(400);
 
@@ -97,7 +97,7 @@ const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail
   await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await p.waitForTimeout(400);
   const clear = await p.evaluate(() => {
-    const nav = document.querySelector('.nav').getBoundingClientRect().top;
+    const nav = document.querySelector('.phonebottom').getBoundingClientRect().top;
     const last = document.querySelector('.brief__raw');
     return last.getBoundingClientRect().bottom <= nav + 1;
   });

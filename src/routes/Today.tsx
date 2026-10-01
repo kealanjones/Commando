@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TaskCard } from '@/components/TaskCard';
-import { useStreams, useToday } from '@/data/store';
+import { useSections, useStreams, useToday } from '@/data/store';
 import type { Task } from '@/lib/types';
 
 /** Urgent items shown before the rest fold behind a "show more". */
@@ -22,10 +22,12 @@ export function Today({
   recentlyDone?: string[];
 }) {
   const { data: streams = [] } = useStreams();
+  const { data: sections = [] } = useSections();
   const { overdue, today, urgent, toDo, doneToday, isLoading } = useToday(recentlyDone);
   const [allUrgent, setAllUrgent] = useState(false);
 
   const streamCode = useMemo(() => new Map(streams.map((s) => [s.id, s.code])), [streams]);
+  const sectionTitle = useMemo(() => new Map(sections.map((s) => [s.id, s.title])), [sections]);
 
   if (isLoading) {
     return (
@@ -51,6 +53,7 @@ export function Today({
               task={t}
               index={i}
               streamLabel={streamCode.get(t.stream_id)}
+              where={sectionTitle.get(t.section_id)}
               compact
               onToggle={onToggle}
               onOpen={onOpen}
@@ -67,6 +70,15 @@ export function Today({
 
   return (
     <div className="today">
+      <header className="shead">
+        <h2>Today</h2>
+        <p className="shead__meta tcount" aria-live="polite">
+          <b>{toDo}</b> to do · <b>{doneToday}</b> done today
+        </p>
+      </header>
+
+      <ColumnHead />
+
       {nothing ? (
         <div className="empty">
           <h3>Nothing due, nothing urgent</h3>
@@ -88,9 +100,16 @@ export function Today({
         </>
       )}
 
-      <p className="tcount" aria-live="polite">
-        <b>{toDo}</b> to do · <b>{doneToday}</b> done today
-      </p>
+
+    </div>
+  );
+}
+
+/** The ledger's column heads, shown at a desk where the columns exist. */
+export function ColumnHead({ second = 'Item' }: { second?: string }) {
+  return (
+    <div className="colhead" aria-hidden="true">
+      <span>Due</span><span /><span>{second}</span><span>Filed under</span><span>Stream</span>
     </div>
   );
 }

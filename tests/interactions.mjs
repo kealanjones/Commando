@@ -64,7 +64,7 @@ await p.waitForTimeout(500);
 const clear = await p.evaluate(() => {
   const tasks = [...document.querySelectorAll('.task')];
   const last = tasks[tasks.length - 1];
-  const nav = document.querySelector('.nav');
+  const nav = document.querySelector('.phonebottom');
   if (!last || !nav) return null;
   return Math.round(nav.getBoundingClientRect().top - last.getBoundingClientRect().bottom);
 });

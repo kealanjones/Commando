@@ -68,7 +68,7 @@ const loads = (p) => p.locator('.plan__day').evaluateAll((els) => els.map((e) =>
   ok(inDay >= 8, `every item placed there is listed (${inDay})`);
   await p.locator('.plan__peekrow button').first().click();
   await p.waitForTimeout(700);
-  ok(await p.isVisible('.card'), 'and opens the item it names');
+  ok(await p.isVisible('#folio-title'), 'and opens the item it names, in the folio');
   await p.keyboard.press('Escape');
   await p.waitForTimeout(400);
 
@@ -143,7 +143,7 @@ const loads = (p) => p.locator('.plan__day').evaluateAll((els) => els.map((e) =>
   const cell = await p.locator('.plan__day').first().boundingBox();
   ok(cell.height >= 38, `a day is big enough to hit with a thumb (${Math.round(cell.height)}px)`);
 
-  ok(await p.locator('.nav a[aria-current="page"]', { hasText: 'Review' }).isVisible(),
+  ok(await p.locator('.tabs a[aria-current="page"]', { hasText: 'Review' }).isVisible(),
     'the plan sits under the Review tab');
 
   await p.locator('.plan__chip').first().click();
