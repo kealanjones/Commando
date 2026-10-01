@@ -2,8 +2,8 @@
  * The Web's two engines, with no browser in sight: what the graph says
  * about the register, and where the layouts put things.
  */
-import { buildGraph, quietness, QUIET_FULL_DAYS } from '/home/user/Commando/src/lib/web.ts';
-import { WebSim, PLOT, fitTransform, toWorld, clampZoom } from '/home/user/Commando/src/lib/force.ts';
+import { buildGraph, quietness, QUIET_FULL_DAYS } from '../src/lib/web.ts';
+import { WebSim, PLOT, fitTransform, toWorld, clampZoom } from '../src/lib/force.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };

@@ -1,5 +1,5 @@
 /** Reading dates back out of what was already written down. */
-import { findDate, findDates, findDeadlineHints, fmtDate } from '/home/user/Commando/src/lib/dates.ts';
+import { findDate, findDates, findDeadlineHints, fmtDate } from '../src/lib/dates.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };

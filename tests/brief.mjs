@@ -1,5 +1,5 @@
 /** The brief: what goes in it, what stays out, and what it reads like. */
-import { buildBrief } from '/home/user/Commando/src/lib/brief.ts';
+import { buildBrief } from '../src/lib/brief.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };

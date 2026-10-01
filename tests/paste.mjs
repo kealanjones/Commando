@@ -1,8 +1,7 @@
 /** Bringing a meeting in via Claude: copy prompt → paste reply → triage. */
-import { chromium } from 'playwright';
+import { launch, out } from './browser.mjs';
 
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--headless=new', '--no-sandbox'] });
-const out = '/tmp/claude-0/-home-user-Commando/55cd7d66-6986-5bab-a214-9d42a2d3da06/scratchpad';
+const b = await launch();
 const fail = [];
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail.push(m); };
 

@@ -1,9 +1,8 @@
 /** The plan in a browser, and the Web's one-stream view. */
-import { chromium } from 'playwright';
+import { launch, out } from './browser.mjs';
 
-const out = '/tmp/claude-0/-home-user-Commando/55cd7d66-6986-5bab-a214-9d42a2d3da06/scratchpad';
 const base = 'http://127.0.0.1:4173';
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--headless=new', '--no-sandbox'] });
+const b = await launch();
 
 const fail = [];
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail.push(m); };

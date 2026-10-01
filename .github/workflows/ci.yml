@@ -36,6 +36,24 @@ jobs:
       - name: API guards
         run: npm run test:api
 
+      - name: Section tree
+        run: npm run test:tree
+
+      - name: Date reading
+        run: npm run test:dates
+
+      - name: Brief
+        run: npm run test:brief
+
+      - name: Plan
+        run: npm run test:plan
+
+      - name: Tally
+        run: npm run test:tally
+
+      - name: Web graph and layout
+        run: npm run test:graph
+
       # Built in demo mode so CI needs no Supabase credentials. The env
       # validation that guards the real build is exercised separately below.
       - name: Build
@@ -52,6 +70,12 @@ jobs:
           npm run test:paste
           npm run test:find
           npm run test:threads
+          npm run test:card
+          npm run test:upgrades
+          npm run test:planning
+          npm run test:modes
+          npm run test:groups
+          npm run test:web
 
   database:
     name: Migrations and RLS

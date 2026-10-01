@@ -1,4 +1,4 @@
-import { suggestGroups } from '/home/user/Commando/src/lib/grouping.ts';
+import { suggestGroups } from '../src/lib/grouping.ts';
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };
 

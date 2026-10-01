@@ -1,7 +1,7 @@
 /** The plan: the grid, the bands, the days you reach for, the queue. */
 import {
   monthGrid, loadOf, loadByDay, quickTargets, weekAhead, undated, isoOf, startOfDay, fmtDay, monthName,
-} from '/home/user/Commando/src/lib/plan.ts';
+} from '../src/lib/plan.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };

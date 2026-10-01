@@ -1,6 +1,5 @@
-import { chromium } from 'playwright';
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--headless=new','--no-sandbox'] });
-const out = '/tmp/claude-0/-home-user-Commando/55cd7d66-6986-5bab-a214-9d42a2d3da06/scratchpad';
+import { launch, out } from './browser.mjs';
+const b = await launch();
 const ctx = await b.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 2 });
 const p = await ctx.newPage();
 const fail = [];
