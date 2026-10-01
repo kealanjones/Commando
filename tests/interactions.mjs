@@ -44,6 +44,24 @@ await p.locator('.toast button', { hasText: 'Undo' }).click();
 await p.waitForTimeout(400);
 ok(!(await p.locator(`#${targetId}`).isChecked()), 'undo reopens the task');
 
+// ── 3b. once the undo has gone, a ticked row folds away ─────────
+{
+  // The row ticked and undone above must still be here once its old
+  // timers would have run out.
+  await p.waitForTimeout(5400);
+  ok((await p.locator(`#${targetId}`).count()) === 1 && !(await p.locator(`#${targetId}`).isChecked()),
+    'an undone tick does not fold its row away later');
+
+  const id = await p.evaluate(() => document.querySelector('.task .check')?.id);
+  await p.locator(`#${id}`).click();
+  await p.waitForTimeout(4950);
+  ok(await p.locator(`#${id}`).evaluate((c) => c.closest('.task').classList.contains('task--leaving')),
+    'just before it goes, the row starts to fold');
+  await p.waitForTimeout(700);
+  ok((await p.locator(`#${id}`).count()) === 0, 'and then it is gone');
+  await p.locator('.toast button', { hasText: 'Undo' }).count();
+}
+
 // ── 4. delete is reversible ─────────────────────────────────────
 // Assert on the specific row, not the count.
 const delId = (await p.evaluate(() => document.querySelector('.task .check')?.id));

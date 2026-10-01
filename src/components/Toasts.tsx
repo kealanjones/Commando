@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 
 export interface Toast {
   id: string;
+  /** Set while it slides away, so it can leave rather than vanish. */
+  leaving?: boolean;
   message: string;
   actionLabel?: string;
   onAction?: () => void;
@@ -24,7 +26,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const timers = useRef<Map<string, number>>(new Map());
 
   const dismiss = useCallback((id: string) => {
-    setToasts((t) => t.filter((x) => x.id !== id));
+    setToasts((t) => t.map((x) => (x.id === id ? { ...x, leaving: true } : x)));
+    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 240);
     for (const [key, handle] of timers.current) {
       if (key === id || key.endsWith(`::${id}`)) {
         window.clearTimeout(handle);
@@ -63,8 +66,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div className="toasts" role="status" aria-live="polite">
         {toasts.map((t) => (
-          <div key={t.id} className={`toast${t.tone === 'warn' ? ' toast--warn' : ''}`}>
+          <div
+            key={t.id}
+            className={`toast${t.tone === 'warn' ? ' toast--warn' : ''}${t.leaving ? ' toast--leaving' : ''}`}
+          >
             <p>{t.message}</p>
+            {/* How long the undo has left, as a line running down. */}
+            {(t.duration ?? 6000) > 0 && t.actionLabel && (
+              <span
+                className="toast__time"
+                aria-hidden="true"
+                style={{ animationDuration: `${t.duration ?? 6000}ms` }}
+              />
+            )}
             {t.actionLabel && (
               <button
                 onClick={() => { t.onAction?.(); dismiss(t.id); }}

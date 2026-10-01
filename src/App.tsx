@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 
@@ -23,7 +23,8 @@ import { NotConfigured, SignIn } from '@/routes/SignIn';
 import { configured, supabase } from '@/lib/supabase';
 import { DEMO } from '@/lib/demo';
 import { useApplyLook, useRealm } from '@/lib/modes';
-import { SelectedContext, useWide } from '@/lib/selection';
+import { LeavingContext, SelectedContext, useWide } from '@/lib/selection';
+import { Glide } from '@/components/Motion';
 import { ensureProfile } from '@/lib/profile';
 import {
   useCreateTask, usePeople, useRealtime, useSections, useSoftDelete, useStreams, useTasks, useUpdateTask,
@@ -84,6 +85,16 @@ function Register({ email }: { email: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [recentlyDone, setRecentlyDone] = useState<string[]>([]);
+  /** Ticked rows in their last moment on screen, folding shut. */
+  const [leaving, setLeaving] = useState<ReadonlySet<string>>(new Set());
+  /** The fold timers per row, so an undo can call them off. */
+  const folds = useRef(new Map<string, number[]>());
+  const keep = useCallback((id: string) => {
+    folds.current.get(id)?.forEach((t) => window.clearTimeout(t));
+    folds.current.delete(id);
+    setRecentlyDone((ids) => ids.filter((x) => x !== id));
+    setLeaving((s) => { if (!s.has(id)) return s; const n = new Set(s); n.delete(id); return n; });
+  }, []);
   const [searching, setSearching] = useState(false);
 
   const selected = useMemo(
@@ -110,29 +121,32 @@ function Register({ email }: { email: string }) {
       const next = !task.done;
       update.mutate({ id: task.id, patch: { done: next } });
 
-      if (!next) {
-        setRecentlyDone((ids) => ids.filter((id) => id !== task.id));
-        return;
-      }
+      if (!next) { keep(task.id); return; }
 
-      // Hold the row on screen for as long as the undo is offered.
-      setRecentlyDone((ids) => (ids.includes(task.id) ? ids : [...ids, task.id]));
-      window.setTimeout(
-        () => setRecentlyDone((ids) => ids.filter((id) => id !== task.id)),
-        5200,
-      );
+      // Hold the row on screen for as long as the undo is offered, then
+      // let it fold shut rather than blink out.
+      keep(task.id);
+      setRecentlyDone((ids) => [...ids, task.id]);
+      folds.current.set(task.id, [
+        window.setTimeout(() => setLeaving((s) => new Set(s).add(task.id)), 4800),
+        window.setTimeout(() => {
+          folds.current.delete(task.id);
+          setRecentlyDone((ids) => ids.filter((id) => id !== task.id));
+          setLeaving((s) => { const n = new Set(s); n.delete(task.id); return n; });
+        }, 5250),
+      ]);
 
       push({
         message: 'Done.',
         actionLabel: 'Undo',
         onAction: () => {
           update.mutate({ id: task.id, patch: { done: false } });
-          setRecentlyDone((ids) => ids.filter((id) => id !== task.id));
+          keep(task.id);
         },
         duration: 5000,
       });
     },
-    [update, push],
+    [update, push, keep],
   );
 
   const onDelete = useCallback(
@@ -209,6 +223,7 @@ function Register({ email }: { email: string }) {
 
   return (
     <SelectedContext.Provider value={wide ? selectedId : null}>
+    <LeavingContext.Provider value={leaving}>
       <div className="shell">
         <a className="skip" href="#main">Skip to content</a>
 
@@ -219,6 +234,9 @@ function Register({ email }: { email: string }) {
           <DeskBar onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} />
 
           <div className="page__body">
+            {wide && <Glide selectedId={selectedId} watch={`${location.pathname}|${tasks.length}|${recentlyDone.join()}|${leaving.size}`} />}
+            {/* Keyed by address, so each page arrives rather than appears. */}
+            <div className="route" key={location.pathname}>
             <Routes>
               <Route path="/" element={<Today onToggle={onToggle} onOpen={onOpen} recentlyDone={recentlyDone} />} />
               <Route path="/streams" element={<Streams onToggle={onToggle} onOpen={onOpen} />} />
@@ -236,6 +254,7 @@ function Register({ email }: { email: string }) {
               <Route path="/plan" element={<Navigate to="/review/plan" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </div>
           </div>
 
           <PhoneBottom onAdd={() => setAdding(true)} />
@@ -284,6 +303,7 @@ function Register({ email }: { email: string }) {
           onClose={() => setAdding(false)}
         />
       )}
+    </LeavingContext.Provider>
     </SelectedContext.Provider>
   );
 }

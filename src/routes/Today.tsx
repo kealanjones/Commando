@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TaskCard } from '@/components/TaskCard';
+import { Num } from '@/components/Motion';
 import { useSections, useStreams, useToday } from '@/data/store';
 import type { Task } from '@/lib/types';
 
@@ -44,7 +45,7 @@ export function Today({
       <section className="tgroup" aria-labelledby={`tg-${id}`} data-tone={tone}>
         <h2 className="tgroup__head" id={`tg-${id}`}>
           {title}
-          <span className="tgroup__n">{total}</span>
+          <span className="tgroup__n"><Num value={total} /></span>
         </h2>
         <ul className="list">
           {list.map((t, i) => (
@@ -73,7 +74,7 @@ export function Today({
       <header className="shead">
         <h2>Today</h2>
         <p className="shead__meta tcount" aria-live="polite">
-          <b>{toDo}</b> to do · <b>{doneToday}</b> done today
+          <b><Num value={toDo} /></b> to do · <b><Num value={doneToday} /></b> done today
         </p>
       </header>
 

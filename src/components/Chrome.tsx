@@ -1,6 +1,7 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Plus } from './icons';
 import { SyncBadge } from './SyncBadge';
+import { Num } from './Motion';
 import { useHealth, useToday } from '@/data/store';
 import { useReviewStatus } from '@/data/review';
 import { REALM_LABEL, setRealm, useRealm } from '@/lib/modes';
@@ -64,7 +65,7 @@ export function Index() {
           <NavLink key={to} to={to} end={to === '/'}>
             <span>{label}</span>
             <span className="leader" aria-hidden="true" />
-            <span className="index__n">{n}</span>
+            <span className="index__n">{n === '' ? '' : <Num value={n} />}</span>
           </NavLink>
         ))}
       </nav>
@@ -80,7 +81,7 @@ export function Index() {
           >
             <span className="index__code">{h.code}</span>
             <span className="index__name">{h.short}</span>
-            <span className="index__n">{h.openTasks}</span>
+            <span className="index__n"><Num value={h.openTasks} /></span>
           </Link>
         ))}
       </div>

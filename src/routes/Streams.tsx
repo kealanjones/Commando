@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Chevron } from '@/components/icons';
 import { TaskCard } from '@/components/TaskCard';
+import { Num } from '@/components/Motion';
 import { useHealth, usePeople, useSections, useTasks } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
 import { branchesFor } from '@/lib/tree';
@@ -70,7 +71,7 @@ function StreamIndex({ health }: { health: StreamHealth[] }) {
                     <span>{quiet(h.daysQuiet)}</span>
                   </span>
                 </span>
-                <span className="srow__n">{h.openTasks}</span>
+                <span className="srow__n"><Num value={h.openTasks} /></span>
               </Link>
             </li>
           );
