@@ -1,392 +1,100 @@
 # Work Register
 
-A personal register for coordinating five parallel workstreams. It answers two
-questions, in this order:
-
-1. **What must I do today?**
-2. **Which of my workstreams is quietly falling behind?**
-
-The second question is the one a flat list never answers, and it is what most of
-the design is for.
+A personal register for five parallel workstreams. It answers one question
+first — **what must I do today?** — and keeps everything else broken down,
+in its place, until you go and look.
 
 ---
 
-## The shape of it
+## Four tabs
 
 | | |
 |---|---|
-| **Today** | The stream cards, one nudge, three tasks — and the tally of what got done. With both lives showing, two zones: work, then personal. |
-| **Streams** | Everything, stream → area → section, with filters including who you are waiting on. |
-| **Web** | The same register as a shape: what is connected to what, and what has gone quiet. |
-| **People** | Who owes you what. Open one before a catch-up. |
-| **Periphery** | The remembering register. Nothing here can be ticked. |
-| **Intake** | Paste a meeting record; review what it proposes; accept what is real. |
-| **Plan** | Every undated item, one at a time, against a month coloured by how loaded each day already is. |
-| **Brief** | Something the register hands back: text you can paste, for a person or a stream. |
-| **Dates** | The dates you already wrote down, read back out of your own words. |
+| **Today** | What is overdue, what is due today, and what you flagged urgent. One list, three headings, and a count beside the title. Nothing else. |
+| **Streams** | Every stream on one line — how much is open, what is overdue, when you last touched it. Open one and it is broken down area by area, section by section. |
+| **People** | Who owes you what. Open a person before a catch-up: everything that names them, a **Brief** to paste, and **Go through them** one at a time. |
+| **Review** | The weekly review — a short deck of things that have gone stale, one decision each — and **Plan**, for giving undated items a day against a calendar of how busy each day already is. |
+
+## The look: Ledger Desk
+
+A ruled page: square corners, a black rule between panes and under a
+heading, a hairline between rows, a double rule under a total, and the date
+of each item in the left margin like a diary. Streams are short codes rather
+than colours; red means overdue and nothing else.
+
+**At a desk** (1100px and wider) the register is three panes: the **index**
+on the left (the date, which life, the four places with what is in them,
+every stream), the **list** in the middle, and the **folio** on the right,
+where the selected item opens. Edits in the folio land as you make them —
+toggles and dates at once, the title and note when you leave the field.
+The list can be driven from the keyboard:
+
+| | |
+|---|---|
+| `J` `K` | Move down and up the list |
+| `↵` | Edit the title |
+| `X` | Done (with Undo) |
+| `U` | Urgent on or off |
+| `D` | Give it a date |
+| `N` | New item |
+| `/` or `Cmd/Ctrl+K` | Search |
+| `Esc` | Put the folio down |
+
+**On a phone** it is one column: the date and which life at the top, and at
+the bottom a full-width **Add an item** — adding is the main job there — over
+the four tabs. An item opens as a card that grows out of its row.
+
+**Settings** holds the paper and the light. **Ledger** is white and black;
+**Notebook** is ruled paper, blue-black ink, a red margin with dates written
+in it, a highlighter on the row you are on, and the open item as an index
+card. Either can **follow the device** into dark, or be fixed light or dark.
+All of it is kept on the device; none of it is written to the register.
+
+Meeting notes come in from **Add → Paste meeting notes instead**.
+
+## One kind of item
+
+Everything in the register is an item in a section. An item is open or done.
+It can have a **date**, and it can be flagged **urgent**. That is the whole
+model — and it is what decides Today:
+
+- a date in the past → **Overdue**
+- today's date → **Today**
+- flagged urgent → **Urgent** (the first five show; the rest fold behind *more urgent*)
+
+Nothing reaches Today any other way, so Today can always explain itself, and
+the way to change it is to change the item.
+
+Earlier versions had a second kind of thing ("watch" items with no checkbox)
+and a third state ("not clear yet"). Migration `0009_one_kind.sql` folds both
+back into ordinary items; nothing is deleted.
 
 ### Work and personal
 
-Two of the five streams are not the job. A switch in the top bar — **Work ·
-Personal · Both** — decides which life the register is, and it is applied
-inside the queries rather than on each screen: in Work the personal streams
-are not dimmed or folded, they are simply not there, on Today, in Streams, in
-the plan, the web, the brief and search alike. The date line names the realm,
-the paper changes colour with it, and the choice survives a reload.
-
-With both showing, Today is drawn in two zones — the work first, then a
-shorter personal one — each ranked on its own, so a mortgage never competes
-with a sponsor for a slot. Streams gets a rule and a word where one life ends
-and the other begins.
-
-Career sits with Personal. It is yours rather than the office's, and a
-Saturday should show neither the Directorate nor a sponsor chase. The realm is
-a column on the stream (`0008_realm.sql`), so it can be moved.
-
-### The tally
-
-What got finished, as a shape. **Today is a ring**: every tick is a wedge in
-the colour of the stream it came from, laid clockwise in the order the day
-happened, drawn as it happens. One thing done is one eighth of the ring, not a
-full circle — a full ring is eight things, and past that the wedges divide and
-the number carries the growth. **The week is a row**: a column of beads per
-day, one bead per finished thing, today's column standing forward, with the
-total and how it compares to last week.
-
-Nothing here is a percentage. The register has no denominator — a congress
-cannot be 40% done — so the tally counts what was finished and lets the shape
-say whether that was a lot. It counts by the moment a thing was ticked, so a
-seeded row that arrived already done never counts as a day's work it was not.
-
-### Focus
-
-The same screens with the chrome taken off. One tap on **Focus** and the
-stream cards, the prompts, the periphery, the notes under each row and the
-stream pills go; the rows grow; what is left is the work, its closing dates,
-and the tally. It is not a different app and it hides nothing you have to go
-looking for — every row is still the row, and it comes off with one tap.
-
-### The recency dial
-
-Each stream is a card carrying its own colour, with a dark badge showing its open
-count and **a ring around that badge showing recency** — full when the stream was
-touched today, emptying as it goes quiet, against a 21-day scale.
-
-It measures time since last contact, not completion. That is deliberate: a
-congress has no denominator, so any percentage-done figure would be fiction.
-Staleness is computed from `touched_at` and never entered by hand.
-
-### The card
-
-An item is not a row with a dialog behind it. Touch a row and it **lifts off
-the page** — the rectangle you touched grows into the whole record, the page
-behind draws back and blurs, and when you are done it drops back into its own
-place in the list.
-
-The geometry is a FLIP, and it is asserted numerically rather than eyeballed:
-the card is laid out at its final size, transformed back onto the row it came
-from, then released. Nothing inside is drawn while it is still row-sized —
-text scaled to a fifth and back is a smear, not a transition — so the contents
-arrive a beat after the shape does, staggered from the top down.
-
-Everything about the item is on it: where it is filed, the title as an
-editable sentence rather than a form field, its three states as one tap each
-(do now, not clear yet, keep tabs only), the detail the register carried, your
-own note, its date and section, and — folded away until you ask — when it was
-added, when it was last touched, when it was last reviewed and whether it came
-from the register or from you.
-
-Opened from somewhere with no row to grow from — search, the map, a thread —
-it simply arrives at full size. `prefers-reduced-motion` does the same, with
-no morph at all. `Escape` closes it and focus returns to the row that opened
-it; `⌘/Ctrl+Enter` saves.
-
-### Three levels, and only where they are earned
-
-**Stream → area → section → item.** ISODP is a stream; Sponsorship is an area
-inside it; OrganOx is a section inside that; chasing their UK marketing manager
-is an item.
-
-The middle level is real data, not a naming convention. It used to be spelled
-out in the section's own title — *Sponsorship — OrganOx*, *Finance — sponsor
-payment process* — which meant nothing could collapse by it, count by it or
-navigate by it, because nothing could read it. Fifteen ISODP sections at one
-level is a list wearing a structure's clothes.
-
-Now ISODP reads as five things (Sponsorship, Finance, Programme, Delegates and
-logistics, Website) and the Directorate as seven, and each area says how much is
-in it and how far it spreads before you open it.
-
-**Depth is optional, and that is the point.** Commonwealth has four sections and
-no areas at all; Career has one. Forcing every section into a group would be
-filing for its own sake — a heading over a room with one chair in it. A stream
-small enough to read at a glance is left flat.
-
-Areas are headings, never places: a task cannot be filed *into* Sponsorship, only
-into a section within it, so there is no ambiguity about where anything lives.
-Delete an area and its sections stay, one level up.
-
-### The plan
-
-One item in hand, a month in front of you, and **the load on every day shown as
-colour** — pale where a day is clear, deep red where it is full. Tap a day, or one
-of the named chips above it, and the item takes that date while the next one
-steps forward.
-
-The heat is the point. You can watch yourself over-filling a Tuesday *while you
-are doing it*, which is the one thing a list of two hundred undated items can
-never tell you.
-
-The bands are tight at the bottom on purpose: **one, two and three things are
-three different days**. A scale that only turned red at fifteen would never say
-anything about a real week.
-
-| | |
-|---|---|
-| **The chips** | Today, tomorrow, then whatever is left of this week **by name** — you think in Fridays, not in "+3 days" — plus next week and next month. Each carries the count already on that day. |
-| **Place / Look** | Tapping a day places the item in hand on it. Switch to Look to inspect a day instead, which is the only way to do it on a phone. |
-| **Just one stream** | Narrows the queue without narrowing the calendar: you still see the whole week's load while planning one workstream. |
-| **Not yet** | Passes an item over for this sitting. Nothing is written; it is back next time. |
-| **Already done / Delete** | Not everything in a dating queue wants a date. Some are finished and a few should never have been on the list, so both answers sit beside the day chips — and both are reversible from the same line. The date sweep carries the same two, quietly, under each row. |
-
-Placing something shows you what that day now holds, because the consequence of a
-decision is the thing you most want to see straight after making it. There are no
-toasts — placing thirty items in a sitting would stack thirty of them — so what
-you just placed is named under the item in hand, with an Undo beside it.
-
-### Dates you already wrote down
-
-The worst number in the register was **one dated item in two hundred**, which is
-why everything felt equally urgent. But most of those dates were never missing —
-they were in the wrong field. *"9 October, 1–2pm"* was sitting in a note;
-*"outbound 14 September, return 25 September"* in another.
-
-The sweep reads them back out. Every proposal shows **the words it came from**,
-picked out of your own sentence, so it argues for itself rather than asking to be
-trusted. Nothing is set without a tap, and skipping writes nothing at all.
-
-It is careful about how sure it is, and says so in plain words rather than a
-confidence score:
-
-| It found | It says |
-|---|---|
-| `28 August 2026` | a date, spelled out |
-| `9 October` | no year given — this is the next one |
-| `by Friday` | reading this as the coming Friday — check it is the right one |
-
-A weekday is the hedged case on purpose. *"Share Satya's taxi on Wednesday
-morning"* sits in a note about a trip and means **that** Wednesday, not the next
-one, so it is never offered as sure.
-
-A second list gathers the items that promise a deadline in words only — *ahead of
-the Australia trip*, *before Sydney*. No parser should guess at those, so they
-are put in front of you with a date field and nothing proposed.
-
-All of it is local: a date parser that needed a network call to read "9 October"
-would be a worse parser. It also keeps working on everything that arrives later,
-which is where most of its value is — meeting notes are full of *"before Friday"*.
-
-### The brief
-
-Everything else in this app is about getting work *in* and keeping it straight.
-This is the part that comes back out.
-
-Pick a person or a stream, get text you can paste into a message, an email or the
-monthly report. A person's brief leads with **what you need from them**, then
-what is also open, what has been waiting longest, and what has moved since you
-last spoke. A stream's is a different brief: **pressing**, moved recently, gone
-quiet, waiting on somebody else, not clear yet.
-
-Every line carries its reason — *overdue — was 22 Aug*, *40 days untouched*,
-*with Dale* — and clicking one opens the item it is about. The window is 7, 14 or
-30 days.
-
-The pasted version is plain text with no markup, because it has to survive Teams
-and Outlook. Composed locally from rows already held: no call, no key, and the
-brief you want most is the one you write on the train.
-
-### Threads — the strands the sections miss
-
-Sections are a filing system: one item, one place. Work does not arrive that
-way. Satya's trip lives in Commonwealth *and* in Directorate; sponsorship runs
-across five ISODP sections. A **thread** is an overlay, not a move — an item
-keeps where it is filed and gains a strand.
-
-The app proposes them. Each suggestion arrives named, listing exactly what it
-would gather, everything pre-selected and each item showing where it is filed.
-**You take out whatever does not belong before agreeing**, rename it if the
-suggested name is wrong, and nothing is grouped until you say so. *Not a thread*
-turns it down for good.
-
-Suggestions are computed locally from the words already in the register — no
-API, no key, works with no signal, and instant on 255 items. Which also means a
-proposal can always explain itself: *these ten share this word, across five
-sections*.
-
-Two rules make the suggestions worth reading:
-
-- **A strand inside one section is never offered.** Your filing already tells
-  you that. Only a thread that crosses sections adds anything.
-- **Only two kinds of word can name a thread**: a proper noun (Dale, Getinge,
-  QEII, VAT) or a word from your own section titles (sponsorship, accreditation,
-  hotels). Scoring by how many sections a word reaches sounds right and is
-  exactly backwards — a generic word like *through* or *whether* appears
-  everywhere, so it spans the most sections and wins. Restricting the vocabulary
-  makes a bad suggestion structurally impossible rather than merely unlikely.
-
-### The web — the register as a shape
-
-Optional, and nothing else depends on it. Two questions a list is bad at.
-
-**What is actually connected to what.** A dot is a section, not a task — 255
-dots is a hairball, and you do not think in tasks anyway, you think in "the
-Australia business". A line between two dots means they move together: **dashed**
-because the same person is named in both, **solid** because you put them in the
-same thread. Names are observed, threads you asserted, so a thread counts double
-in the pull between two sections.
-
-The point is what the filing hides. Australia and Sydney is filed under
-Commonwealth; released, it settles beside Office and OrganOx, because Satya and
-Dale are in all three. And when one person holds most of the web together, the
-caption says so outright — *78 of the 109 links are Anthony* is not something the
-list will ever tell you.
-
-**What has gone quiet.** Every dot fades toward white as the days since you last
-touched that section pile up — full colour today, empty at three weeks. Neglect
-becomes something you see rather than something you audit. A register with no
-history at all opens at full colour rather than looking abandoned.
-
-Three arrangements of the same dots:
-
-| | |
-|---|---|
-| **As filed** | Five piles, the way you keep them |
-| **As connected** | Released: shared people and threads pull sections together |
-| **Under pressure** | A scatter — quiet across, loaded up. The top right is the corner going quiet with work still in it |
-
-Everything else on a dot carries a reading too: **size** is open items plus what
-you are keeping tabs on, **the arc on the ring** is how much of that section is
-finished, **a red dot** is work that is pressing, and **a dashed ring** is a
-section you only monitor.
-
-Pick a connector or a thread to see just their reach; pick a stream to see how
-much of it leaks outside itself — and then **Only this stream** to drop the rest
-of the register entirely. That is not a filter over the same picture: the graph is
-rebuilt from that stream's sections alone, so the layout, the link count and the
-connectors are all about the stream rather than about the stream's corner of
-everything. ISODP alone is fifteen readable dots; ISODP inside all thirty-three
-is a neighbourhood. Drag a dot to park it, double-click to let it
-go. Selecting a section lists its open work, and tapping an item opens the same
-editor as everywhere else — the map is a way into the register, not a poster of
-it. Arrow keys walk between sections without a mouse; `Escape` clears.
-
-The first visit holds the filed arrangement for a beat and then lets go, because
-watching Australia leave the Commonwealth pile is the whole argument and it only
-needs making once. After that it opens where you left it.
-
-### Finding things
-
-The magnifying glass in the header, `/`, or `Cmd/Ctrl+K`. It searches task
-titles, your notes, the detail carried over from the seed, section names and
-who you are waiting on — all at once, over the already-cached list, so it works
-with no signal and returns as you type.
-
-Ranked rather than filtered: with 255 items a plain substring match buries the
-thing you meant under everything that merely mentions the word. An exact title
-beats a prefix, which beats a word-boundary match, which beats one buried
-mid-word — so "organ" finds *Organ Recovery Systems* before *reorganisation*.
-Notes and section names count for less than titles; finished items are found but
-demoted. Every word you type has to appear somewhere, so a second word narrows
-rather than widens.
-
-Arrow keys move, Enter opens the item, Escape closes. Matches are highlighted,
-and when the hit was in a note or in the seeded detail, that line is shown
-underneath rather than leaving you guessing why the result is there.
-
-### The review — what stops the list eating itself
-
-A register that only grows is the problem it was built to solve. Intake adds
-items after every meeting; nothing removed any. Worse, **a fifth of the tasks
-began with a verb that has no finish line** — "keep the pipeline current",
-"continue seeking sponsors". There is no state of the world in which those get
-ticked, so they would sit in the do-column for ever, diluting everything that
-can actually be finished.
-
-So the app asks. When decisions are waiting, Today offers a short deck — eight
-cards, one at a time, a few seconds each:
-
-> **No finish line.** There is no state of the world where you tick this. It is
-> a standing concern, not a task.
-> **Keep the sponsor pipeline current**
-> *Give it a date · Just watch it · Not clear yet · Drop it*
-
-Cards are queued by reason, worst first: overdue, then no-finish-line, then
-urgent-but-undated, then anything untouched for three weeks. A decision snoozes
-the item for a month — without that the same cards return every week and the
-ritual dies. Every decision is reversible, and the deck ends by telling you what
-changed: *your do-column is 8 lighter*.
-
-**Not clear yet** is the third answer to "is this doing or remembering". Some
-things are neither: real work you cannot act on because you do not yet know what
-it means. Parking one takes it off Today and puts it in its own pile to work
-through later, which is honest in a way that either forcing it into the task
-list or demoting it to the periphery is not.
-
-The same card surface runs for a person: open **Anthony** before a 1:1 and go
-through the seventeen things he owes you, one at a time, with *I've chased them*
-in place of *give it a date*.
+The switch in the header decides which life the register is. It is applied
+inside the queries, so in **Work** the personal streams are not dimmed — they
+are simply not there, on every screen and in search. The choice survives a
+reload. Career sits with Personal.
+
+### The review
+
+A register that only grows is the problem it was built to solve. The weekly
+review offers up to eight items, one at a time, worst first: overdue, then
+*no finish line* ("keep the pipeline current"), then urgent but undated, then
+anything untouched for three weeks. Each gets one decision — **give it a date**,
+**done**, **drop it**, or **leave it** — and every decision can be undone. A
+decided item is left alone for a month.
 
 ### Intake
 
-Paste notes, a transcript or an email chain. It comes back as a list of proposed
-items, each routed into one of your real sections, each carrying **the verbatim
-quote it came from** so a proposal can be checked in two seconds rather than by
-re-reading the transcript.
+Paste notes, a transcript or an email chain and get back proposed items, each
+routed into one of your sections and carrying **the quote it came from**.
+Nothing is written until you accept it; an item that fits no section comes back
+unplaced rather than guessed; a proposal that restates an open item is flagged.
 
-Three things it deliberately does not do:
-
-- **It does not write to the register.** Proposals land in `intake_items` and
-  stay there until you accept them. An LLM reading a transcript is a good first
-  pass and a bad final authority.
-- **It does not invent placement.** If nothing fits, the item comes back
-  unplaced and is excluded from the ready count until you choose a section.
-  A guess routed into the wrong stream is worse than an obvious gap.
-- **It leans towards watching, not doing.** The prompt says so explicitly: a
-  false task nags every morning, a false watch item is merely quiet. That
-  asymmetry is the whole point of the register, so extraction inherits it.
-
-It also checks proposals against your existing open items and flags anything
-that restates one, because half of what comes out of a meeting is already on
-the list.
-
-Two ways in.
-
-**Via Claude.** Needs nothing at all. The app writes a prompt that already carries your streams, your
-sections and every item you have open. Copy it, paste it into Claude with the
-meeting underneath, paste the reply back. No API key, no function to deploy, and
-nothing new leaves — you are already in Claude when you do it, which makes it a
-decision each time rather than a pipe that is always open. The parser takes the
-fenced block, the whole reply, or a bare array, and says plainly what to do when
-it cannot read something.
-
-**Read it here.** The default. Paste the record and it is read for you. Runs at
-`/api/extract`, which ships and deploys with the app — the only setup is adding
-`ANTHROPIC_API_KEY` to the Vercel project. The key never reaches the browser;
-the endpoint forwards your own session to PostgREST, so its reads and writes are
-bounded by the same RLS policies the app runs under.
-
-Same triage screen either way.
-
-### Doing versus remembering
-
-About a quarter of the register is not work — it is things that must stay in
-peripheral vision without demanding anything today. Those are `kind = 'watch'`,
-they live on their own screen, they never appear on Today, and **they have no
-checkbox anywhere in the interface**. A checkbox is a demand. *Make a task* is
-the only way out, and the conversion is the one animation in the app allowed to
-be noticeable.
-
-Full design and architecture reasoning is in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+Two ways in: **Read it here** (runs at `/api/extract`, needs `ANTHROPIC_API_KEY`
+on the Vercel project) or **Via Claude** (copy a prompt, paste the reply back —
+no key, nothing sent by the app).
 
 ---
 
@@ -401,63 +109,53 @@ npm run dev
 ### Seeing it without a backend
 
 ```bash
-VITE_DEMO=1 npm run dev   # or: npm run build:demo
+npm run build:demo && npm run serve:dist   # or: VITE_DEMO=1 npm run dev
 ```
 
-Fixture mode renders the whole app from `data/register.seed.ts` with no Supabase
-connection and no sign-in. Writes stay in memory and are discarded on reload.
-Useful for looking at layout against the real volume of items.
+Fixture mode renders the whole app from `data/register.seed.ts` with no
+Supabase connection and no sign-in. Writes stay in memory and are discarded on
+reload.
 
-### A shareable single file
+### Tests
 
-```bash
-npm run build:preview
-```
-
-Builds fixture mode into one self-contained `preview.html` — every script and
-stylesheet inlined, no service worker, hash routing so it works with no server.
-Open it directly or send it to someone. It carries the real register content, so
-treat it as you would any other document with your work in it.
-
-> Seeding from your machine additionally needs the secret key — copy
-> `.env.seed.example` instead. You can avoid that entirely by pasting
-> `supabase/seed.sql` into the Supabase dashboard; see DEPLOY.md.
-
-### Scripts
+Unit suites run directly; browser suites need the demo build being served
+(`npm run build:demo && npm run serve:dist`). CI runs all of them.
 
 | | |
 |---|---|
-| `npm run dev` | Dev server |
-| `npm run build` | Production build |
 | `npm run typecheck` | TypeScript, no emit |
-| `npm run seed` | Seed or re-seed the database |
-| `npm run seed:sql` | Regenerate `supabase/seed.sql` for pasting into the dashboard |
-| `npm run seed:dry` | Report what a seed would change, write nothing |
-| `npm run build:demo` + `npm run serve:dist` | Build and serve fixture mode |
-| `npm run test:ui` | Browser interaction checks (needs `serve:dist` running) |
-| `npm run test:card` | The card: the growth out of a row, and the drop back into it |
-| `npm run test:intake` | End-to-end paste → triage → commit checks |
-| `npm run test:review` | The review deck, the people view and the unclear pile |
-| `npm run test:paste` | Copy prompt → paste reply → triage, end to end |
+| `npm run test:today` | What Today shows, and what it counts |
+| `npm run test:tree` | Stream → area → section: the shape and the order it reads in |
+| `npm run test:plan` | The month grid, the load bands, the queue that needs dating |
+| `npm run test:brief` | What goes in a brief and what it reads like |
+| `npm run test:search` | Search ranking and highlighting |
 | `npm run test:parse` | The paste parser against the shapes people actually paste |
 | `npm run test:api` | The `/api/extract` guards: auth, method, missing key |
-| `npm run test:search` | Search ranking and highlighting |
-| `npm run test:group` | What can and cannot anchor a thread |
-| `npm run test:tree` | Stream → area → section: the shape and the order it reads in |
-| `npm run test:plan` | The month grid, the heat bands, the days you reach for |
-| `npm run test:planning` | Placing work in the browser, and the Web's one-stream view |
-| `npm run test:dates` | Reading dates back out of what was already written down |
-| `npm run test:brief` | What goes in a brief, what stays out, and what it reads like |
-| `npm run test:upgrades` | The sweep and the brief in the browser |
-| `npm run test:groups` | The middle level in the browser: reading it, filing into it, finding through it |
-| `npm run test:dberror` | That a failed write explains itself rather than going quiet |
-| `npm run test:threads` | Proposing, editing, accepting and dismissing a grouping |
-| `npm run test:find` | Search in the browser: shortcuts, keyboard, opening a result |
-| `npm run test:graph` | The web's graph and its three layouts, with no browser |
-| `npm run test:web` | The web in the browser: arrangements, filters, selection, keyboard |
-| `./tests/rls.sh` | Apply the migrations to a local Postgres and prove the RLS policies |
-| `npm run test:shots` | Screenshot every route at 375px and 1280px |
-| `npm run build:preview` | Fold the app into one self-contained `preview.html` for sharing |
+| `npm run test:dberror` | That a failed write explains itself |
+| `npm run test:ui` | Notes, ticking, undo, delete, keyboard, reduced motion |
+| `npm run test:modes` | Work and personal; Today's count; the desk and its keys; paper and light |
+| `npm run test:card` | The item card on narrower screens: growing out of a row and back into it |
+| `npm run test:review` | The Review tab, the deck, and a person's page |
+| `npm run test:planning` | Placing work on days in the browser |
+| `npm run test:brief-ui` | The brief, from a person and from a stream |
+| `npm run test:intake` | Paste → triage → commit |
+| `npm run test:paste` | Copy prompt → paste reply → triage |
+| `npm run test:find` | Search in the browser |
+| `npm run test:groups` | Areas in the browser: reading, filing, finding |
+| `./tests/rls.sh` | Migrations on a real Postgres: the RLS proof, and 0009 on old data |
+| `npm run test:shots` | Screenshot the main routes at 375px and 1280px |
+
+Screenshots from the browser suites go to `SHOTS_DIR`, or a folder in the
+system temp directory.
+
+### Other scripts
+
+| | |
+|---|---|
+| `npm run seed` | Seed or re-seed the database |
+| `npm run seed:dry` | Report what a seed would change, write nothing |
+| `npm run seed:sql` | Regenerate `supabase/seed.sql` for pasting into the dashboard |
+| `npm run build:preview` | Fold fixture mode into one self-contained `preview.html` |
 
 ---
 
@@ -501,6 +199,7 @@ supabase db push
 | `0003_realtime.sql` | Realtime publication |
 | `0004`–`0007` | Intake, review, threads, section groups |
 | `0008_realm.sql` | Work or personal, on each stream |
+| `0009_one_kind.sql` | One kind of item: watch items become ordinary items, parked items go back into play |
 
 ### 3. Sign in once
 
@@ -608,7 +307,7 @@ What happens on a re-run:
 | — | You created it in the app | **Never touched** |
 
 Always survives a re-seed: done state, your notes, due dates you set,
-reschedules, promotions between task and periphery, and `touched_at`.
+reschedules and `touched_at`.
 
 Run `npm run seed:dry` first to see the counts before anything is written.
 
@@ -627,16 +326,11 @@ reads as *old item gone, new item arrived*: the old row is soft-deleted and a ne
 one inserted. If you want to keep its history, rename it in the app instead — that
 sets `user_edited` and freezes the seed out of that row.
 
-### What is in the register
+### Adding to the seed
 
-**255 items across 33 sections** — 201 tasks and 54 watch items — built from the
-Master Work Action List. 24 flagged *do now*; exactly one carries a date.
-
-How the list was mapped, and the judgement calls made along the way, are in
-[`docs/DATA-MAPPING.md`](docs/DATA-MAPPING.md).
-
-To add more: put tasks in a section's `items` array and anything that only needs
-remembering in its `watch` array, then re-seed.
+Put items in a section's `items` array, then re-seed. A section's `watch` array
+is still read, for older seed files, but its entries land as ordinary items
+after the rest — there is only one kind of item now.
 
 ```ts
 {
@@ -644,14 +338,13 @@ remembering in its `watch` array, then re-seed.
   stream: 'isodp',
   title: 'Accreditation',
   items: [
-    P('Confirm CME accreditation route', { p: 1 }),
+    P('Confirm CME accreditation route', { p: 1 }),   // p: 1 → urgent
     'Check timelines against the programme',
-  ],
-  watch: [
-    'Whether the accreditation body changes its rules before 2027',
   ],
 },
 ```
+
+How the original list was mapped is in [`docs/DATA-MAPPING.md`](docs/DATA-MAPPING.md).
 
 ---
 
@@ -709,8 +402,7 @@ Checked in a real browser by `npm run test:ui`:
 
 - Keyboard reachable throughout, with a visible 3px focus ring on every control.
 - Icon-only buttons carry `aria-label`; checkboxes name the task they complete.
-- `prefers-reduced-motion` collapses all animation, including the promote
-  ceremony, which falls back to an instant state change.
+- `prefers-reduced-motion` collapses all animation.
 - Nothing overflows horizontally at 375px.
 - The fixed navigation never covers the last item in a list.
 - A skip link, and `aria-live` on the toast region.
@@ -724,29 +416,22 @@ data/register.seed.ts     the seed source of truth — edit this
 data/people.ts            names extracted into the waiting-on dimension
 supabase/migrations/      schema, RLS, realtime
 scripts/seed.ts           idempotent reconciling seeder
-src/lib/                  supabase client, offline queue, types, slug
+src/routes/               Today, Streams, People, Person, Review, Plan, Brief, Intake, Settings, sign-in
+src/components/           the index and phone bars, rows, the folio, the card, sheets, search, toasts
 src/data/store.ts         queries, optimistic mutations, derived signals
-src/components/           dial, cards, sheets, toasts
-src/routes/               Today, Streams, Web, People, Periphery, Intake, Review, sign-in
-src/data/review.ts        queue building and the decision mutations
-src/lib/search.ts         ranking and highlighting
-src/lib/grouping.ts       finding the strands the sections miss
-src/lib/tree.ts           stream → area → section, the one place that knows the shape
-src/lib/plan.ts           the month, the heat bands and the queue that needs dating
-src/lib/tally.ts          what got finished today and this week, as a shape
-src/lib/modes.ts          the two switches: work / personal / both, and focus
-src/lib/dates.ts          reading dates out of your own wording
-src/lib/brief.ts          composing something the register can hand back
-src/lib/web.ts            the register as a graph: links, connectors, staleness
-src/lib/force.ts          the three layouts, framework-free and testable
-src/lib/webPaint.ts       drawing the web on a canvas
+src/data/review.ts        the review queue and the decision mutations
 src/data/intake.ts        extraction call and triage state
+src/lib/today.ts          what Today shows: overdue, today, urgent
+src/lib/tree.ts           stream → area → section, the one place that knows the shape
+src/lib/plan.ts           the month, the load bands and the queue that needs dating
+src/lib/brief.ts          composing something the register can hand back
+src/lib/search.ts         ranking and highlighting
+src/lib/modes.ts          which life, which paper, which light
+src/lib/selection.ts      where an item opens: the folio at a desk, the card on a phone
+src/lib/queue.ts          the offline write queue
 api/extract.ts            reads a meeting server-side; holds the Anthropic key
-src/styles/tokens.css     the design system: colour, type, radii, motion
-src/styles/fonts.css      self-hosted @font-face (scripts/fetch-fonts.sh)
-vercel.json netlify.toml  SPA rewrites, security headers, cache policy
+src/styles/tokens.css     the two papers, light and dark: every colour and face
 DEPLOY.md                 the deployment runbook
-tests/                    browser checks, plus the RLS proof (rls.sql)
-docs/DECISIONS.md         why it looks and works the way it does
-docs/DATA-GAP.md          what is missing from the seed data
+tests/                    unit and browser checks, plus the RLS proof (rls.sql)
+docs/DECISIONS.md         why it works the way it does
 ```

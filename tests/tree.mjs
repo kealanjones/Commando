@@ -1,5 +1,5 @@
 /** Stream → group → section: the shape, and the order it reads in. */
-import { branchesFor, leavesFor, isGroup, pathOf, groupOf } from '/home/user/Commando/src/lib/tree.ts';
+import { branchesFor, leavesFor, isGroup, pathOf, groupOf } from '../src/lib/tree.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };

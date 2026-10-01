@@ -1,7 +1,7 @@
 /** The plan: the grid, the bands, the days you reach for, the queue. */
 import {
   monthGrid, loadOf, loadByDay, quickTargets, weekAhead, undated, isoOf, startOfDay, fmtDay, monthName,
-} from '/home/user/Commando/src/lib/plan.ts';
+} from '../src/lib/plan.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };
@@ -29,8 +29,7 @@ const tasks = [
   T('k', { due: on('2026-09-10') }), T('l', { due: on('2026-09-10') }),
   T('done', { due: on('2026-09-01'), done: true }),
   T('gone', { due: on('2026-09-01'), deleted_at: '2026-08-01' }),
-  T('watch', { due: on('2026-09-01'), kind: 'watch' }),
-  T('u1'), T('u2', { do_now: true }), T('u3', { unclear: true }),
+  T('u1'), T('u2', { do_now: true }),
   T('u4', { section_id: 'quiet' }),
 ];
 
@@ -112,9 +111,8 @@ const queue = undated(tasks);
 const ids = queue.map((t) => t.id);
 ok(ids.includes('u1') && ids.includes('u2'), 'undated open work is queued');
 ok(!ids.includes('a'), 'anything already dated is not');
-ok(!ids.includes('done') && !ids.includes('gone') && !ids.includes('watch'),
-  'nor is anything finished, deleted or only being watched');
-ok(!ids.includes('u3'), 'and something parked as unclear is left out of a dating queue');
+ok(!ids.includes('done') && !ids.includes('gone'),
+  'nor is anything finished or deleted');
 ok(ids[0] === 'u2', 'a flagged item comes first');
 ok(ids.indexOf('u1') < ids.indexOf('u4'),
   'then the one with more queued behind it in the same section');

@@ -1,8 +1,7 @@
 /** Bringing a meeting in via Claude: copy prompt → paste reply → triage. */
-import { chromium } from 'playwright';
+import { launch, out } from './browser.mjs';
 
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--headless=new', '--no-sandbox'] });
-const out = '/tmp/claude-0/-home-user-Commando/55cd7d66-6986-5bab-a214-9d42a2d3da06/scratchpad';
+const b = await launch();
 const fail = [];
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail.push(m); };
 
@@ -29,7 +28,8 @@ const clip = await p.evaluate(() => navigator.clipboard.readText());
 ok(clip.length > 500, `a prompt reaches the clipboard (${clip.length} chars)`);
 ok(/isodp-pay/.test(clip), 'it carries real section ids');
 ok(/Send Anthony the short priority sponsor list/.test(clip), 'it carries existing items so nothing is duplicated');
-ok(/WATCH item/.test(clip), 'it carries the doing-versus-watching rule');
+ok(/When unsure whether something is an action, leave it out/.test(clip), 'it says to leave out what is not an action');
+ok(!/WATCH/.test(clip), 'and no longer asks for a task-or-watch decision');
 
 // paste back what Claude would return, with chat either side
 const reply = `Here's what I found.
@@ -78,13 +78,21 @@ await p.waitForTimeout(900);
 ok(await p.locator('.toast', { hasText: 'added to the register' }).isVisible(), 'committing confirms');
 
 await p.getByRole('link', { name: 'Streams' }).click();
+await p.waitForTimeout(700);
+await p.locator('.srow', { hasText: 'ISODP' }).click();
 await p.waitForTimeout(900);
 ok((await p.locator('.task__title', { hasText: 'Send Isaac the revised registration' }).count()) >= 1,
   'accepted tasks appear in the register');
+ok((await p.locator('.task__title', { hasText: 'Getinge are reorganising' }).count()) >= 1,
+  'a reply that still says "watch" lands as an ordinary item');
+
+// Intake is reached from Add, not the nav.
+await p.getByRole('button', { name: 'Add an item' }).click();
+await p.getByRole('button', { name: 'Paste meeting notes instead' }).click();
+await p.waitForTimeout(700);
+ok(p.url().endsWith('/intake'), 'Add leads to meeting intake');
 
 // a bad paste must explain itself, not just fail
-await p.getByRole('link', { name: 'Intake' }).click();
-await p.waitForTimeout(700);
 await p.getByRole('button', { name: 'Via Claude' }).click();
 await p.waitForTimeout(250);
 await p.locator('#intake-paste').fill('Sure, I can help with that!');

@@ -2,7 +2,7 @@
  * Exercise the handler's guards without an Anthropic key: everything up to
  * the model call is ordinary logic and worth proving.
  */
-const mod = await import('/home/user/Commando/api/extract.ts');
+const mod = await import('../api/extract.ts');
 const handler = mod.default;
 
 const make = () => {

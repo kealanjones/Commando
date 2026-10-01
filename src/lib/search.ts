@@ -95,7 +95,6 @@ export function search(
 
     // Something you can still act on beats something you finished.
     if (task.done) total *= 0.35;
-    if (task.kind === 'watch') total *= 0.8;
     if (task.do_now && !task.done) total *= 1.15;
     if (task.due && !task.done) total *= 1.1;
 

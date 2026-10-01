@@ -91,8 +91,7 @@ export function buildBrief(input: BriefInput): Brief {
     ? live.filter((t) => taskPeople.some((l) => l.task_id === t.id && l.person_id === subject.id))
     : live.filter((t) => t.stream_id === subject.id);
 
-  const open = mine.filter((t) => t.kind === 'task' && !t.done);
-  const watch = mine.filter((t) => t.kind === 'watch');
+  const open = mine.filter((t) => !t.done);
   const moved = mine.filter(
     (t) => t.done && t.done_at !== null && new Date(t.done_at).getTime() >= cutoff,
   );
@@ -109,8 +108,6 @@ export function buildBrief(input: BriefInput): Brief {
   const stuck = open
     .filter((t) => !pressing.includes(t) && (days(t.touched_at) ?? 999) >= QUIET_DAYS)
     .sort((a, b) => (days(b.touched_at) ?? 999) - (days(a.touched_at) ?? 999));
-
-  const unclear = open.filter((t) => t.unclear);
 
   const where = (t: Task) => pathOf(sections, t.section_id);
   const whoElse = (t: Task) => (peopleByTask.get(t.id) ?? []).filter((n) => n !== person?.name);
@@ -170,11 +167,6 @@ export function buildBrief(input: BriefInput): Brief {
         .slice(0, 10)
         .map((t) => ({ task: t, note: `with ${(peopleByTask.get(t.id) ?? []).join(', ')}` })),
     });
-    blocks.push({
-      heading: 'Not clear yet',
-      emptyAs: null,
-      lines: unclear.slice(0, 6).map((t) => ({ task: t, note: where(t) })),
-    });
   }
 
   // Empty blocks with nothing worth saying are dropped entirely.
@@ -195,7 +187,7 @@ export function buildBrief(input: BriefInput): Brief {
   const standfirst = subject.kind === 'person'
     ? `${open.length} open ${open.length === 1 ? 'item' : 'items'}`
       + `${spread.length ? ` across ${list(spread)}` : ''}.${closed}`
-    : `${open.length} open, ${watch.length} being kept an eye on.${closed}`;
+    : `${open.length} open.${closed}`;
 
   return {
     title,

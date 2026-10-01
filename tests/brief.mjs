@@ -1,5 +1,5 @@
 /** The brief: what goes in it, what stays out, and what it reads like. */
-import { buildBrief } from '/home/user/Commando/src/lib/brief.ts';
+import { buildBrief } from '../src/lib/brief.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };
@@ -95,14 +95,14 @@ ok(allPersonTitles.includes('Chase Belaal about the Australia trip'),
 
 // ── a stream ────────────────────────────────────────────────────────
 ok(forStream.title === 'ISODP 2027', 'a stream brief is headed by the stream');
-ok(/6 open, 1 being kept an eye on\./.test(forStream.standfirst),
-  `and separates doing from watching (${forStream.standfirst})`);
+ok(/^7 open\./.test(forStream.standfirst),
+  `and counts every open item as one kind of thing (${forStream.standfirst})`);
 
 ok(titles(block(forStream, 'Pressing')).includes('Send the priority sponsor list'), 'pressing work leads');
 ok(titles(block(forStream, 'Gone quiet')).includes('Follow up the OrganOx marketing manager'),
   'and what has gone quiet is named');
-ok(titles(block(forStream, 'Not clear yet')).includes('Work out what TransNovo actually want'),
-  'the parked items are listed rather than hidden');
+ok(!forStream.blocks.some((b) => b.heading === 'Not clear yet'),
+  'there is no separate pile for parked items');
 
 const waiting = block(forStream, 'Waiting on somebody');
 ok(waiting.lines.some((l) => /Dale/.test(l.note)), `and who each one sits with (${waiting.lines[0]?.note})`);

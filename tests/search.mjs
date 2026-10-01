@@ -1,4 +1,4 @@
-import { search, highlight, terms } from '/home/user/Commando/src/lib/search.ts';
+import { search, highlight, terms } from '../src/lib/search.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };

@@ -7,8 +7,8 @@ import { useTaskPeople } from '@/data/review';
  * Who owes you what.
  *
  * A third of the register names a person, and a fifth of it cannot be
- * finished by working — only by someone else moving. This is the page to
- * open in the ten minutes before a 1:1.
+ * finished by working — only by someone else moving. Open a person before
+ * a catch-up.
  */
 export function People() {
   const { data: people = [] } = usePeople();
@@ -17,7 +17,7 @@ export function People() {
 
   const rows = useMemo(() => {
     const open = new Map(
-      tasks.filter((t) => t.kind === 'task' && !t.done && !t.deleted_at).map((t) => [t.id, t]),
+      tasks.filter((t) => !t.done && !t.deleted_at).map((t) => [t.id, t]),
     );
     const byPerson = new Map<string, typeof tasks>();
     for (const l of links) {
@@ -53,21 +53,6 @@ export function People() {
         <h2 id="people-head">Waiting on</h2>
         <span className="shead__meta">{total} items · {rows.length} people</span>
       </div>
-      <p style={{ margin: '0 0 16px', color: 'var(--ink-2)', fontSize: 14, lineHeight: 1.6, maxWidth: '58ch' }}>
-        Work that moves when somebody else does. Open one before a catch-up and go
-        through it a card at a time.
-      </p>
-
-      {rows.length > 0 && (
-        <div className="prompt">
-          <div>
-            <h3>Before a catch-up</h3>
-            <p>A brief you can paste: what has moved, what is stuck, what you need from them.</p>
-          </div>
-          <Link to={`/brief?person=${rows[0].id}`}>Write one</Link>
-        </div>
-      )}
-
       {rows.length === 0 ? (
         <div className="empty">
           <h3>Nobody owes you anything</h3>
@@ -89,7 +74,7 @@ export function People() {
                   {p.role && <span className="person__role">{p.role}</span>}
                   <span className="person__meta">
                     {p.oldest > 0 ? `oldest ${p.oldest}d` : 'all touched today'}
-                    {p.urgent > 0 && ` · ${p.urgent} pressing`}
+                    {p.urgent > 0 && ` · ${p.urgent} urgent or overdue`}
                   </span>
                 </span>
                 <span className="person__streams" aria-hidden="true">

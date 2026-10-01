@@ -1,6 +1,5 @@
-import { chromium } from 'playwright';
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--headless=new','--no-sandbox'] });
-const out = '/tmp/claude-0/-home-user-Commando/55cd7d66-6986-5bab-a214-9d42a2d3da06/scratchpad';
+import { launch, out } from './browser.mjs';
+const b = await launch();
 const errs = [];
 
 async function shot(name, w, h, path='/', settle=1200) {
@@ -19,12 +18,12 @@ async function shot(name, w, h, path='/', settle=1200) {
 
 await shot('phone-today', 375, 812, '/');
 await shot('phone-streams', 375, 812, '/streams');
-await shot('phone-periphery', 375, 812, '/periphery');
-// The web animates into place, so give it longer than a static route.
-await shot('phone-web', 375, 812, '/web', 3600);
+await shot('phone-stream', 375, 812, '/streams/isodp');
+await shot('phone-people', 375, 812, '/people');
+await shot('phone-review', 375, 812, '/review');
+await shot('phone-plan', 375, 812, '/review/plan');
 await shot('desktop-today', 1280, 900, '/');
 await shot('desktop-streams', 1280, 900, '/streams/isodp');
-await shot('desktop-web', 1280, 900, '/web', 3600);
 
 console.log(errs.length ? '\nCONSOLE ERRORS:\n' + errs.join('\n') : '\nno console errors');
 await b.close();

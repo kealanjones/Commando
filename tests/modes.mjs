@@ -1,13 +1,23 @@
-/** Work and personal, the tally, and focus — in a browser. */
-import { chromium } from 'playwright';
+/** Work and personal, what Today counts, the desk, and the look — in a browser. */
+import { launch, out } from './browser.mjs';
 
-const out = '/tmp/claude-0/-home-user-Commando/55cd7d66-6986-5bab-a214-9d42a2d3da06/scratchpad';
 const base = 'http://127.0.0.1:4173';
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--headless=new', '--no-sandbox'] });
+const b = await launch();
 
 const fail = [];
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail.push(m); };
-const pills = (p) => p.locator('.today .task .pill:not(.pill--due):not(.pill--flag)').allTextContents();
+const pills = async (p) => {
+  // Urgent folds after five; open it so every row is counted.
+  const more = p.locator('.more', { hasText: 'more urgent' });
+  if (await more.count()) { await more.click(); await p.waitForTimeout(300); }
+  return p.locator('.today .task .pill:not(.pill--due):not(.pill--flag)').allTextContents();
+};
+const tab = (p, name) => p.locator('.nav').getByRole('link', { name });
+const streamRows = async (p) => {
+  await tab(p, 'Streams').click();
+  await p.waitForTimeout(600);
+  return p.locator('.srow').count();
+};
 
 // ── work and personal ───────────────────────────────────────────────
 {
@@ -18,64 +28,54 @@ const pills = (p) => p.locator('.today .task .pill:not(.pill--due):not(.pill--fl
   await p.goto(`${base}/`, { waitUntil: 'networkidle' });
   await p.waitForTimeout(900);
 
-  ok((await p.locator('.scard').count()) === 5, 'with both lives showing, all five streams are on the rail');
-  const zones = await p.locator('.today .zone').allTextContents();
-  ok(zones.join(',') === 'Work,Personal', `and Today is drawn in two zones (${zones.join(', ')})`);
   const both = await pills(p);
   ok(both.some((x) => /career|per/i.test(x)) && both.some((x) => /isodp|dir|cttl/i.test(x)),
-    `each zone holds its own realm (${both.join(', ')})`);
-  ok(await p.locator('.hello__date').textContent() === (await p.locator('.hello__date').textContent()).replace(/^(Work|Personal)/, ''),
-    'the date line does not name a realm while both are showing');
+    `with both lives showing, Today holds both (${[...new Set(both)].join(', ')})`);
+  ok(await streamRows(p) === 5, 'and Streams lists all five');
+  ok((await p.locator('.zone').allTextContents()).join(',') === 'Work,Personal',
+    'with a word where one life ends and the other begins');
 
   await p.getByRole('button', { name: 'Work', exact: true }).click();
-  await p.waitForTimeout(700);
-  ok((await p.locator('.scard').count()) === 3, 'switching to Work leaves three streams');
-  ok(/^Work ·/.test(await p.locator('.hello__date').textContent()), 'and the date line says so');
-  ok((await p.locator('.today .zone').count()) === 0, 'one realm is one list, not two zones');
+  await p.waitForTimeout(600);
+  ok((await p.locator('.srow').count()) === 3, 'switching to Work leaves three streams');
+  ok((await p.locator('.zone').count()) === 0, 'and no realm headings');
+  ok(await p.evaluate(() => document.body.dataset.realm) === 'work', 'the page wears the realm');
+
+  await tab(p, 'Today').click();
+  await p.waitForTimeout(600);
   const work = await pills(p);
   ok(work.length > 0 && work.every((x) => !/career|per/i.test(x)),
-    `nothing personal is on Today (${work.join(', ')})`);
-  ok(await p.evaluate(() => document.body.dataset.realm) === 'work', 'the page wears the realm');
+    `nothing personal is on Today (${[...new Set(work)].join(', ')})`);
   await p.screenshot({ path: `${out}/modes-work.png` });
-
-  // The scope reaches every screen, not just Today.
-  await p.goto(`${base}/streams`, { waitUntil: 'networkidle' });
-  await p.waitForTimeout(700);
-  const heads = await p.locator('.chip[data-stream]').allTextContents();
-  ok(!heads.some((h) => /Career|Personal/.test(h)), 'Streams does not offer the personal streams');
-  ok((await p.locator('section[data-stream]').count()) === 3, 'and lists only the three at work');
 
   await p.keyboard.press('/');
   await p.waitForTimeout(300);
   await p.keyboard.type('allotment');
   await p.waitForTimeout(500);
-  const hits = await p.locator('.search__hit, [class*="search"] li').count();
+  const hits = await p.locator('.find__row').count();
   ok(hits === 0, `search in Work cannot find the allotment (${hits} hits)`);
   await p.keyboard.press('Escape');
 
-  await p.goto(`${base}/`, { waitUntil: 'networkidle' });
-  await p.waitForTimeout(500);
   await p.getByRole('button', { name: 'Personal', exact: true }).click();
-  await p.waitForTimeout(700);
-  ok((await p.locator('.scard').count()) === 2, 'Personal is the other two');
+  await p.waitForTimeout(600);
   const per = await pills(p);
-  ok(per.length > 0 && per.every((x) => /career|per/i.test(x)), `and only they are on Today (${per.join(', ')})`);
+  ok(per.length > 0 && per.every((x) => /career|per/i.test(x)), `Personal shows only its own on Today (${[...new Set(per)].join(', ')})`);
+  ok(await streamRows(p) === 2, 'and two streams');
   const paper = await p.evaluate(() => getComputedStyle(document.body).backgroundColor);
   ok(paper !== 'rgb(242, 244, 249)', `the paper changes colour with the realm (${paper})`);
-  await p.screenshot({ path: `${out}/modes-personal.png` });
 
   await p.reload({ waitUntil: 'networkidle' });
   await p.waitForTimeout(700);
-  ok((await p.locator('.scard').count()) === 2, 'the choice survives a reload');
+  ok((await p.locator('.srow').count()) === 2, 'the choice survives a reload');
   await p.getByRole('button', { name: 'Both', exact: true }).click();
   await p.waitForTimeout(500);
-  ok((await p.locator('.scard').count()) === 5, 'and Both brings everything back');
+  ok((await p.locator('.srow').count()) === 5, 'and Both brings everything back');
 
   ok(errs.length === 0, `no page errors (${errs.slice(0, 2).join('; ') || 'none'})`);
   await ctx.close();
 }
 
-// ── the tally ───────────────────────────────────────────────────────
+// ── Today: the list, and a count ────────────────────────────────────
 {
   const ctx = await b.newContext({ viewport: { width: 1280, height: 1000 } });
   const p = await ctx.newPage();
@@ -84,87 +84,115 @@ const pills = (p) => p.locator('.today .task .pill:not(.pill--due):not(.pill--fl
   await p.goto(`${base}/`, { waitUntil: 'networkidle' });
   await p.waitForTimeout(900);
 
-  const tally = p.locator('.tally');
-  ok(await tally.isVisible(), 'Today carries the tally');
-  ok((await p.locator('.tally__n').textContent()) === '0', 'nothing has been done yet today');
-  ok((await p.locator('.tally__seg').count()) === 0, 'so the ring is empty');
-  ok((await p.locator('.tally__col').count()) === 7, 'the week is seven columns');
-  ok((await p.locator('.tally__bead').count()) > 5, 'with beads for what was finished this week');
-  const weekBefore = Number((await p.locator('.tally__sum b').textContent()));
+  const chrome = await p.evaluate(() =>
+    document.querySelectorAll('.prompt, .nudge, .rail, .scard, .tally, .peekat').length);
+  ok(chrome === 0, 'Today has nothing above or around the list');
+  const heads = await p.locator('.tgroup__head').allTextContents();
+  ok(heads.length > 0 && heads.every((h) => /^(Overdue|Today|Urgent)\d+$/.test(h)),
+    `it is grouped as overdue, today and urgent (${heads.join(', ')})`);
+  ok((await p.locator('.today .task__context, .today .task__note').count()) === 0,
+    'rows are a title and a date, not paragraphs');
 
-  // Tick one: the ring draws, the number pops, the week grows.
+  const count = async () => {
+    const [toDo, done] = (await p.locator('.tcount b').allTextContents()).map(Number);
+    return { toDo, done };
+  };
+  const before = await count();
+  ok(before.done === 0, 'nothing has been done yet today');
+
   await p.locator('.today .task .check').first().click();
-  await p.waitForTimeout(1100);
-  ok((await p.locator('.tally__n').textContent()) === '1', 'ticking something makes it one done today');
-  const seg = p.locator('.tally__seg').first();
-  ok((await seg.count()) === 1, 'and draws one wedge');
-  const dash = await seg.evaluate((el) => Number(el.getAttribute('stroke-dasharray').split(' ')[0]));
-  const circ = 2 * Math.PI * 50;
-  ok(dash > 0 && dash < circ / 4, `a single wedge, not a full ring (${Math.round(dash)} of ${Math.round(circ)})`);
-  const stream = await seg.getAttribute('data-stream');
-  ok(Boolean(stream), `in the colour of the stream it came from (${stream})`);
-  ok(Number(await p.locator('.tally__sum b').textContent()) === weekBefore + 1, 'the week counts it too');
-  const todayCol = p.locator('.tally__col[data-today]');
-  ok((await todayCol.locator('.tally__bead').count()) === 1, "and today's column gains a bead");
-  await p.screenshot({ path: `${out}/tally.png`, clip: { x: 130, y: 0, width: 1020, height: 1000 }, fullPage: true });
-
-  // Ticking a second, then undoing it, takes it straight back off.
-  await p.locator('.today .task .check').nth(1).click();
-  await p.waitForTimeout(600);
-  ok((await p.locator('.tally__seg').count()) === 2, 'a second tick is a second wedge');
+  await p.waitForTimeout(500);
+  const after = await count();
+  ok(after.done === 1 && after.toDo === before.toDo - 1,
+    `ticking one moves it from to-do to done (${before.toDo}/${before.done} → ${after.toDo}/${after.done})`);
   await p.locator('.toast button', { hasText: 'Undo' }).last().click();
-  await p.waitForTimeout(600);
-  ok((await p.locator('.tally__seg').count()) === 1, 'and undoing it takes the wedge back');
+  await p.waitForTimeout(500);
+  const undone = await count();
+  ok(undone.done === 0 && undone.toDo === before.toDo, 'and undo puts it back');
 
   ok(errs.length === 0, `no page errors (${errs.slice(0, 2).join('; ') || 'none'})`);
   await ctx.close();
 }
 
-// ── focus ───────────────────────────────────────────────────────────
+// ── the desk: three panes, and the keys ─────────────────────────────
 {
-  const ctx = await b.newContext({ viewport: { width: 1280, height: 1000 } });
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
   const p = await ctx.newPage();
   const errs = [];
   p.on('pageerror', (e) => errs.push(String(e)));
   await p.goto(`${base}/`, { waitUntil: 'networkidle' });
   await p.waitForTimeout(900);
 
-  const before = await p.evaluate(() => ({
-    rail: document.querySelectorAll('.scard').length,
-    prompt: document.querySelectorAll('.prompt, .nudge').length,
-    title: parseFloat(getComputedStyle(document.querySelector('.task__title')).fontSize),
-    notes: [...document.querySelectorAll('.task__context, .task__note')].filter((e) => e.offsetParent).length,
-  }));
-  await p.getByRole('button', { name: 'Focus' }).click();
-  await p.waitForTimeout(600);
-  const after = await p.evaluate(() => ({
-    rail: document.querySelectorAll('.scard').length,
-    prompt: document.querySelectorAll('.prompt, .nudge').length,
-    title: parseFloat(getComputedStyle(document.querySelector('.task__title')).fontSize),
-    notes: [...document.querySelectorAll('.task__context, .task__note')].filter((e) => e.offsetParent).length,
-    tasks: document.querySelectorAll('.today .task').length,
-    tally: Boolean(document.querySelector('.tally')),
-    peek: document.querySelectorAll('.peekat').length,
-    pills: [...document.querySelectorAll('.today .pill')].filter((e) => e.offsetParent).map((e) => e.className),
-  }));
-  ok(before.rail === 5 && after.rail === 0, 'Focus takes the stream cards off');
-  ok(before.prompt > 0 && after.prompt === 0, 'and the prompts and nudges');
-  ok(after.peek === 0, 'and the periphery');
-  ok(before.notes > 0 && after.notes === 0, 'and the notes under each row');
-  ok(after.pills.every((c) => /pill--due/.test(c)), `only a closing date is still worn (${after.pills.length} pills)`);
-  ok(after.title > before.title, `the rows grow (${before.title}px → ${after.title}px)`);
-  ok(after.tasks > 0 && after.tally, 'what is left is the work and the tally');
-  ok(await p.evaluate(() => document.body.classList.contains('is-focus')), 'the page wears it');
-  await p.screenshot({ path: `${out}/focus.png` });
+  ok(await p.locator('.index').isVisible(), 'at a desk the index is on the left');
+  ok(await p.locator('.folio-pane').isVisible(), 'and the folio on the right');
+  ok(!(await p.locator('.phonebottom').isVisible()), 'with no phone bar at the bottom');
+  ok(await p.locator('.folio--empty').isVisible(), 'the folio says what to do before anything is chosen');
 
-  await p.reload({ waitUntil: 'networkidle' });
-  await p.waitForTimeout(700);
-  ok((await p.locator('.scard').count()) === 0, 'Focus survives a reload');
-  await p.getByRole('button', { name: 'Focus' }).click();
-  await p.waitForTimeout(500);
-  ok((await p.locator('.scard').count()) === 5, 'and comes off with one tap');
+  await p.locator('.task__open').nth(1).click();
+  await p.waitForTimeout(300);
+  ok((await p.locator('.card').count()) === 0, 'opening an item does not lift a card');
+  const second = (await p.locator('.task__title').nth(1).textContent()).trim();
+  ok((await p.locator('#folio-title').inputValue()) === second, `it opens in the folio (${second.slice(0, 40)}…)`);
+  ok((await p.locator('.task[data-selected]').count()) === 1, 'and the row is marked as the one you are on');
+
+  await p.keyboard.press('j');
+  await p.waitForTimeout(200);
+  const third = (await p.locator('.task__title').nth(2).textContent()).trim();
+  ok((await p.locator('#folio-title').inputValue()) === third, 'J moves down the list and the folio follows');
+  await p.keyboard.press('k');
+  await p.waitForTimeout(200);
+  ok((await p.locator('#folio-title').inputValue()) === second, 'K moves back up');
+
+  const before = Number((await p.locator('.tcount b').first().textContent()));
+  await p.keyboard.press('x');
+  await p.waitForTimeout(400);
+  ok(Number((await p.locator('.tcount b').first().textContent())) === before - 1, 'X marks it done');
+  await p.locator('.toast button', { hasText: 'Undo' }).last().click();
+  await p.waitForTimeout(400);
+
+  // Edits land as they are made: a title on leaving it, a date at once.
+  await p.locator('#folio-title').fill('Renamed at the desk');
+  await p.locator('#folio-note').click();
+  await p.waitForTimeout(300);
+  ok((await p.locator('.task__title', { hasText: 'Renamed at the desk' }).count()) === 1,
+    'a new title reaches the list when you leave the field');
+  await p.locator('.daychip', { hasText: 'Tomorrow' }).click();
+  await p.waitForTimeout(300);
+  ok(await p.locator('.daychip', { hasText: 'Tomorrow' }).getAttribute('aria-pressed') === 'true',
+    'a date is set with one tap');
+
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(200);
+  ok(await p.locator('.folio--empty').isVisible(), 'Escape puts the folio down');
+
+  await p.keyboard.press('n');
+  await p.waitForTimeout(300);
+  ok(await p.locator('#add-title').isVisible(), 'N starts a new item');
+  await p.keyboard.press('Escape');
 
   ok(errs.length === 0, `no page errors (${errs.slice(0, 2).join('; ') || 'none'})`);
+  await ctx.close();
+}
+
+// ── paper and light ─────────────────────────────────────────────────
+{
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
+  const p = await ctx.newPage();
+  await p.goto(`${base}/settings`, { waitUntil: 'networkidle' });
+  await p.waitForTimeout(600);
+  const look = () => p.evaluate(() => [document.documentElement.dataset.paper, document.documentElement.dataset.light]);
+  ok(JSON.stringify(await look()) === '["ledger","dark"]', `a dark device gets the dark ledger by default (${await look()})`);
+  await p.getByLabel('Always light').check();
+  await p.waitForTimeout(200);
+  ok((await look())[1] === 'light', 'Always light overrides the device');
+  await p.getByLabel('Notebook').check();
+  await p.waitForTimeout(200);
+  ok((await look())[0] === 'notebook', 'Notebook changes the paper');
+  const face = await p.evaluate(() => getComputedStyle(document.body).fontFamily);
+  ok(/Newsreader/.test(face), `and the type with it (${face.split(',')[0]})`);
+  await p.reload({ waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  ok(JSON.stringify(await look()) === '["notebook","light"]', 'and both survive a reload');
   await ctx.close();
 }
 
@@ -181,15 +209,16 @@ const pills = (p) => p.locator('.today .task .pill:not(.pill--due):not(.pill--fl
     await p.waitForTimeout(500);
     const over = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok(over === 0, `${name} does not overflow at 375px (${over}px)`);
-    const lines = await p.locator('.hello__date').evaluate((e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight)));
-    ok(lines === 1, `the date line stays on one line in ${name}`);
+    const lines = await p.locator('.phonetop__day').evaluate((e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight)));
+    ok(lines === 1, `the date stays on one line in ${name}`);
   }
-  const tally = await p.locator('.tally').boundingBox();
-  ok(tally.width <= 375 - 32 + 1, `the tally fits the phone (${Math.round(tally.width)}px)`);
-  await p.getByRole('button', { name: 'Focus' }).click();
-  await p.waitForTimeout(500);
-  await p.screenshot({ path: `${out}/phone-focus.png` });
-  await p.getByRole('button', { name: 'Focus' }).click();
+  const nav = await p.evaluate(() => {
+    const n = document.querySelector('.tabs');
+    return { count: n.querySelectorAll('a').length, scrolls: n.scrollWidth > n.clientWidth + 2 };
+  });
+  ok(nav.count === 4, `the nav is four tabs (${nav.count})`);
+  ok(!nav.scrolls, 'and they fit without scrolling');
+  await p.screenshot({ path: `${out}/phone-today.png` });
   ok(errs.length === 0, `no page errors on the phone (${errs.slice(0, 2).join('; ') || 'none'})`);
   await ctx.close();
 }

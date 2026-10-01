@@ -1,8 +1,7 @@
 /** Paste → read → triage → commit, driven in a real browser. */
-import { chromium } from 'playwright';
+import { launch, out } from './browser.mjs';
 
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--headless=new', '--no-sandbox'] });
-const out = '/tmp/claude-0/-home-user-Commando/55cd7d66-6986-5bab-a214-9d42a2d3da06/scratchpad';
+const b = await launch();
 const fail = [];
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail.push(m); };
 
@@ -39,14 +38,14 @@ ok(focused === 'intake-text', `focus stays in the paste box while typing (${focu
 
 await paste();
 
-ok((await p.locator('.cand').count()) === 7, `triage lists every proposal (${await p.locator('.cand').count()})`);
+ok((await p.locator('.cand').count()) === 5, `triage lists every proposal (${await p.locator('.cand').count()})`);
 ok(await p.locator('.cand__quote').first().isVisible(), 'each proposal shows the quote it came from');
 ok((await p.locator('.cand__dup').count()) === 1, 'a restated existing item is flagged as a duplicate');
 ok((await p.locator('.cand--unplaced').count()) === 1, 'an unplaceable item is marked, not guessed at');
 await p.screenshot({ path: `${out}/phone-triage.png` });
 
 const readyBefore = Number(await p.locator('.commit__count b').textContent());
-ok(readyBefore === 6, `unplaced items are excluded from the ready count (${readyBefore} of 7)`);
+ok(readyBefore === 4, `unplaced items are excluded from the ready count (${readyBefore} of 5)`);
 
 // nothing written yet
 const leakedBefore = await p.evaluate(async () => {
@@ -63,16 +62,19 @@ await p.getByRole('button', { name: 'Put back' }).click();
 await p.waitForTimeout(300);
 ok(Number(await p.locator('.commit__count b').textContent()) === readyBefore, 'putting it back restores the count');
 
-// doing → watching
-const seg = p.locator('.cand').first().locator('.seg button', { hasText: 'Just watch' });
-await seg.click();
+// every proposal is one kind of thing: no doing-versus-watching choice
+ok((await p.locator('.cand .seg').count()) === 0, 'there is no task-or-watch choice to make');
+
+// urgent can be set or cleared before accepting
+const urgent = p.locator('.cand').nth(1).locator('.tinytoggle', { hasText: 'Urgent' });
+await urgent.click();
 await p.waitForTimeout(200);
-ok((await seg.getAttribute('aria-pressed')) === 'true', 'a proposal can be moved from doing to watching');
+ok((await urgent.getAttribute('aria-pressed')) === 'true', 'a proposal can be flagged urgent before it lands');
 
 // place the unplaced one
 await p.locator('.cand--unplaced').first().locator('select').selectOption({ index: 1 });
 await p.waitForTimeout(300);
-ok(Number(await p.locator('.commit__count b').textContent()) === 7, 'placing the last item makes all seven ready');
+ok(Number(await p.locator('.commit__count b').textContent()) === 5, 'placing the last item makes all five ready');
 
 // edit a title in place without losing focus
 await p.locator('.cand__title').nth(1).click();
@@ -84,26 +86,29 @@ const edited = await p.locator('.cand__title').nth(1).inputValue();
 ok(edited.endsWith(' - before Sydney'), 'the whole edit is captured, not the first character');
 
 // commit
-await p.getByRole('button', { name: /Add 7 to the register/ }).click();
+await p.getByRole('button', { name: /Add 5 to the register/ }).click();
 await p.waitForTimeout(1000);
 ok(await p.locator('.toast', { hasText: 'added to the register' }).isVisible(), 'committing confirms how many landed');
 
 // Navigate in-app, not with goto: a full reload would re-prime the fixture
 // cache from the seed file and discard everything added this session.
 await p.getByRole('link', { name: 'Streams' }).click();
+await p.waitForTimeout(700);
+await p.locator('.srow', { hasText: 'ISODP' }).click();
 await p.waitForTimeout(900);
-// The Isaac item was flipped to "watch" earlier in this run, so assert on
-// one that stayed a task.
 ok((await p.locator('.task__title', { hasText: 'Ask Suzanne how TTS handled multi-currency' }).count()) >= 1,
-  'accepted tasks appear in the register');
-ok((await p.locator('.task__title', { hasText: 'Send Isaac the revised registration' }).count()) === 0,
-  'an item reclassified as watch does not appear among the tasks');
+  'accepted items appear in their section');
+ok((await p.locator('.task__title', { hasText: 'Send Isaac the revised registration' }).count()) >= 1,
+  'every accepted proposal lands as an ordinary item');
 
-await p.getByRole('link', { name: 'Periphery' }).click();
-await p.waitForTimeout(900);
-const watchLanded = await p.locator('.watch p').count();
-ok(watchLanded >= 3, `items marked watch land in the periphery, not Today (${watchLanded})`);
-await p.screenshot({ path: `${out}/phone-periphery-after.png` });
+// The Isaac item came in urgent, so it is on Today.
+await p.getByRole('link', { name: 'Today' }).click();
+await p.waitForTimeout(700);
+const more = p.locator('.more', { hasText: 'more urgent' });
+if (await more.count()) { await more.click(); await p.waitForTimeout(300); }
+ok((await p.locator('.task__title', { hasText: 'Send Isaac the revised registration' }).count()) === 1,
+  'an accepted urgent item shows on Today');
+await p.screenshot({ path: `${out}/phone-today-after-intake.png` });
 
 console.log(fail.length ? `\n${fail.length} FAILING:\n- ` + fail.join('\n- ') : '\nAll intake checks passed');
 await b.close();

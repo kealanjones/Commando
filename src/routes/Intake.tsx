@@ -35,7 +35,7 @@ export function Intake() {
   const boxRef = useRef<HTMLTextAreaElement>(null);
 
   const openTasks = useMemo(
-    () => tasks.filter((t) => t.kind === 'task' && !t.done && !t.deleted_at),
+    () => tasks.filter((t) => !t.done && !t.deleted_at),
     [tasks],
   );
 
@@ -291,14 +291,12 @@ function Triage({
     }
   };
 
-  const taskCount = kept.filter((i) => i.kind === 'task').length;
-  const watchCount = kept.filter((i) => i.kind === 'watch').length;
 
   return (
     <section aria-labelledby="triage-head">
       <div className="shead">
         <h2 id="triage-head">{label || 'What it found'}</h2>
-        <span className="shead__meta">{taskCount} tasks · {watchCount} to watch</span>
+        <span className="shead__meta">{kept.length} proposed</span>
       </div>
 
       {summary && <p className="summary">{summary}</p>}
@@ -314,7 +312,7 @@ function Triage({
             return (
               <li key={raw.id} className="cand cand--gone">
                 <p>{item.title}</p>
-                <button className="watch__go" onClick={() => restore(raw.id)}>Put back</button>
+                <button className="linkish" onClick={() => restore(raw.id)}>Put back</button>
               </li>
             );
           }
@@ -346,17 +344,6 @@ function Triage({
               )}
 
               <div className="cand__controls">
-                <div className="seg" role="group" aria-label="Kind">
-                  <button
-                    aria-pressed={item.kind === 'task'}
-                    onClick={() => edit(raw.id, { kind: 'task' })}
-                  >Do it</button>
-                  <button
-                    aria-pressed={item.kind === 'watch'}
-                    onClick={() => edit(raw.id, { kind: 'watch' })}
-                  >Just watch</button>
-                </div>
-
                 <select
                   className="select select--inline"
                   value={item.section_id ?? ''}
@@ -376,13 +363,11 @@ function Triage({
                   ))}
                 </select>
 
-                {item.kind === 'task' && (
-                  <button
-                    className="tinytoggle"
-                    aria-pressed={item.do_now}
-                    onClick={() => edit(raw.id, { do_now: !item.do_now })}
-                  >Do now</button>
-                )}
+                <button
+                  className="tinytoggle"
+                  aria-pressed={item.do_now}
+                  onClick={() => edit(raw.id, { do_now: !item.do_now })}
+                >Urgent</button>
 
                 {item.due && <span className="pill pill--flag">due {item.due}</span>}
                 {item.waiting_on.length > 0 && (

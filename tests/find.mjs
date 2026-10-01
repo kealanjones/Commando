@@ -1,8 +1,7 @@
 /** Search: opening it, ranking, keyboard, and getting to the thing. */
-import { chromium } from 'playwright';
+import { launch, out } from './browser.mjs';
 
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--headless=new', '--no-sandbox'] });
-const out = '/tmp/claude-0/-home-user-Commando/55cd7d66-6986-5bab-a214-9d42a2d3da06/scratchpad';
+const b = await launch();
 const fail = [];
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail.push(m); };
 
@@ -31,8 +30,8 @@ await p.keyboard.press('Control+k');
 await p.waitForSelector('.find');
 ok(true, 'Ctrl+K opens it');
 
-// before typing, useful jumps rather than a blank box
-ok((await p.locator('.find__jumps .chip').count()) === 4, 'the empty state offers jumps');
+// before typing, a line on what it searches rather than a blank box
+ok(await p.locator('.find__hint').isVisible(), 'the empty state says what it searches');
 
 // ranking and highlighting
 await p.locator('.find__input').fill('belaal');

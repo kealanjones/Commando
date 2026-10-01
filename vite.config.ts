@@ -74,6 +74,10 @@ function csp(env: Record<string, string>): Plugin {
 }
 
 export default defineConfig(({ mode }) => {
+  // --mode demo is the fixture build. Say so here rather than in a .env.demo
+  // file: that file is gitignored, so CI built "demo" with no fixtures and
+  // served the setup screen to every browser test.
+  if (mode === 'demo') process.env.VITE_DEMO = '1';
   const env = loadEnv(mode, process.cwd(), '');
   return {
   base: artifact ? './' : '/',
@@ -93,8 +97,8 @@ export default defineConfig(({ mode }) => {
         name: 'Work Register',
         short_name: 'Register',
         description: 'What must I do today, and which stream is falling behind.',
-        theme_color: '#F2F4F9',
-        background_color: '#F2F4F9',
+        theme_color: '#FFFFFF',
+        background_color: '#FFFFFF',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

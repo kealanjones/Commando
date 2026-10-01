@@ -1,13 +1,12 @@
 /**
  * The decision surface.
  *
- * One mechanism, three entry points. The register only ever grew — intake
+ * One mechanism, two entry points. The register only ever grew — intake
  * adds after every meeting, nothing removed anything — and a fifth of the
  * tasks began with a verb that cannot be finished. This is what makes the
  * list go down.
  *
- *   weekly  — stale, unfinishable, urgent-but-undated
- *   unclear — things you parked because you did not know what they meant
+ *   weekly  — overdue, unfinishable, urgent-but-undated, gone quiet
  *   person  — what someone owes you, for the ten minutes before a 1:1
  */
 import { useCallback, useMemo } from 'react';
@@ -31,20 +30,19 @@ export const SESSION_SIZE = 8;
  */
 const UNFINISHABLE = /^(keep|track|continue|monitor|maintain|ensure|be alert)\b/i;
 
-export const isUnfinishable = (t: Task) => t.kind === 'task' && UNFINISHABLE.test(t.title);
+export const isUnfinishable = (t: Task) => UNFINISHABLE.test(t.title);
 
 const daysSince = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
 
 function reasonFor(t: Task, idle: number): ReviewReason | null {
   if (t.due && new Date(t.due) < new Date(new Date().toDateString())) return 'overdue';
-  if (t.unclear) return 'unclear';
   if (isUnfinishable(t)) return 'unfinishable';
   if (t.do_now && !t.due) return 'urgent_undated';
   if (idle >= STALE_DAYS) return 'stale';
   return null;
 }
 
-const PRIORITY: ReviewReason[] = ['overdue', 'unfinishable', 'urgent_undated', 'unclear', 'stale'];
+const PRIORITY: ReviewReason[] = ['overdue', 'unfinishable', 'urgent_undated', 'stale'];
 
 /** Who is named on which task. */
 export function useTaskPeople() {
@@ -65,7 +63,7 @@ export function useReviewQueue(mode: ReviewMode, personId?: string) {
   const { data: links = [] } = useTaskPeople();
 
   return useMemo(() => {
-    const open = tasks.filter((t) => t.kind === 'task' && !t.done && !t.deleted_at);
+    const open = tasks.filter((t) => !t.done && !t.deleted_at);
 
     const load = new Map<string, number>();
     for (const t of open) load.set(t.section_id, (load.get(t.section_id) ?? 0) + 1);
@@ -88,14 +86,9 @@ export function useReviewQueue(mode: ReviewMode, personId?: string) {
         .sort((a, b) => b.daysIdle - a.daysIdle);
     }
 
-    if (mode === 'unclear') {
-      return open.filter((t) => t.unclear).map((t) => build(t, 'unclear'));
-    }
-
     // Weekly. Skip anything decided recently, or the same cards return every
     // week and the ritual dies. An overdue item ignores the snooze.
     const due = open.filter((t) => {
-      if (t.unclear) return false;                 // has its own queue
       const snoozed = t.reviewed_at && daysSince(t.reviewed_at) < SNOOZE_DAYS;
       const reason = reasonFor(t, daysSince(t.touched_at ?? t.created_at));
       if (!reason) return false;
@@ -125,7 +118,6 @@ export function useReviewStatus() {
   return {
     waiting: queue.length,
     session: Math.min(queue.length, SESSION_SIZE),
-    unclear: tasks.filter((t) => t.kind === 'task' && !t.done && t.unclear).length,
     daysSinceReview: lastReviewed ? daysSince(lastReviewed) : null,
     reasons: queue.reduce<Record<string, number>>((acc, c) => {
       acc[c.reason] = (acc[c.reason] ?? 0) + 1;
@@ -145,14 +137,8 @@ export function useDecide() {
       switch (decision.kind) {
         case 'date':
           return update.mutate({ id: task.id, patch: { due: decision.due, reviewed_at: now } });
-        case 'watch':
-          return update.mutate({ id: task.id, patch: { kind: 'watch', do_now: false, reviewed_at: now } });
         case 'drop':
           return remove(task.id);
-        case 'unclear':
-          return update.mutate({ id: task.id, patch: { unclear: true, do_now: false, reviewed_at: now } });
-        case 'clear':
-          return update.mutate({ id: task.id, patch: { unclear: false, reviewed_at: now } });
         case 'done':
           return update.mutate({ id: task.id, patch: { done: true, reviewed_at: now } });
         case 'chased':
@@ -175,8 +161,7 @@ export function useUndoDecision() {
       update.mutate({
         id: before.id,
         patch: {
-          due: before.due, kind: before.kind, done: before.done,
-          do_now: before.do_now, unclear: before.unclear,
+          due: before.due, done: before.done, do_now: before.do_now,
           deleted_at: null, reviewed_at: before.reviewed_at,
         },
       }),

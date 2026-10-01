@@ -123,7 +123,7 @@ async function main() {
   // ── flatten the seed file ────────────────────────────────────────
   type Flat = {
     natural_key: string; owner_id: string; stream_id: string; section_id: string;
-    title: string; kind: 'task' | 'watch'; context: string | null;
+    title: string; kind: 'task'; context: string | null;
     do_now: boolean; due: string | null; position: number;
   };
 
@@ -132,7 +132,7 @@ async function main() {
   let dupes = 0;
 
   for (const s of SECTIONS) {
-    const push = (raw: string | Item, kind: 'task' | 'watch', idx: number) => {
+    const push = (raw: string | Item, kind: 'task', idx: number) => {
       const it = norm(raw);
       const key = naturalKey(s.id, it.t);
       if (seen.has(key)) {
@@ -148,12 +148,11 @@ async function main() {
       });
     };
     (s.items ?? []).forEach((i, idx) => push(i, 'task', idx));
-    (s.watch ?? []).forEach((i, idx) => push(i, 'watch', idx));
+    // Former watch items are ordinary items now (0009), listed after the rest.
+    (s.watch ?? []).forEach((i, idx) => push(i, 'task', (s.items?.length ?? 0) + idx));
   }
 
-  const tasks = flat.filter((f) => f.kind === 'task').length;
-  const watch = flat.filter((f) => f.kind === 'watch').length;
-  console.log(`items     ${flat.length}  (${tasks} tasks, ${watch} watch)${dupes ? `  ${dupes} duplicates skipped` : ''}`);
+  console.log(`items     ${flat.length}${dupes ? `  ${dupes} duplicates skipped` : ''}`);
 
   // ── reconcile ────────────────────────────────────────────────────
   const { data: existing, error: exErr } = await db

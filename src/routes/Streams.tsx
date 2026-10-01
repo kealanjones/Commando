@@ -1,294 +1,198 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Chevron } from '@/components/icons';
-import { Dial, quietLabel } from '@/components/Dial';
 import { TaskCard } from '@/components/TaskCard';
-import { WatchCard } from '@/components/WatchCard';
-import { useHealth, usePeople, useSections, useStreams, useTasks } from '@/data/store';
-import { useSuggestions, useThreadsWithItems } from '@/data/threads';
-import { supabase } from '@/lib/supabase';
-import { useQuery } from '@tanstack/react-query';
+import { useHealth, usePeople, useSections, useTasks } from '@/data/store';
+import { useTaskPeople } from '@/data/review';
 import { branchesFor } from '@/lib/tree';
 import { useRealm } from '@/lib/modes';
-import type { Realm, Section, Task } from '@/lib/types';
+import type { Realm, Section, StreamHealth, Task } from '@/lib/types';
 
-type Filter = 'all' | 'donow' | 'undated' | 'done';
-
-/** Everything lives here: browse by stream, then by section. */
+/**
+ * The breakdown of everything.
+ *
+ *   /streams      one line per stream: how much is open, what is pressing
+ *   /streams/:id  that stream, area by area, section by section
+ */
 export function Streams({
   onToggle,
   onOpen,
-  onPromote,
 }: {
   onToggle: (t: Task) => void;
   onOpen: (t: Task) => void;
-  onPromote: (t: Task) => void;
 }) {
   const { streamId } = useParams();
-  const [params, setParams] = useSearchParams();
-  const realm = useRealm();
-  const filter = (params.get('filter') as Filter) ?? 'all';
-  const person = params.get('person');
-
   const health = useHealth();
-  const { data: streams = [] } = useStreams();
+  const stream = streamId ? health.find((h) => h.id === streamId) : undefined;
+  if (streamId && stream) return <StreamDetail stream={stream} onToggle={onToggle} onOpen={onOpen} />;
+  return <StreamIndex health={health} />;
+}
+
+function quiet(days: number | null): string {
+  if (days === null) return 'not touched yet';
+  if (days === 0) return 'touched today';
+  if (days === 1) return 'touched yesterday';
+  return `quiet ${days} days`;
+}
+
+function StreamIndex({ health }: { health: StreamHealth[] }) {
+  const realm = useRealm();
+  return (
+    <section aria-labelledby="streams-head">
+      <div className="shead">
+        <h2 id="streams-head">Streams</h2>
+        <span className="shead__meta">
+          {health.reduce((n, h) => n + h.openTasks, 0)} open
+        </span>
+      </div>
+      <div className="colhead colhead--streams" aria-hidden="true">
+        <span>Code</span><span>Stream</span><span>Open</span>
+      </div>
+      <ul className="list">
+        {health.map((h, i) => {
+          // With both lives showing, a word marks where one ends.
+          const before: Realm | undefined = health[i - 1]?.realm;
+          const zone = realm === 'all' && before !== h.realm;
+          return (
+            <li key={h.id}>
+              {zone && (
+                <h3 className="zone" data-realm={h.realm}>
+                  {h.realm === 'work' ? 'Work' : 'Personal'}
+                </h3>
+              )}
+              <Link to={`/streams/${h.id}`} className="srow" data-stream={h.id}>
+                <span className="srow__code">{h.code}</span>
+                <span className="srow__body">
+                  <b>{h.title}</b>
+                  <span className="srow__meta">
+                    {h.overdue > 0 && <span className="srow__due">{h.overdue} overdue</span>}
+                    {h.doNow > 0 && <span>{h.doNow} urgent</span>}
+                    <span>{quiet(h.daysQuiet)}</span>
+                  </span>
+                </span>
+                <span className="srow__n">{h.openTasks}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+type Filter = 'open' | 'done';
+
+function StreamDetail({
+  stream,
+  onToggle,
+  onOpen,
+}: {
+  stream: StreamHealth;
+  onToggle: (t: Task) => void;
+  onOpen: (t: Task) => void;
+}) {
+  const [params, setParams] = useSearchParams();
+  const filter: Filter = params.get('filter') === 'done' ? 'done' : 'open';
+
   const { data: sections = [] } = useSections();
   const { data: tasks = [] } = useTasks();
   const { data: people = [] } = usePeople();
-
-  const { data: links = [] } = useQuery({
-    queryKey: ['task_people'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('task_people').select('task_id,person_id');
-      if (error) throw error;
-      return data as { task_id: string; person_id: string }[];
-    },
-    staleTime: 5 * 60_000,
-  });
+  const { data: links = [] } = useTaskPeople();
 
   const waitingFor = useMemo(() => {
     const nameOf = new Map(people.map((p) => [p.id, p.name]));
     const m = new Map<string, string[]>();
     for (const l of links) {
       const n = nameOf.get(l.person_id);
-      if (!n) continue;
-      m.set(l.task_id, [...(m.get(l.task_id) ?? []), n]);
+      if (n) m.set(l.task_id, [...(m.get(l.task_id) ?? []), n]);
     }
     return m;
   }, [links, people]);
 
-  const personCounts = useMemo(() => {
-    const open = new Set(tasks.filter((t) => !t.done && t.kind === 'task').map((t) => t.id));
-    const c = new Map<string, number>();
-    for (const l of links) if (open.has(l.task_id)) c.set(l.person_id, (c.get(l.person_id) ?? 0) + 1);
-    return c;
-  }, [links, tasks]);
-
-  const suggestions = useSuggestions(6);
-  const threads = useThreadsWithItems();
-
-  const threadsFor = useMemo(() => {
-    const m = new Map<string, string[]>();
-    for (const { thread, items } of threads) {
-      for (const t of items) m.set(t.id, [...(m.get(t.id) ?? []), thread.title]);
-    }
-    return m;
-  }, [threads]);
-
   const setFilter = (f: Filter) => {
     const next = new URLSearchParams(params);
-    if (f === 'all') next.delete('filter'); else next.set('filter', f);
+    if (f === 'open') next.delete('filter'); else next.set('filter', f);
     setParams(next, { replace: true });
   };
 
-  const setPerson = (id: string | null) => {
-    const next = new URLSearchParams(params);
-    if (!id || id === person) next.delete('person'); else next.set('person', id);
-    setParams(next, { replace: true });
-  };
+  const mySections = sections.filter((s) => s.stream_id === stream.id);
+  const rows = tasks.filter((t) => t.stream_id === stream.id && (filter === 'done' ? t.done : !t.done));
 
-  const matches = (t: Task) => {
-    if (t.kind !== 'task') return false;
-    if (person && !links.some((l) => l.task_id === t.id && l.person_id === person)) return false;
-    switch (filter) {
-      case 'donow':   return !t.done && t.do_now;
-      case 'undated': return !t.done && !t.due;
-      case 'done':    return t.done;
-      default:        return !t.done;
-    }
+  const cards = (sec: Section) => {
+    const items = rows.filter((t) => t.section_id === sec.id);
+    if (!items.length) return null;
+    return (
+      <SectionBlock key={sec.id} id={sec.id} title={sec.title} count={items.length}>
+        <ul className="list">
+          {items.map((t, i) => (
+            <TaskCard
+              key={t.id}
+              task={t}
+              index={i}
+              waitingOn={waitingFor.get(t.id)}
+              onToggle={onToggle}
+              onOpen={onOpen}
+            />
+          ))}
+        </ul>
+      </SectionBlock>
+    );
   };
-
-  const visibleStreams = streamId ? health.filter((h) => h.id === streamId) : health;
-  const current = streamId ? streams.find((s) => s.id === streamId) : null;
 
   return (
-    <>
-      {current && (
-        <Link
-          to="/streams"
-          className="shead__meta"
-          style={{ textDecoration: 'none', display: 'inline-block', marginBottom: 14 }}
-        >
-          ← All streams
-        </Link>
-      )}
+    <section data-stream={stream.id} aria-labelledby="stream-head">
+      <Link to="/streams" className="back">← Streams</Link>
 
-      {(suggestions.length > 0 || threads.length > 0) && (
-        <div className="prompt">
-          <div>
-            <h3>
-              {suggestions.length > 0
-                ? `${suggestions.length} possible thread${suggestions.length === 1 ? '' : 's'}`
-                : `${threads.length} thread${threads.length === 1 ? '' : 's'}`}
-            </h3>
-            <p>
-              {suggestions.length > 0
-                ? `Strands running across sections — ${suggestions.slice(0, 3).map((s) => s.label).join(', ')}${suggestions.length > 3 ? '…' : ''}`
-                : 'Strands running across your sections.'}
-            </p>
-          </div>
-          <Link to="/threads">{suggestions.length > 0 ? 'Take a look' : 'Open'}</Link>
+      <div className="stream__head">
+        <div>
+          <h2 id="stream-head">{stream.title}</h2>
+          <p className="stream__meta">
+            {stream.openTasks} open
+            {stream.overdue > 0 && ` · ${stream.overdue} overdue`}
+            {stream.doNow > 0 && ` · ${stream.doNow} urgent`}
+            {` · ${quiet(stream.daysQuiet)}`}
+          </p>
         </div>
-      )}
-
-      <div className="filters" role="group" aria-label="Filter">
-        {([
-          ['all', 'Open'],
-          ['donow', 'Do now'],
-          ['undated', 'No date'],
-          ['done', 'Done'],
-        ] as [Filter, string][]).map(([f, label]) => (
-          <button
-            key={f}
-            className="chip"
-            aria-pressed={filter === f}
-            onClick={() => setFilter(f)}
-          >
-            {label}
-          </button>
-        ))}
+        <Link to={`/brief?stream=${stream.id}`} className="btn btn--ghost">Brief</Link>
       </div>
 
-      {people.some((p) => (personCounts.get(p.id) ?? 0) > 0) && (
-      <div className="filters" role="group" aria-label="Waiting on">
-        {people
-          .filter((p) => (personCounts.get(p.id) ?? 0) > 0)
-          .sort((a, b) => (personCounts.get(b.id) ?? 0) - (personCounts.get(a.id) ?? 0))
-          .map((p) => (
-            <button
-              key={p.id}
-              className="chip"
-              aria-pressed={person === p.id}
-              onClick={() => setPerson(p.id)}
-            >
-              <span className="chip__dot" />
-              {p.name}
-              <span className="chip__n">{personCounts.get(p.id)}</span>
-            </button>
-          ))}
+      <div className="seg stream__filter" role="group" aria-label="Show">
+        <button type="button" aria-pressed={filter === 'open'} onClick={() => setFilter('open')}>Open</button>
+        <button type="button" aria-pressed={filter === 'done'} onClick={() => setFilter('done')}>Done</button>
       </div>
-      )}
 
-      {visibleStreams.map((h, i) => {
-        const mySections = sections.filter((s) => s.stream_id === h.id);
-        const rows = tasks.filter((t) => t.stream_id === h.id && matches(t));
-        const watch = tasks.filter((t) => t.stream_id === h.id && t.kind === 'watch');
-        if (rows.length === 0 && watch.length === 0 && (person || filter !== 'all')) return null;
+      {branchesFor(mySections, stream.id).map((branch) => {
+        // A bare section sits at the top level on its own.
+        if (!branch.children.length) return cards(branch.node);
 
-        // With both realms showing, a rule and a word mark where one life
-        // ends and the other begins.
-        const before: Realm | undefined = visibleStreams[i - 1]?.realm;
-        const zone = !streamId && realm === 'all' && before !== h.realm
-          ? <h3 className="zone" data-realm={h.realm}>{h.realm === 'work' ? 'Work' : 'Personal'}</h3>
-          : null;
+        const total = branch.children.reduce(
+          (n, c) => n + rows.filter((t) => t.section_id === c.id).length, 0,
+        );
+        if (!total) return null;
 
         return (
-          <section key={h.id} data-stream={h.id} style={{ marginBottom: 34 }}>
-            {zone}
-            <div
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16,
-                background: 'var(--s-tint)', borderRadius: 'var(--r-panel)', padding: 14,
-              }}
-            >
-              <Dial
-                count={h.openTasks + h.doneTasks + h.watchItems === 0 ? null : h.openTasks}
-                daysQuiet={h.daysQuiet}
-                empty={h.openTasks + h.doneTasks + h.watchItems === 0}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-.03em' }}>
-                  {streamId ? h.short : <Link to={`/streams/${h.id}`}>{h.short}</Link>}
-                </h2>
-                {streamId && h.title !== h.short && (
-                  <div className="scard__q" style={{ marginTop: 3 }}>{h.title}</div>
-                )}
-                <div className="scard__q" style={{ marginTop: 4 }}>
-                  {quietLabel(h.daysQuiet, h.openTasks + h.doneTasks + h.watchItems > 0)}
-                  {h.watchItems > 0 && ` · ${h.watchItems} in the periphery`}
-                </div>
-              </div>
-            </div>
-
-            {branchesFor(mySections, h.id).map((branch) => {
-              const cards = (sec: Section) => {
-                const items = rows.filter((t) => t.section_id === sec.id);
-                if (!items.length) return null;
-                return (
-                  <SectionBlock
-                    key={sec.id}
-                    title={sec.title}
-                    monitor={sec.monitor}
-                    count={items.length}
-                    streamId={h.id}
-                  >
-                    <ul className="list" style={{ paddingBottom: 16 }}>
-                      {items.map((t, i) => (
-                        <TaskCard
-                          key={t.id}
-                          task={t}
-                          index={i}
-                          waitingOn={waitingFor.get(t.id)}
-                          threads={threadsFor.get(t.id)}
-                          onToggle={onToggle}
-                          onOpen={onOpen}
-                        />
-                      ))}
-                    </ul>
-                  </SectionBlock>
-                );
-              };
-
-              // A bare section sits at the top level on its own.
-              if (!branch.children.length) return cards(branch.node);
-
-              const total = branch.children.reduce(
-                (n, c) => n + rows.filter((t) => t.section_id === c.id).length, 0,
-              );
-              if (!total) return null;
-
-              return (
-                <GroupBlock
-                  key={branch.node.id}
-                  title={branch.node.title}
-                  count={total}
-                  sections={branch.children.filter(
-                    (c) => rows.some((t) => t.section_id === c.id),
-                  ).length}
-                >
-                  {branch.children.map(cards)}
-                </GroupBlock>
-              );
-            })}
-
-            {rows.length === 0 && (
-              <div className="empty">
-                <h3>Nothing here</h3>
-                <p>No items match this filter in {h.title}.</p>
-              </div>
-            )}
-
-            {streamId && watch.length > 0 && (
-              <SectionBlock title="Keeping an eye on" count={watch.length} streamId={h.id}>
-                <ul className="list" style={{ paddingBottom: 16 }}>
-                  {watch.map((t) => (
-                    <WatchCard key={t.id} task={t} onPromote={onPromote} onOpen={onOpen} />
-                  ))}
-                </ul>
-              </SectionBlock>
-            )}
-          </section>
+          <GroupBlock
+            key={branch.node.id}
+            title={branch.node.title}
+            count={total}
+            sections={branch.children.filter((c) => rows.some((t) => t.section_id === c.id)).length}
+          >
+            {branch.children.map(cards)}
+          </GroupBlock>
         );
       })}
-    </>
+
+      {rows.length === 0 && (
+        <div className="empty">
+          <h3>{filter === 'done' ? 'Nothing finished yet' : 'Nothing open'}</h3>
+          <p>{filter === 'done' ? `Nothing in ${stream.title} has been ticked.` : `${stream.title} is clear.`}</p>
+        </div>
+      )}
+    </section>
   );
 }
 
-/**
- * The middle level. Open by default — this is a heading that groups, not a
- * drawer that hides; collapsing it is for when a stream is being read one
- * area at a time.
- */
+/** An area: a heading over the sections inside it. Open by default. */
 function GroupBlock({
   title, count, sections, children,
 }: {
@@ -313,31 +217,32 @@ function GroupBlock({
       <div className="collapse" data-open={open} id={id}>
         <div className="groupblock__body">{children}</div>
       </div>
+      <div className="total">
+        <span>Total</span><span>{count}</span>
+      </div>
     </div>
   );
 }
 
 function SectionBlock({
-  title, count, monitor, streamId, children,
+  id, title, count, children,
 }: {
-  title: string; count: number; monitor?: boolean; streamId: string; children: React.ReactNode;
+  id: string; title: string; count: number; children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
-  const id = `sec-${streamId}-${title.replace(/\W+/g, '-')}`;
   return (
     <div className="sectionblock">
       <button
         className="sectionblock__head"
         aria-expanded={open}
-        aria-controls={id}
+        aria-controls={`sec-${id}`}
         onClick={() => setOpen((v) => !v)}
       >
         <Chevron />
         <h3>{title}</h3>
-        {monitor && <span className="pill pill--flag">monitor</span>}
         <span className="shead__meta">{count}</span>
       </button>
-      <div className="collapse" data-open={open} id={id}>
+      <div className="collapse" data-open={open} id={`sec-${id}`}>
         <div>{children}</div>
       </div>
     </div>

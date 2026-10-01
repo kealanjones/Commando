@@ -36,6 +36,7 @@ the whole file, paste, and press Run — **in order**:
 6. `supabase/migrations/0006_threads.sql`
 7. `supabase/migrations/0007_groups.sql`
 8. `supabase/migrations/0008_realm.sql`
+9. `supabase/migrations/0009_one_kind.sql`
 
 **Migrations go before the code that needs them.** The app auto-deploys from the
 default branch, so a new version can be live before its migration has run. It
@@ -173,6 +174,7 @@ Paste each file into **SQL Editor**, in order, and run it:
 6. `supabase/migrations/0006_threads.sql`
 7. `supabase/migrations/0007_groups.sql`
 8. `supabase/migrations/0008_realm.sql`
+9. `supabase/migrations/0009_one_kind.sql`
 
 Or, with the CLI:
 

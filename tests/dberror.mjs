@@ -1,4 +1,4 @@
-import { describeWriteError } from '/home/user/Commando/src/lib/dbError.ts';
+import { describeWriteError } from '../src/lib/dbError.ts';
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };
 

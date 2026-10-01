@@ -1,17 +1,15 @@
 /**
- * The two switches that change what every screen is.
+ * The switches that are yours, on this device, and survive a reload. None
+ * is written to the register: how you look at it is not a fact about it.
  *
  * Realm: work, personal, or both. It is applied inside the queries, so a
  * route never has to remember to filter — in Work, the personal streams
  * are not dimmed or folded, they are simply not there.
  *
- * Focus: the same screens with the chrome taken off. What is left is the
- * work and the ticks.
- *
- * Both are yours, on this device, and survive a reload. Neither is written
- * to the register: which life you are looking at is not a fact about it.
+ * Paper and light: which look the register wears. Ledger or Notebook, and
+ * light, dark, or whatever the device is set to.
  */
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { STREAMS } from '@data/register.seed';
 import type { Realm, RealmScope, Stream } from './types';
 
@@ -41,15 +39,45 @@ function setting<T extends string>(key: string, initial: T, valid: readonly T[])
 }
 
 const realm = setting<RealmScope>('commando.realm', 'all', ['work', 'personal', 'all']);
-const focus = setting<'on' | 'off'>('commando.focus', 'off', ['on', 'off']);
+
+export type Paper = 'ledger' | 'notebook';
+export type Light = 'system' | 'light' | 'dark';
+const paper = setting<Paper>('commando.paper', 'ledger', ['ledger', 'notebook']);
+const light = setting<Light>('commando.light', 'system', ['system', 'light', 'dark']);
 
 export const useRealm = (): RealmScope =>
   useSyncExternalStore(realm.subscribe, realm.get, () => 'all');
 export const setRealm = (r: RealmScope) => realm.set(r);
 
-export const useFocus = (): boolean =>
-  useSyncExternalStore(focus.subscribe, focus.get, () => 'off') === 'on';
-export const setFocus = (on: boolean) => focus.set(on ? 'on' : 'off');
+export const usePaper = (): Paper => useSyncExternalStore(paper.subscribe, paper.get, () => 'ledger');
+export const setPaper = (p: Paper) => paper.set(p);
+export const useLight = (): Light => useSyncExternalStore(light.subscribe, light.get, () => 'system');
+export const setLight = (l: Light) => light.set(l);
+
+/**
+ * Put the paper and the resolved light on <html>, where tokens.css reads
+ * them. "System" follows the device live, so the page turns dark at the
+ * same moment the laptop does.
+ */
+export function useApplyLook() {
+  const p = usePaper();
+  const l = useLight();
+  useEffect(() => {
+    const root = document.documentElement;
+    const media = window.matchMedia?.('(prefers-color-scheme: dark)');
+    const apply = () => {
+      const dark = l === 'dark' || (l === 'system' && Boolean(media?.matches));
+      root.dataset.paper = p;
+      root.dataset.light = dark ? 'dark' : 'light';
+      const paperColour = getComputedStyle(root).getPropertyValue('--paper').trim();
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', paperColour || '#FFFFFF');
+    };
+    apply();
+    if (l !== 'system' || !media) return;
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
+  }, [p, l]);
+}
 
 export const REALM_LABEL: Record<RealmScope, string> = {
   work: 'Work', personal: 'Personal', all: 'Both',

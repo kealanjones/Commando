@@ -28,15 +28,12 @@ export function buildPrompt(
 
 I am Head of Office to the Director of Organ and Tissue Donation and Transplantation at NHS Blood and Transplant.
 
-My register makes one distinction above all others:
+Every entry in my register is something that has to get done — by me, or by someone I am waiting on. It is not a notebook: a decision that was recorded, a risk someone mentioned or general context is not an entry unless somebody committed to do something about it.
 
-- A TASK is something I must do. It appears on my morning list and asks something of me.
-- A WATCH item is something I must keep in view but must NOT be pushed to act on today: a decision recorded, a risk raised, a contract in progress, an action that belongs to someone else.
-
-Getting this wrong towards "task" is the expensive mistake — a list where everything looks equally urgent is the problem this register exists to solve. When unsure, choose watch.
+A long list where everything looks equally important is the problem this register exists to solve. When unsure whether something is an action, leave it out.
 
 Rules:
-1. Extract only what the record supports. If an action is implied but never agreed, it is a watch item at most.
+1. Extract only actions the record supports. If an action is implied but never agreed, leave it out.
 2. Never invent a date. Use "due" only where a date was stated, or a stated relative date resolves unambiguously against today, ${today}.
 3. Write titles I could act on cold in three weeks. "Chase Derek for the sponsor list before Sydney" — not "Follow up sponsors".
 4. Route every item into one of the sections below using its exact id. If nothing fits, use null and I will place it.
@@ -59,7 +56,6 @@ Reply with ONE fenced json block and nothing else, in exactly this shape:
   "items": [
     {
       "title": "Send Isaac the revised registration cost model",
-      "kind": "task",
       "section_id": "isodp-pay",
       "context": "He cannot sign off the budget line without them.",
       "do_now": true,
@@ -124,7 +120,7 @@ export function parseProposals(raw: string): ParsedProposals {
 
     items.push({
       title: title.slice(0, 500),
-      kind: o.kind === 'watch' ? 'watch' : 'task',
+      kind: 'task',
       context: str(o.context),
       stream_id: null,                       // resolved from the section by the caller
       section_id: str(o.section_id) as string | null,
