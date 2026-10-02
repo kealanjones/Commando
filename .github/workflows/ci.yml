@@ -57,6 +57,9 @@ jobs:
       - name: Notes or transcript
         run: npm run test:recordkind
 
+      - name: Memory
+        run: npm run test:memory
+
       # Built in demo mode so CI needs no Supabase credentials. The env
       # validation that guards the real build is exercised separately below.
       - name: Build
@@ -78,6 +81,7 @@ jobs:
           npm run test:modes
           npm run test:groups
           npm run test:organise
+          npm run test:memory-ui
 
   database:
     name: Migrations and RLS

@@ -29,7 +29,7 @@ export function describeWriteError(err: WriteError | null | undefined, what: str
     );
   }
 
-  if (code === '42703' || /column .* does not exist/i.test(raw)) {
+  if (code === '42703' || code === 'PGRST204' || /column .* does not exist|could not find the .* column/i.test(raw)) {
     return `Could not ${what}: the database is missing a column this version needs. Run the latest migration — see DEPLOY.md step 3.`;
   }
 
@@ -43,4 +43,26 @@ export function describeWriteError(err: WriteError | null | undefined, what: str
   }
 
   return `Could not ${what}: ${raw || 'unknown error'}.`;
+}
+
+/**
+ * A table the database has not got: Postgres says 42P01, PostgREST says
+ * PGRST205 ("not in the schema cache"). Either means a migration to run.
+ */
+export function missingTable(err: unknown): boolean {
+  const e = err as WriteError | null | undefined;
+  if (!e) return false;
+  return e.code === '42P01' || e.code === 'PGRST205'
+    || /relation .* does not exist|could not find the table/i.test(e.message ?? '');
+}
+
+/**
+ * A column the database has not got: Postgres says 42703, PostgREST (which
+ * checks its schema cache before Postgres sees the write) says PGRST204.
+ */
+export function missingColumn(err: unknown): boolean {
+  const e = err as WriteError | null | undefined;
+  if (!e) return false;
+  return e.code === '42703' || e.code === 'PGRST204'
+    || /column .* does not exist|could not find the .* column/i.test(e.message ?? '');
 }

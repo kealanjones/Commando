@@ -4,6 +4,8 @@ import { NewFocus } from '@/components/NewFocus';
 import { useToast } from '@/components/Toasts';
 import { useSections, useStreams, useTasks } from '@/data/store';
 import { useAcceptItems, useExtract, useImportProposals, useIntakeItems, useTriage } from '@/data/intake';
+import { useAbsorb, useMemory } from '@/data/memory';
+import { memoryDigest } from '@/lib/memory';
 import { buildPrompt } from '@/lib/proposalFormat';
 import { KIND_LABEL, guessKind, type RecordKind } from '@/lib/recordKind';
 import type { IntakeItem } from '@/lib/types';
@@ -49,9 +51,17 @@ export function Intake() {
     [tasks],
   );
 
+  // Every meeting feeds the memory, and the memory helps read the next one.
+  const { notes: memoryNotes } = useMemory();
+  const absorb = useAbsorb();
+  const remember = (id: string) => absorb.mutate(id, {
+    onSuccess: (r) => { if (r.entries) push({ message: `Added ${r.entries} line${r.entries === 1 ? '' : 's'} to the memory.` }); },
+    onError: (e) => push({ message: `Not added to the memory: ${(e as Error).message} You can try again from Memory.`, tone: 'warn' }),
+  });
+
   const prompt = useMemo(
-    () => buildPrompt(streams, sections, openTasks.map((t) => t.title), kind),
-    [streams, sections, openTasks, kind],
+    () => buildPrompt(streams, sections, openTasks.map((t) => t.title), kind, memoryDigest(memoryNotes)),
+    [streams, sections, openTasks, kind, memoryNotes],
   );
 
   const copyPrompt = async () => {
@@ -72,6 +82,13 @@ export function Intake() {
       const res = await importProposals.mutateAsync({
         raw: paste, label: label.trim() || undefined, sections, openTasks,
       });
+      remember(res.intake_id);
+      if (!res.items.length) {
+        // Nothing to do, but worth remembering: no triage to show.
+        push({ message: 'No actions in that one. It is going into the memory.' });
+        startOver();
+        return;
+      }
       setSummary(res.summary);
       setIntakeId(res.intake_id);
     } catch (e) {
@@ -87,6 +104,7 @@ export function Intake() {
       const res = await extract.mutateAsync({ text, label: label.trim() || undefined, kind });
       setIntakeId(res.intake_id);
       setSummary(res.summary);
+      remember(res.intake_id);
       if (res.count === 0) push({ message: 'Nothing in there needed adding.' });
     } catch (e) {
       push({

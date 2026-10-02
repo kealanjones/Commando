@@ -58,6 +58,11 @@ actually used.
   rows that are a title and a date, a count at the bottom. No stream cards,
   prompts, nudges, periphery or tally above or around it. Being on Today is
   explained by a date or a flag you set, never by a score.
+- **Memory: living notes, not a pile of transcripts.** Each meeting adds dated
+  lines to a note per project, person and topic and refreshes that note's
+  "now". Small updates keep every call inside the function's time limit as the
+  memory grows; keeping the meeting on every line makes forgetting exact. The
+  reader gets the notes' "now" as background; asking reads the whole memory.
 - **Two levels: projects and sub-focuses.** Streams are called projects, and
   a project holds sub-focuses (ISODP → Sponsorship). The old middle level of
   groups made filing an item a choice among forty-odd sections; 0011 folds

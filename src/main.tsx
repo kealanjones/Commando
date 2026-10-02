@@ -4,8 +4,9 @@ import { BrowserRouter, HashRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import App from './App';
-import { DEMO, demoPeople, demoSections, demoStreams, demoTaskPeople, demoTasks } from './lib/demo';
+import { DEMO, demoMemory, demoPeople, demoSections, demoStreams, demoTaskPeople, demoTasks } from './lib/demo';
 import { keys } from './data/store';
+import { memoryKeys } from './data/memory';
 import { ToastProvider } from './components/Toasts';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import './styles/fonts.css';
@@ -39,6 +40,10 @@ if (DEMO) {
   queryClient.setQueryData(keys.tasks, tasks);
   queryClient.setQueryData(keys.people, demoPeople());
   queryClient.setQueryData(['task_people'], links);
+  const memory = demoMemory();
+  queryClient.setQueryData(memoryKeys.notes, memory.notes);
+  queryClient.setQueryData(memoryKeys.entries, memory.entries);
+  queryClient.setQueryData(memoryKeys.meetings, memory.meetings);
   queryClient.setDefaultOptions({ queries: { staleTime: Infinity, retry: false, refetchOnWindowFocus: false } });
 }
 

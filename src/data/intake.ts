@@ -13,6 +13,7 @@ import { keys } from './store';
 import { parseProposals, placeItems } from '@/lib/proposalFormat';
 import { describeWriteError } from '@/lib/dbError';
 import { structureSaved, withoutEmptyTag } from '@/lib/queue';
+import { missingColumn } from '@/lib/dbError';
 import type { IntakeItem, Section, Task } from '@/lib/types';
 import type { RecordKind } from '@/lib/recordKind';
 
@@ -99,7 +100,7 @@ export function useImportProposals() {
         const owner = auth.user?.id ?? '';
         items.forEach((i) => { i.owner_id = owner; });
 
-        const { error: intakeErr } = await supabase.from('intakes').insert({
+        const intakeRow: Record<string, unknown> = {
           id: intakeId,
           owner_id: owner,
           label: input.label?.slice(0, 200) ?? null,
@@ -110,7 +111,14 @@ export function useImportProposals() {
           status: 'ready',
           model: 'pasted',
           processed_at: now,
-        });
+        };
+        // What Claude wrote for the memory goes in memory_text (0012). A
+        // database without that column still takes the meeting, just not
+        // the memory.
+        let { error: intakeErr } = await supabase.from('intakes').insert(
+          parsed.memory ? { ...intakeRow, memory_text: parsed.memory } : intakeRow,
+        );
+        if (intakeErr && missingColumn(intakeErr)) ({ error: intakeErr } = await supabase.from('intakes').insert(intakeRow));
         if (intakeErr) throw new Error(describeWriteError(intakeErr, 'save that'));
 
         const { error: itemsErr } = await supabase.from('intake_items').insert(

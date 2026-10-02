@@ -49,6 +49,7 @@ export function Index() {
     ['/projects', 'Projects', open],
     ['/people', 'People', ''],
     ['/review', 'Review', review.session || ''],
+    ['/memory', 'Memory', ''],
   ];
 
   return (

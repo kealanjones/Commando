@@ -205,6 +205,39 @@ select assert(
   (select realm from public.streams where id = 'per' and owner_id = '11111111-1111-1111-1111-111111111111') = 'personal',
   'a third realm is refused: there are two lives, not a bucket for the rest');
 
+-- ── memory is personal ─────────────────────────────────────────────
+reset role;
+insert into public.memory_notes (id, owner_id, kind, key, title, now) values
+  ('99999999-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111',
+   'project', 'isodp', 'ISODP 2027', 'Sponsorship is the critical path.');
+insert into public.memory_entries (owner_id, note_id, happened_on, text) values
+  ('11111111-1111-1111-1111-111111111111', '99999999-0000-0000-0000-000000000001',
+   '2026-08-14', 'OrganOx agreed in principle.');
+set role authenticated;
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+select assert((select count(*) from public.memory_notes) = 1, 'owner sees their own memory');
+select assert((select count(*) from public.memory_entries) = 1, 'and its timeline');
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+select assert((select count(*) from public.memory_notes) = 0, 'another user sees none of it');
+select assert((select count(*) from public.memory_entries) = 0, 'not even the timeline');
+do $$
+begin
+  insert into public.memory_notes (owner_id, kind, key, title)
+  values ('11111111-1111-1111-1111-111111111111', 'topic', 'planted', 'Planted');
+  raise exception 'wrote into someone else''s memory';
+exception
+  when insufficient_privilege then null;
+end $$;
+select assert(true, 'and cannot write into it');
+do $$
+begin
+  delete from public.memory_notes;
+  raise exception 'a hard delete was allowed';
+exception
+  when insufficient_privilege then null;
+end $$;
+select assert(true, 'memory is never hard-deleted from the app');
+
 -- ── RLS is on and forced everywhere ────────────────────────────────
 select assert(
   (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace

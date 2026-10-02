@@ -62,6 +62,11 @@ export function Settings({ email }: { email: string }) {
           <Link to="/projects/organise" className="btn btn--ghost">Organise projects</Link>
         </fieldset>
         <fieldset className="choice">
+          <legend className="label">Memory</legend>
+          <p className="choice__hint">What your meetings have taught it: ask it things, correct it, export it for Claude, or erase it.</p>
+          <Link to="/memory" className="btn btn--ghost">Open memory</Link>
+        </fieldset>
+        <fieldset className="choice">
           <legend className="label">Account</legend>
           <p className="settings__email">{email}</p>
           {!DEMO && (

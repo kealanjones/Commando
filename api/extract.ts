@@ -159,7 +159,15 @@ export default async function handler(req: Req, res: Res) {
     return;
   }
 
+  // What the memory already knows (0012): background for filing and for
+  // shorthand like "the Kyoto problem". Absent before that migration.
+  const { data: memory } = await db.from('memory_notes')
+    .select('kind,title,now').is('deleted_at', null).order('kind');
+  const known = ((memory ?? []) as { kind: string; title: string; now: string }[])
+    .map((n) => `  [${n.kind}] ${n.title}${n.now ? `: ${n.now}` : ''}`).join('\n').slice(0, 30_000);
+
   const grounding = [
+    ...(known ? ['WHAT YOU ALREADY KNOW FROM EARLIER MEETINGS (background only: use it to file and word things well)', known, ''] : []),
     'STREAMS',
     ...streams.map((s) => `  ${s.id} — ${s.title}`),
     '',
