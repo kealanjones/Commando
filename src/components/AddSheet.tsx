@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { NewFocus } from './NewFocus';
 import { Close } from './icons';
 import { groupOf, leavesFor } from '@/lib/tree';
 import type { Section, Stream, Task } from '@/lib/types';
@@ -93,6 +94,7 @@ export function AddSheet({
                 </optgroup>
               ))}
             </select>
+            <NewFocus idPrefix="add" streamId={section?.stream_id} onCreated={(s) => setSectionId(s.id)} />
           </div>
           <div>
             <label htmlFor="add-due">Due date</label>

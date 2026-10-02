@@ -156,6 +156,59 @@ ok(new URL(p.url()).pathname === '/intake', 'the Meeting button opens Intake');
 await p.goto(`${base}/settings`, { waitUntil: 'networkidle' });
 ok((await p.getByRole('link', { name: 'Organise projects' }).count()) === 1, 'Settings links to Organise');
 
+// ── + New while filing ─────────────────────────────────────────────
+// A fresh page, so the earlier moves above do not matter.
+{
+  const d = await (await b.newContext({ viewport: { width: 1400, height: 1000 } })).newPage();
+  d.on('pageerror', (e) => fail.push('PAGEERROR ' + e.message));
+  await d.goto(`${base}/`, { waitUntil: 'networkidle' });
+  await d.waitForTimeout(700);
+  const dialog = d.getByRole('dialog');
+
+  // A sub-focus in an existing project, made while adding an item.
+  await d.getByRole('button', { name: 'Add an item' }).click();
+  await dialog.getByPlaceholder(/Chase Derek/).fill('Brief the volunteer leads');
+  await dialog.getByRole('button', { name: 'New sub-focus or project' }).click();
+  await dialog.locator('#add-nf-project').selectOption('isodp');
+  await dialog.locator('#add-nf-name').fill('Volunteers');
+  await dialog.locator('#add-nf-name').press('Enter');
+  await d.waitForTimeout(200);
+  ok((await d.getByRole('dialog').count()) === 1, 'Enter in the small form makes the sub-focus, not the item');
+  const picked = await dialog.locator('#add-section option:checked').textContent();
+  ok(picked === 'Volunteers', `the new sub-focus is picked straight away (${picked})`);
+  await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+  await d.waitForTimeout(300);
+  await d.locator('.index__stream', { hasText: 'ISODP' }).click();
+  await d.waitForTimeout(500);
+  ok((await d.locator('.sectionblock__head h3').allTextContents()).includes('Volunteers'), 'it is on the project page');
+  ok((await d.locator('.task', { hasText: 'Brief the volunteer leads' }).count()) === 1, 'with the item in it');
+
+  // A whole new project, made the same way.
+  await d.getByRole('button', { name: 'Add an item' }).click();
+  await dialog.getByPlaceholder(/Chase Derek/).fill('Book the plot inspection');
+  await dialog.getByRole('button', { name: 'New sub-focus or project' }).click();
+  await dialog.locator('#add-nf-project').selectOption('__new__');
+  await dialog.locator('#add-nf-pname').fill('Allotment');
+  await dialog.getByRole('button', { name: 'Add project' }).click();
+  await d.waitForTimeout(200);
+  const grp = await dialog.locator('#add-section option:checked').evaluate((o) => `${o.parentElement.label} › ${o.textContent}`);
+  ok(grp === 'Allotment › General', `a new project arrives with its first sub-focus, picked (${grp})`);
+  await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+  await d.waitForTimeout(300);
+  ok((await d.locator('.index__stream', { hasText: 'Allotment' }).count()) === 1, 'and the project is in the sidebar');
+
+  // From an item's own panel too: move it into a brand-new sub-focus.
+  await d.locator('.task__open').first().click();
+  await d.waitForSelector('.folio');
+  await d.locator('.folio').getByRole('button', { name: 'New sub-focus or project' }).click();
+  await d.locator('#folio-nf-name').fill('Quick wins');
+  await d.locator('.folio').getByRole('button', { name: 'Add sub-focus' }).click();
+  await d.waitForTimeout(200);
+  ok((await d.locator('#folio-section option:checked').textContent()) === 'Quick wins', 'an open item can be moved into a sub-focus made on the spot');
+  await d.screenshot({ path: `${out}/desk-newfocus.png` });
+  await d.context().close();
+}
+
 // ── on a phone ─────────────────────────────────────────────────────
 const phone = await (await b.newContext({ viewport: { width: 375, height: 812 }, deviceScaleFactor: 2 })).newPage();
 await phone.goto(`${base}/projects/organise`, { waitUntil: 'networkidle' });

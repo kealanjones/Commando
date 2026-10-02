@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Close } from '@/components/icons';
+import { NewFocus } from '@/components/NewFocus';
 import { useToast } from '@/components/Toasts';
 import { useSections, useStreams, useTasks } from '@/data/store';
 import { useAcceptItems, useExtract, useImportProposals, useIntakeItems, useTriage } from '@/data/intake';
@@ -390,6 +391,8 @@ function Triage({
                     </optgroup>
                   ))}
                 </select>
+                <NewFocus idPrefix={`cand-${raw.id}`} streamId={item.stream_id ?? undefined}
+                  onCreated={(sec) => edit(raw.id, { section_id: sec.id, stream_id: sec.stream_id })} />
 
                 <button
                   className="tinytoggle"
