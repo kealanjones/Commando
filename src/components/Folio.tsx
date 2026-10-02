@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { NewFocus } from './NewFocus';
 import { groupOf, leavesFor, pathOf } from '@/lib/tree';
 import { isoDay } from '@/lib/today';
 import type { Section, Stream, Task } from '@/lib/types';
@@ -198,6 +199,8 @@ function FolioFor({
                 </optgroup>
               ))}
             </select>
+            <NewFocus idPrefix="folio" streamId={task.stream_id}
+              onCreated={(sec) => save({ section_id: sec.id, stream_id: sec.stream_id })} />
           </dd>
         </div>
 

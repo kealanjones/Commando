@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { NewFocus } from './NewFocus';
 import { Close } from './icons';
 import { groupOf, leavesFor, pathOf } from '@/lib/tree';
 import { prefersReducedMotion, rectOf, takeSource } from '@/lib/expand';
@@ -297,6 +298,7 @@ export function TaskSheet({
                   </optgroup>
                 ))}
               </select>
+              <NewFocus idPrefix="sheet" streamId={streamId} onCreated={(s) => setSectionId(s.id)} />
             </div>
           </section>
 

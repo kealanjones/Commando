@@ -1,4 +1,4 @@
-import { drain } from '../src/lib/queueCore.ts';
+import { blocksDirectWrites, drain } from '../src/lib/queueCore.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };
@@ -54,6 +54,9 @@ const never = () => false;
   ok(failed.join() === 'bad:no column', 'a permanent failure is reported');
   ok(sent.join() === 'bad,good' && store.read().length === 0, 'and the queue carries on past it');
 }
+
+ok(blocksDirectWrites([{ kind: 'update' }, { kind: 'add' }]), 'a queued new sub-focus holds back direct writes');
+ok(!blocksDirectWrites([{ kind: 'update' }, { kind: 'insert' }, { kind: 'patch' }]), 'other queued edits do not');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

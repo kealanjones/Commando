@@ -105,14 +105,24 @@ await urgent.click();
 await p.waitForTimeout(200);
 ok((await urgent.getAttribute('aria-pressed')) === 'true', 'a proposal can be flagged urgent before it lands');
 
-// place the unplaced one
-await p.locator('.cand--unplaced').first().locator('select').selectOption({ index: 1 });
-await p.waitForTimeout(300);
+// an unplaced proposal can be given a sub-focus made on the spot
+{
+  const un = p.locator('.cand--unplaced').first();
+  await un.getByRole('button', { name: 'New sub-focus or project' }).click();
+  await un.locator('select').nth(1).selectOption('cttl');
+  await un.locator('input').last().fill('External panel');
+  await un.getByRole('button', { name: 'Add sub-focus' }).click();
+  await p.waitForTimeout(300);
+  ok((await p.locator('.cand--unplaced').count()) === 0, 'an unplaced proposal can be filed into a sub-focus made there and then');
+  ok(Number(await p.locator('.commit__count b').textContent()) === readyBefore + 1, 'and it joins the ready count');
+}
+
 ok(Number(await p.locator('.commit__count b').textContent()) === 5, 'placing the last item makes all five ready');
 
 // edit a title in place without losing focus
 await p.locator('.cand__title').nth(1).click();
-await p.keyboard.press('End');
+// Ctrl+End, not End: titles wrap, and End only reaches the end of the line clicked on.
+await p.keyboard.press('Control+End');
 await p.keyboard.type(' - before Sydney', { delay: 6 });
 const cls = await p.evaluate(() => document.activeElement?.className ?? '');
 ok(String(cls).includes('cand__title'), 'editing a title in place does not lose focus');

@@ -40,3 +40,8 @@ export async function drain<T extends Op>(
     return;
   }
 }
+
+/** A queued new project or sub-focus: anything written straight to the database must wait for it. */
+export function blocksDirectWrites(ops: { kind: string }[]): boolean {
+  return ops.some((o) => o.kind === 'add');
+}
