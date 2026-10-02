@@ -12,7 +12,7 @@
  */
 import { supabase } from './supabase';
 import { DEMO } from './demo';
-import { drain } from './queueCore';
+import { blocksDirectWrites, drain } from './queueCore';
 
 const STORE = 'register.queue.v1';
 
@@ -39,7 +39,7 @@ export interface QueueState {
 
 let listeners: Listener[] = [];
 let failed: QueueState['failed'] = null;
-let flushing = false;
+let inFlight: Promise<void> | null = null;
 
 function read(): QueuedOp[] {
   try {
@@ -125,14 +125,25 @@ async function send(op: QueuedOp) {
   return res.error as { code?: string; message: string; status?: number } | null;
 }
 
-export async function flush(): Promise<void> {
-  if (DEMO || flushing || !navigator.onLine) return;
-  flushing = true;
-  try {
-    await drain({ read, write, emit }, send, (op, message) => { failed = { op, message }; }, permanent);
-  } finally {
-    flushing = false;
-  }
+export function flush(): Promise<void> {
+  if (DEMO || !navigator.onLine) return Promise.resolve();
+  // One drain at a time; a caller arriving mid-drain waits for that one,
+  // which keeps going until the queue is empty or a write fails.
+  if (inFlight) return inFlight;
+  inFlight = drain({ read, write, emit }, send, (op, message) => { failed = { op, message }; }, permanent)
+    .finally(() => { inFlight = null; });
+  return inFlight;
+}
+
+/**
+ * Flush, then say whether new projects or sub-focuses are still waiting
+ * to be saved. Writes that go straight to the database (accepting meeting
+ * proposals) must not name a sub-focus the database has not got yet.
+ */
+export async function structureSaved(): Promise<boolean> {
+  if (DEMO) return true;
+  await flush();
+  return !blocksDirectWrites(read());
 }
 
 if (typeof window !== 'undefined') {

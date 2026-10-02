@@ -183,6 +183,19 @@ ok((await p.getByRole('link', { name: 'Organise projects' }).count()) === 1, 'Se
   ok((await d.locator('.sectionblock__head h3').allTextContents()).includes('Volunteers'), 'it is on the project page');
   ok((await d.locator('.task', { hasText: 'Brief the volunteer leads' }).count()) === 1, 'with the item in it');
 
+  // A double-click makes one sub-focus, not two.
+  await d.getByRole('button', { name: 'Add an item' }).click();
+  await dialog.getByRole('button', { name: 'New sub-focus or project' }).click();
+  await dialog.locator('#add-nf-project').selectOption('isodp');
+  await dialog.locator('#add-nf-name').fill('Clicked twice');
+  // Two clicks in the same instant, before the first has finished saving.
+  await dialog.getByRole('button', { name: 'Add sub-focus' }).evaluate((b) => { b.click(); b.click(); });
+  await d.waitForTimeout(300);
+  ok((await dialog.locator('#add-section option', { hasText: 'Clicked twice' }).count()) === 1,
+    'a double-click on Add makes one sub-focus, not two');
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).last().click();
+  await d.waitForTimeout(300);
+
   // A whole new project, made the same way.
   await d.getByRole('button', { name: 'Add an item' }).click();
   await dialog.getByPlaceholder(/Chase Derek/).fill('Book the plot inspection');

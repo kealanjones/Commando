@@ -12,7 +12,7 @@ import { DEMO, demoExtraction } from '@/lib/demo';
 import { keys } from './store';
 import { parseProposals, placeItems } from '@/lib/proposalFormat';
 import { describeWriteError } from '@/lib/dbError';
-import { withoutEmptyTag } from '@/lib/queue';
+import { structureSaved, withoutEmptyTag } from '@/lib/queue';
 import type { IntakeItem, Section, Task } from '@/lib/types';
 import type { RecordKind } from '@/lib/recordKind';
 
@@ -165,6 +165,11 @@ export function useAcceptItems() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (items: IntakeItem[]) => {
+      // A sub-focus made during triage goes through the offline queue; these
+      // rows do not. Let it land first, or say why not.
+      if (!(await structureSaved())) {
+        throw new Error('A new sub-focus has not saved yet (are you offline?). Try again once you are back online.');
+      }
       const { data: auth } = DEMO ? { data: { user: { id: 'demo' } } } : await supabase.auth.getUser();
       const now = new Date().toISOString();
 

@@ -28,6 +28,9 @@ export function NewFocus({ idPrefix, streamId, onCreated }: {
   const [projectName, setProjectName] = useState('');
   const [name, setName] = useState('');
   const first = useRef<HTMLInputElement>(null);
+  // One creation at a time: a double-click or a held Enter must not make two.
+  const busy = useRef(false);
+  const [saving, setSaving] = useState(false);
   const pname = useRef<HTMLInputElement>(null);
 
   // Offer the projects in the life on show first; both when on Both.
@@ -48,7 +51,18 @@ export function NewFocus({ idPrefix, streamId, onCreated }: {
   const close = () => { setOpen(false); setName(''); setProjectName(''); };
 
   const create = async () => {
-    if (!ready) return;
+    if (!ready || busy.current) return;
+    busy.current = true;
+    setSaving(true);
+    try {
+      await make();
+    } finally {
+      busy.current = false;
+      setSaving(false);
+    }
+  };
+
+  const make = async () => {
     let target = project;
     if (making) {
       const p = await act.addProject({
@@ -104,7 +118,7 @@ export function NewFocus({ idPrefix, streamId, onCreated }: {
       </div>
       <div className="newfocus__acts">
         <button type="button" className="btn btn--ghost" onClick={close}>Cancel</button>
-        <button type="button" className="btn btn--primary" disabled={!ready} onClick={() => void create()}>
+        <button type="button" className="btn btn--primary" disabled={!ready || saving} onClick={() => void create()}>
           {making ? 'Add project' : 'Add sub-focus'}
         </button>
       </div>
