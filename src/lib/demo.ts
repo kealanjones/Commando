@@ -96,7 +96,7 @@ export function demoTasks(): Task[] {
         kind: 'task',
         context: it.note ?? null,
         note: null,
-        done: false, done_at: null,
+        done: false, done_at: null, cleared_at: null,
         do_now: it.p === 1,
         due: it.due ?? null,
         // Former watch items follow the section's tasks (0009).
@@ -143,7 +143,7 @@ export function demoTasks(): Task[] {
     out.push({
       id: `done-${i}`, owner_id: OWNER, stream_id: stream, section_id: section.id,
       natural_key: null, title, kind: 'task', context: null, note: null,
-      done: true, done_at: stamp(daysAgo), do_now: false, due: null, position: 900 + i,
+      done: true, done_at: stamp(daysAgo), cleared_at: stamp(daysAgo), do_now: false, due: null, position: 900 + i,
       user_edited: true, reviewed_at: null, unclear: false, touched_at: stamp(daysAgo),
       created_at: now, updated_at: now, deleted_at: null,
     });

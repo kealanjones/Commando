@@ -145,7 +145,7 @@ export function useRealtime() {
 // ── mutations ──────────────────────────────────────────────────────
 type Patch = Partial<Pick<Task,
   'title' | 'note' | 'done' | 'do_now' | 'due' | 'section_id' | 'stream_id'
-  | 'deleted_at' | 'reviewed_at'>>;
+  | 'deleted_at' | 'reviewed_at' | 'cleared_at'>>;
 
 /**
  * Fields whose editing means the seed file no longer owns this row.
@@ -215,7 +215,7 @@ export function useCreateTask() {
         kind: 'task',
         context: null,
         note: input.note ?? null,
-        done: false, done_at: null,
+        done: false, done_at: null, cleared_at: null,
         do_now: input.do_now ?? false,
         due: input.due ?? null,
         position: 9999,
@@ -268,13 +268,9 @@ export function useHealth(): StreamHealth[] {
 }
 
 /** Today's three groups, in the realm showing. See lib/today.ts. */
-export function useToday(keepVisible: string[] = []) {
+export function useToday() {
   const { data: tasks = [], isLoading } = useTasks();
-  const keepKey = keepVisible.join(',');
-  const groups = useMemo(
-    () => todayGroups(tasks, new Date(), new Set(keepKey ? keepKey.split(',') : [])),
-    [tasks, keepKey],
-  );
+  const groups = useMemo(() => todayGroups(tasks, new Date()), [tasks]);
   return { ...groups, isLoading };
 }
 

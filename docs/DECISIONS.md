@@ -58,6 +58,9 @@ actually used.
   rows that are a title and a date, a count at the bottom. No stream cards,
   prompts, nudges, periphery or tally above or around it. Being on Today is
   explained by a date or a flag you set, never by a score.
+- **Done stays struck until cleared.** A ticked row does not vanish: it
+  stays in place, struck through, as a reminder that it got done. Clear done
+  (`cleared_at`, migration 0010) takes them off together, with an undo.
 - **One kind of item.** Watch items and *not clear yet* are gone; migration
   0009 turns both into ordinary items without deleting anything. Undated and
   unflagged, they never reach Today — they wait in their section.

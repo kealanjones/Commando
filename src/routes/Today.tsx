@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TaskCard } from '@/components/TaskCard';
 import { Num } from '@/components/Motion';
+import { ClearDone } from '@/components/ClearDone';
 import { useSections, useStreams, useToday } from '@/data/store';
 import type { Task } from '@/lib/types';
 
@@ -15,16 +16,15 @@ const URGENT_SHOWN = 5;
 export function Today({
   onToggle,
   onOpen,
-  recentlyDone = [],
+  onClearDone,
 }: {
   onToggle: (t: Task) => void;
   onOpen: (t: Task) => void;
-  /** Ticked in the last few seconds: held in place so undo makes sense. */
-  recentlyDone?: string[];
+  onClearDone: (list: Task[]) => void;
 }) {
   const { data: streams = [] } = useStreams();
   const { data: sections = [] } = useSections();
-  const { overdue, today, urgent, toDo, doneToday, isLoading } = useToday(recentlyDone);
+  const { overdue, today, urgent, toDo, doneToday, struck, isLoading } = useToday();
   const [allUrgent, setAllUrgent] = useState(false);
 
   const streamCode = useMemo(() => new Map(streams.map((s) => [s.id, s.code])), [streams]);
@@ -73,9 +73,12 @@ export function Today({
     <div className="today">
       <header className="shead">
         <h2>Today</h2>
-        <p className="shead__meta tcount" aria-live="polite">
-          <b><Num value={toDo} /></b> to do · <b><Num value={doneToday} /></b> done today
-        </p>
+        <div className="shead__side">
+          <p className="shead__meta tcount" aria-live="polite">
+            <b><Num value={toDo} /></b> to do · <b><Num value={doneToday} /></b> done today
+          </p>
+          <ClearDone struck={struck} onClear={onClearDone} />
+        </div>
       </header>
 
       <ColumnHead />
@@ -100,8 +103,6 @@ export function Today({
           )}
         </>
       )}
-
-
     </div>
   );
 }

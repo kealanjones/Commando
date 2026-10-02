@@ -176,7 +176,7 @@ export function useAcceptItems() {
         kind: 'task',
         context: i.context,
         note: null,
-        done: false, done_at: null,
+        done: false, done_at: null, cleared_at: null,
         do_now: i.do_now,
         due: i.due,
         position: 9999,

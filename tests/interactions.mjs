@@ -44,22 +44,36 @@ await p.locator('.toast button', { hasText: 'Undo' }).click();
 await p.waitForTimeout(400);
 ok(!(await p.locator(`#${targetId}`).isChecked()), 'undo reopens the task');
 
-// ── 3b. once the undo has gone, a ticked row folds away ─────────
+// ── 3b. a ticked row stays, struck, until Clear done ───────────
 {
-  // The row ticked and undone above must still be here once its old
-  // timers would have run out.
-  await p.waitForTimeout(5400);
-  ok((await p.locator(`#${targetId}`).count()) === 1 && !(await p.locator(`#${targetId}`).isChecked()),
-    'an undone tick does not fold its row away later');
+  ok((await p.locator('.cleardone').count()) === 0, 'with nothing struck, there is nothing to clear');
 
   const id = await p.evaluate(() => document.querySelector('.task .check')?.id);
   await p.locator(`#${id}`).click();
-  await p.waitForTimeout(4950);
+  await p.waitForTimeout(5800);
+  ok((await p.locator(`#${id}`).count()) === 1 && (await p.locator(`#${id}`).isChecked()),
+    'long after the undo has gone, the ticked row is still there');
+  ok(await p.locator(`#${id}`).evaluate((c) => c.closest('.task').classList.contains('task--done')),
+    'struck through');
+  ok((await p.locator('.cleardone').textContent()).includes('1'), 'Clear done shows how many it will take');
+
+  await p.locator('.cleardone').click();
+  await p.waitForTimeout(150);
   ok(await p.locator(`#${id}`).evaluate((c) => c.closest('.task').classList.contains('task--leaving')),
-    'just before it goes, the row starts to fold');
+    'clearing folds the struck row shut');
   await p.waitForTimeout(700);
   ok((await p.locator(`#${id}`).count()) === 0, 'and then it is gone');
-  await p.locator('.toast button', { hasText: 'Undo' }).count();
+  ok((await p.locator('.cleardone').count()) === 0, 'and so is the button');
+  ok(await p.locator('.toast', { hasText: 'Cleared 1.' }).isVisible(), 'clearing offers Undo');
+  await p.locator('.toast button', { hasText: 'Undo' }).click();
+  await p.waitForTimeout(500);
+  ok((await p.locator(`#${id}`).count()) === 1 && (await p.locator(`#${id}`).isChecked()),
+    'undo puts it back, still struck');
+
+  // Reopening it takes it off the struck list again.
+  await p.locator(`#${id}`).click();
+  await p.waitForTimeout(400);
+  ok((await p.locator('.cleardone').count()) === 0, 'reopening it leaves nothing to clear');
 }
 
 // ── 4. delete is reversible ─────────────────────────────────────
@@ -117,6 +131,25 @@ const total = await p.evaluate(async () => {
   const r = await fetch('/'); return r.ok;
 });
 ok(total, 'app shell served');
+
+// ── 9. on a person, a ticked row stays where it was ─────────────
+{
+  await p.goto('http://127.0.0.1:4173/people', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  // The person with the most open items, so there is an order to keep.
+  const href = await p.evaluate(() => [...document.querySelectorAll('a[href^="/people/"]')]
+    .map((a) => ({ h: a.getAttribute('href'), n: parseInt(a.textContent.match(/(\d+)\s*$/)?.[1] ?? '0', 10) }))
+    .sort((a, b) => b.n - a.n)[0]?.h);
+  await p.goto(`http://127.0.0.1:4173${href}`, { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  const before = await p.evaluate(() => [...document.querySelectorAll('.task .check')].map((c) => c.id));
+  ok(before.length >= 2, `the person has rows to keep in order (${before.length})`);
+  await p.locator(`#${before[0]}`).click();
+  await p.waitForTimeout(600);
+  const after = await p.evaluate(() => [...document.querySelectorAll('.task .check')].map((c) => c.id));
+  ok(JSON.stringify(before) === JSON.stringify(after), 'ticking on a person does not move the row');
+  ok((await p.locator('.cleardone').count()) === 1, 'and offers Clear done there too');
+}
 
 console.log(fail.length ? `\n${fail.length} FAILING:\n- ` + fail.join('\n- ') : '\nAll interaction checks passed');
 await b.close();

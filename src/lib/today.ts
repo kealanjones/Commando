@@ -11,6 +11,12 @@
  */
 import type { Task } from './types';
 
+/**
+ * Done, but not yet cleared: it stays where it was, struck through, as a
+ * record of what got done, until the done ones are cleared off the page.
+ */
+export const lingers = (t: Task) => t.done && !t.cleared_at && !t.deleted_at;
+
 export interface TodayGroups {
   overdue: Task[];
   today: Task[];
@@ -19,6 +25,8 @@ export interface TodayGroups {
   toDo: number;
   /** Ticked today, whatever they were. */
   doneToday: number;
+  /** Done items still showing in the three groups, for Clear done. */
+  struck: Task[];
 }
 
 /** A local calendar day as YYYY-MM-DD, the shape `due` is stored in. */
@@ -29,17 +37,9 @@ export function isoDay(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/**
- * @param keep ids ticked in the last few seconds: they stay in their group,
- *   struck through, while the undo is on offer, rather than vanishing.
- */
-export function todayGroups(
-  tasks: Task[],
-  now: Date = new Date(),
-  keep: ReadonlySet<string> = new Set(),
-): TodayGroups {
+export function todayGroups(tasks: Task[], now: Date = new Date()): TodayGroups {
   const today = isoDay(now);
-  const live = tasks.filter((t) => !t.deleted_at && (!t.done || keep.has(t.id)));
+  const live = tasks.filter((t) => !t.deleted_at && (!t.done || lingers(t)));
 
   // Dated before undated: a flagged item with a date is the more definite one.
   const byDue = (a: Task, b: Task) => (a.due ?? '9999').localeCompare(b.due ?? '9999') || a.position - b.position;
@@ -61,5 +61,6 @@ export function todayGroups(
     urgent,
     toDo: open(overdue) + open(dueToday) + open(urgent),
     doneToday,
+    struck: [...overdue, ...dueToday, ...urgent].filter(lingers),
   };
 }

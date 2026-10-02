@@ -47,6 +47,11 @@ export interface Task {
   note: string | null;
   done: boolean;
   done_at: string | null;
+  /**
+   * When a done item was cleared off the page. A done item with no
+   * clearing stays where it was, struck through (0010).
+   */
+  cleared_at: string | null;
   do_now: boolean;
   due: string | null;
   position: number;
