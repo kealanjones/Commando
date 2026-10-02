@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSections, useSoftDelete, useStreams, useTasks, useUpdateTask } from '@/data/store';
 import { useDecide } from '@/data/review';
+import { announceTick } from '@/lib/progress';
 import { pathOf } from '@/lib/tree';
 import {
   fmtDay, monthGrid, monthName, quickTargets, startOfDay, undated, weekAhead,
@@ -80,6 +81,7 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   const finish = () => {
     if (!inHand) return;
     const task = inHand;
+    announceTick();
     update.mutate({ id: task.id, patch: { done: true, cleared_at: null } });
     setLast({ kind: 'done', task });
   };

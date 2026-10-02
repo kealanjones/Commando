@@ -58,6 +58,11 @@ actually used.
   rows that are a title and a date, a count at the bottom. No stream cards,
   prompts, nudges, periphery or tally above or around it. Being on Today is
   explained by a date or a flag you set, never by a score.
+- **The day's progress, today only.** Tally marks under the date (above the
+  list on a phone), one stroke a tick; pressing them prints a till receipt
+  of the day; a rubber stamp comes down at 5, 10, 15, 20 and 30. This is not
+  the old tally panel that was cut: it counts only what you did today, resets
+  each morning, and never compares one day with another.
 - **Done stays struck until cleared.** A ticked row does not vanish: it
   stays in place, struck through, as a reminder that it got done. Clear done
   (`cleared_at`, migration 0010) takes them off together, with an undo.

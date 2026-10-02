@@ -132,6 +132,65 @@ const total = await p.evaluate(async () => {
 });
 ok(total, 'app shell served');
 
+// ── 8b. the day's tally, its stamp, and its receipt ────────────
+{
+  const ctx3 = await b.newContext({ viewport: { width: 1400, height: 900 } });
+  const d = await ctx3.newPage();
+  await d.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
+  await d.waitForTimeout(800);
+  const strokes = () => d.locator('.daytally--index .daytally__gate path').count();
+  ok((await strokes()) === 0, 'no ticks yet, no tally marks');
+  ok(await d.locator('.daytally--index').isVisible() && !(await d.locator('.daytally--phone').isVisible()),
+    'at a desk the tally is under the date, not above the list');
+  ok((await d.locator('.daytally--index').textContent()).includes('Nothing ticked yet'), 'and the tally says so');
+
+  for (let i = 0; i < 4; i++) {
+    const id = await d.evaluate(() => [...document.querySelectorAll('.task .check')].find((c) => !c.checked)?.id);
+    await d.locator(`#${id}`).click();
+    await d.waitForTimeout(150);
+  }
+  ok((await strokes()) === 4, `each tick draws a stroke (${await strokes()})`);
+  ok((await d.locator('.stamp').count()) === 0, 'no stamp before the fifth');
+
+  const fifth = await d.evaluate(() => [...document.querySelectorAll('.task .check')].find((c) => !c.checked)?.id);
+  await d.locator(`#${fifth}`).click();
+  await d.waitForTimeout(300);
+  ok((await d.locator('.daytally--index .daytally__cross').count()) === 1, 'the fifth crosses the gate');
+  ok((await d.locator('.stamp').textContent())?.includes('Good start'), 'and brings down the stamp');
+  await d.waitForTimeout(2400);
+  ok((await d.locator('.stamp').count()) === 0, 'which lifts away again');
+
+  // Undo the fifth and tick it again: one stamp a milestone a day.
+  await d.locator(`#${fifth}`).click();
+  await d.waitForTimeout(200);
+  await d.locator(`#${fifth}`).click();
+  await d.waitForTimeout(300);
+  ok((await d.locator('.stamp').count()) === 0, 'reaching five again the same day does not stamp twice');
+
+  await d.evaluate(() => document.activeElement?.blur());
+  await d.keyboard.press('j');   // a row is selected, so X would act on it
+  await d.waitForTimeout(150);
+  ok((await d.locator('.task[data-selected]').count()) === 1, 'a row is selected');
+  await d.locator('.daytally--index').click();
+  await d.waitForSelector('.receipt');
+  ok((await d.locator('.receipt__lines li').count()) === 5, 'the receipt lists the five');
+  ok((await d.locator('.receipt__total').textContent()).includes('5'), 'with a total');
+  ok(await d.evaluate(() => document.activeElement?.classList.contains('receipt__tear')), 'focus moves into the receipt');
+  for (let i = 0; i < 3; i++) await d.keyboard.press('Tab');
+  ok(await d.evaluate(() => Boolean(document.activeElement?.closest('.receipt'))), 'and Tab keeps it there');
+  await d.keyboard.press('/');
+  await d.keyboard.press('Control+k');
+  await d.waitForTimeout(200);
+  ok((await d.locator('.find').count()) === 0, 'search shortcuts do not open behind the receipt');
+  await d.keyboard.press('x');
+  ok((await d.locator('.task .check:checked').count()) === 5, 'the list keys do nothing behind the receipt');
+  await d.getByRole('button', { name: 'Tear off' }).click();
+  await d.waitForTimeout(700);
+  ok((await d.locator('.receipt').count()) === 0, 'tearing it off closes it');
+  ok(await d.evaluate(() => document.activeElement?.classList.contains('daytally--index')), 'and focus goes back to the tally');
+  await ctx3.close();
+}
+
 // ── 9. on a person, a ticked row stays where it was ─────────────
 {
   await p.goto('http://127.0.0.1:4173/people', { waitUntil: 'networkidle' });

@@ -2,6 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Plus } from './icons';
 import { SyncBadge } from './SyncBadge';
 import { Num } from './Motion';
+import { DayTally } from './Progress';
 import { useHealth, useToday } from '@/data/store';
 import { useReviewStatus } from '@/data/review';
 import { REALM_LABEL, setRealm, useRealm } from '@/lib/modes';
@@ -57,6 +58,8 @@ export function Index() {
         <span className="index__day">{dayNum()}</span>
         <span className="index__month">{monthYear()}</span>
       </div>
+
+      <DayTally className="daytally--index" />
 
       <RealmSwitch />
 

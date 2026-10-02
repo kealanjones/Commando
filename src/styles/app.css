@@ -1370,3 +1370,146 @@ body.is-carded .page { transform: scale(.99); filter: saturate(.8); }
 [data-paper='notebook'] .rv__title { font-size: 30px; font-weight: 700; }
 [data-paper='notebook'] .plan__grid { border-top-width: 2px; }
 [data-paper='notebook'] .empty h3 { font-size: 24px; }
+
+/* ══ the day's progress ═════════════════════════════════════════════
+   Tally marks under the date, a till receipt when they are pressed, and
+   a rubber stamp at the milestones. Today only: it resets each morning. */
+
+.daytally {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  width: 100%; padding: 10px 0 12px; border: 0; border-bottom: 1px solid var(--hair);
+  background: none; color: var(--ink); text-align: left; cursor: pointer;
+}
+.daytally__marks { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; min-height: 30px; }
+.daytally__gate path {
+  fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: draw 340ms var(--ease) forwards;
+}
+.daytally__gate .daytally__cross { stroke-width: 2.3; animation-duration: 420ms; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.daytally__more { font-family: var(--mono); font-size: 12px; color: var(--pencil); }
+.daytally__caption {
+  display: flex; align-items: baseline; gap: 10px; width: 100%;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--pencil);
+}
+.daytally__caption b { color: var(--ink); font-weight: 500; }
+.daytally__hint {
+  margin-left: auto; opacity: 0; transform: translateX(-4px);
+  transition: opacity var(--t-quick) var(--ease), transform var(--t-quick) var(--ease);
+}
+.daytally:hover .daytally__hint, .daytally:focus-visible .daytally__hint { opacity: 1; transform: none; }
+.daytally:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.daytally:active .daytally__marks { transform: scale(.98); }
+.daytally__marks { transition: transform var(--t-quick) var(--spring); }
+
+.daytally--index { margin-top: 14px; }
+.daytally--phone { margin-top: 2px; flex-direction: row; align-items: center; justify-content: space-between; }
+/* The header above already says how many, so on a phone it only offers the receipt. */
+.daytally--phone .daytally__caption { width: auto; }
+.daytally--phone .daytally__count { display: none; }
+.daytally--phone .daytally__hint { opacity: 1; transform: none; }
+@media (min-width: 1100px) { .daytally--phone { display: none; } }
+@media (hover: none) { .daytally__hint { opacity: 1; transform: none; } }
+
+[data-paper='notebook'] .daytally__gate path { stroke-width: 2.4; }
+[data-paper='notebook'] .daytally__caption { font-family: var(--hand); font-size: 15px; letter-spacing: 0; text-transform: none; }
+
+/* The receipt: a till roll printed out of a slot. */
+.scrim--receipt { z-index: 85; align-items: center; padding: max(16px, var(--safe-t)) 16px max(16px, var(--safe-b)); }
+.receipt { position: relative; width: min(340px, 100%); display: flex; flex-direction: column; align-items: stretch; max-height: 100%; }
+.receipt__slot {
+  position: relative; z-index: 2; height: 12px; margin: 0 -12px; border-radius: 6px;
+  background: #1b1c1f; box-shadow: inset 0 -3px 0 rgba(255, 255, 255, .08), 0 6px 14px -6px rgba(0, 0, 0, .5);
+}
+.receipt__paper {
+  --roll: #FBFAF6;
+  position: relative; margin-top: -6px; padding: 26px 22px 30px; overflow-y: auto;
+  background: var(--roll); color: #1a1a1a;
+  font-family: 'Courier Prime', 'Geist Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.45;
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, .55);
+  /* the torn edge along the bottom */
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 12px 8px repeat-x;
+          mask: linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 12px 8px repeat-x;
+  transform-origin: top center;
+  animation: print 1100ms cubic-bezier(.3, .7, .2, 1) both;
+}
+@keyframes print {
+  0%   { clip-path: inset(0 0 100% 0); transform: translateY(-40px); }
+  30%  { clip-path: inset(0 0 62% 0); transform: translateY(-24px); }
+  38%  { clip-path: inset(0 0 60% 0); transform: translateY(-23px); }
+  70%  { clip-path: inset(0 0 18% 0); transform: translateY(-6px); }
+  76%  { clip-path: inset(0 0 16% 0); transform: translateY(-5px); }
+  100% { clip-path: inset(0 0 0 0);   transform: none; }
+}
+.receipt__paper--torn { animation: tear 420ms var(--ease-in) forwards; }
+@keyframes tear {
+  0%   { transform: none; }
+  25%  { transform: rotate(1.5deg) translateY(4px); }
+  100% { transform: rotate(-7deg) translate(-30px, 120px); opacity: 0; }
+}
+.receipt p { margin: 0; }
+.receipt__shop { text-align: center; font-weight: 700; font-size: 16px; letter-spacing: .3em; text-transform: uppercase; }
+.receipt__meta { text-align: center; font-size: 11.5px; letter-spacing: .08em; color: #555; margin-top: 2px !important; }
+.receipt__rule { border-top: 1.5px dashed #9a9a9a; margin: 12px 0 !important; }
+.receipt__empty { text-align: center; color: #666; padding: 6px 0; }
+.receipt__lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.receipt__lines li {
+  display: grid; grid-template-columns: 42px 1fr auto; gap: 8px; align-items: baseline;
+  animation: rise 260ms var(--ease) both;
+}
+.receipt__time { color: #666; font-size: 11.5px; }
+.receipt__title { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.receipt__code { font-size: 10.5px; letter-spacing: .06em; color: #666; }
+.receipt__sums { margin: 0; display: flex; flex-direction: column; gap: 3px; }
+.receipt__sums div { display: flex; justify-content: space-between; }
+.receipt__sums dt, .receipt__sums dd { margin: 0; }
+.receipt__total { font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: .06em; padding-bottom: 4px; }
+.receipt__verdict { text-align: center; margin-top: 14px !important; font-style: italic; }
+.receipt__barcode {
+  height: 38px; margin: 14px 18px 6px !important;
+  background: repeating-linear-gradient(90deg, #1a1a1a 0 2px, transparent 2px 4px, #1a1a1a 4px 5px, transparent 5px 8px, #1a1a1a 8px 11px, transparent 11px 12px);
+}
+.receipt__thanks { text-align: center; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #666; }
+.receipt__acts {
+  display: flex; gap: 8px; justify-content: center; margin-top: 14px;
+  animation: rise 300ms var(--ease) 900ms both;
+}
+.receipt__acts .btn { flex: none; min-width: 110px; }
+[data-light='dark'] .receipt__paper { --roll: #EDEBE4; }
+
+/* The rubber stamp. */
+.stamp {
+  position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; pointer-events: none;
+}
+.stamp__ink {
+  --ink-red: #C4211A;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 14px 26px 12px; border: 4px double var(--ink-red); border-radius: 10px;
+  color: var(--ink-red); background: color-mix(in srgb, var(--paper) 55%, transparent);
+  font-family: var(--mono); text-transform: uppercase; text-align: center;
+  mix-blend-mode: multiply;
+  animation: stampdown 2300ms var(--ease) both;
+}
+.stamp__text { font-size: clamp(30px, 6vw, 52px); font-weight: 700; letter-spacing: .12em; line-height: 1; }
+.stamp__n { font-size: 12px; letter-spacing: .24em; }
+@keyframes stampdown {
+  0%   { opacity: 0; transform: scale(2.2) rotate(-14deg); }
+  12%  { opacity: 1; transform: scale(.94) rotate(-8deg); }
+  18%  { transform: scale(1.03) rotate(-8deg); }
+  24%  { transform: scale(1) rotate(-8deg); }
+  80%  { opacity: 1; transform: scale(1) rotate(-8deg); }
+  100% { opacity: 0; transform: scale(1.04) rotate(-8deg) translateY(-12px); }
+}
+[data-light='dark'] .stamp__ink { --ink-red: #FF6B5E; mix-blend-mode: normal; background: color-mix(in srgb, var(--paper) 80%, transparent); }
+[data-paper='notebook'] .stamp__ink { font-family: var(--hand); text-transform: none; border-style: solid; border-width: 3px; border-radius: 14px; }
+[data-paper='notebook'] .stamp__text { letter-spacing: .02em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .daytally__gate path { animation: none; stroke-dashoffset: 0; }
+  .receipt__paper, .receipt__lines li, .receipt__acts { animation: none; }
+  .stamp__ink { animation: stampfade 2300ms linear both; transform: rotate(-8deg); }
+}
+@keyframes stampfade { 0%, 100% { opacity: 0; } 8%, 85% { opacity: 1; } }
