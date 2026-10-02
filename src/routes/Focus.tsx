@@ -55,7 +55,7 @@ export function Focus() {
   };
   const preview = useMemo(() => pile(tasks, sections, scope, today), [tasks, sections, scope, today]);
 
-  const [phase, setPhase] = useState<'setup' | 'run' | 'end'>('setup');
+  const [phase, setPhase] = useState<'setup' | 'run'>('setup');
   const [ids, setIds] = useState<string[]>([]);
   const [runKey, setRunKey] = useState(0);
 
@@ -87,8 +87,6 @@ export function Focus() {
           streams={streams}
           sections={sections}
           today={today}
-          finished={phase === 'end'}
-          onFinish={() => setPhase('end')}
           onAgain={() => setPhase('setup')}
           onClose={leave}
         />
@@ -122,14 +120,21 @@ function Setup({ scope, setScope, streams, sections, preview, today, onStart, on
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement;
       if (e.key === 'Escape') { e.preventDefault(); onClose(); }
-      // Enter starts from anywhere on this screen, a chip just chosen included.
-      if (e.key === 'Enter' && !el.classList.contains('fx__start')) { e.preventDefault(); onStart(); }
+      // Enter starts unless it is meant for a control with focus.
+      if (e.key === 'Enter' && !el.closest('button, a, input, select, textarea')) { e.preventDefault(); onStart(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onStart, onClose]);
 
   useEffect(() => { startBtn.current?.focus({ preventScroll: true }); }, []);
+
+  // A pick made with the mouse hands focus to Start, so Enter goes straight
+  // in; one made from the keyboard leaves focus where it is.
+  const choose = (next: FocusScope) => (e: React.MouseEvent) => {
+    setScope(next);
+    if (e.detail > 0) startBtn.current?.focus({ preventScroll: true });
+  };
 
   const first = preview[0];
   const n = preview.length;
@@ -150,7 +155,7 @@ function Setup({ scope, setScope, streams, sections, preview, today, onStart, on
             <div className="fx__chips">
               {WHICH.map((w) => (
                 <button key={w.id} type="button" className="fx__chip" aria-pressed={scope.which === w.id}
-                  onClick={() => setScope({ ...scope, which: w.id })}>{w.label}</button>
+                  onClick={choose({ ...scope, which: w.id })}>{w.label}</button>
               ))}
             </div>
           </fieldset>
@@ -159,10 +164,10 @@ function Setup({ scope, setScope, streams, sections, preview, today, onStart, on
             <legend className="label">Where</legend>
             <div className="fx__chips">
               <button type="button" className="fx__chip" aria-pressed={!scope.stream}
-                onClick={() => setScope({ ...scope, stream: null, section: null })}>All projects</button>
+                onClick={choose({ ...scope, stream: null, section: null })}>All projects</button>
               {streams.map((s) => (
                 <button key={s.id} type="button" className="fx__chip" aria-pressed={scope.stream === s.id}
-                  onClick={() => setScope({ ...scope, stream: s.id, section: null })}>
+                  onClick={choose({ ...scope, stream: s.id, section: null })}>
                   {s.code.toLowerCase() !== s.short.toLowerCase() && <span className="fx__chipcode">{s.code}</span>}{s.short}
                 </button>
               ))}
@@ -170,21 +175,21 @@ function Setup({ scope, setScope, streams, sections, preview, today, onStart, on
             {project && focuses.length > 0 && (
               <div className="fx__chips fx__chips--sub" key={project.id}>
                 <button type="button" className="fx__chip" aria-pressed={!scope.section}
-                  onClick={() => setScope({ ...scope, section: null })}>All of {project.short}</button>
+                  onClick={choose({ ...scope, section: null })}>All of {project.short}</button>
                 {focuses.map((f) => (
                   <button key={f.id} type="button" className="fx__chip"
                     aria-pressed={scope.section === f.id || parentOfPicked === f.id}
-                    onClick={() => setScope({ ...scope, section: f.id })}>{f.title}</button>
+                    onClick={choose({ ...scope, section: f.id })}>{f.title}</button>
                 ))}
               </div>
             )}
             {children.length > 0 && (
               <div className="fx__chips fx__chips--sub" key={`c-${children[0].parent_id}`}>
                 <button type="button" className="fx__chip" aria-pressed={scope.section === children[0].parent_id}
-                  onClick={() => setScope({ ...scope, section: children[0].parent_id })}>All of it</button>
+                  onClick={choose({ ...scope, section: children[0].parent_id })}>All of it</button>
                 {children.map((c) => (
                   <button key={c.id} type="button" className="fx__chip" aria-pressed={scope.section === c.id}
-                    onClick={() => setScope({ ...scope, section: c.id })}>{c.title}</button>
+                    onClick={choose({ ...scope, section: c.id })}>{c.title}</button>
                 ))}
               </div>
             )}
@@ -195,7 +200,7 @@ function Setup({ scope, setScope, streams, sections, preview, today, onStart, on
             <div className="fx__chips">
               {ORDER.map((o) => (
                 <button key={o.id} type="button" className="fx__chip" aria-pressed={scope.order === o.id}
-                  onClick={() => setScope({ ...scope, order: o.id })}>{o.label}</button>
+                  onClick={choose({ ...scope, order: o.id })}>{o.label}</button>
               ))}
             </div>
           </fieldset>
@@ -233,9 +238,9 @@ function Setup({ scope, setScope, streams, sections, preview, today, onStart, on
 
 // ── the run ────────────────────────────────────────────────────────
 
-function Run({ ids, tasks, streams, sections, today, finished, onFinish, onAgain, onClose }: {
+function Run({ ids, tasks, streams, sections, today, onAgain, onClose }: {
   ids: string[]; tasks: Task[]; streams: Stream[]; sections: Section[]; today: string;
-  finished: boolean; onFinish: () => void; onAgain: () => void; onClose: () => void;
+  onAgain: () => void; onClose: () => void;
 }) {
   const update = useUpdateTask();
   const { remove, restore } = useSoftDelete();
@@ -259,6 +264,8 @@ function Run({ ids, tasks, streams, sections, today, finished, onFinish, onAgain
   const [now, setNow] = useState(() => Date.now());
   const [pressed, setPressed] = useState<string | null>(null);
   const busy = useRef(false);
+  /** An Undo pressed while a card is still leaving, run once it has gone. */
+  const pendingUndo = useRef(false);
 
   const byId = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks]);
   // An item finished or deleted somewhere else drops out of the run.
@@ -266,9 +273,9 @@ function Run({ ids, tasks, streams, sections, today, finished, onFinish, onAgain
   // A deleted or finished card is held as it was until it has gone.
   const task = leaving ?? (live[0] ? byId.get(live[0]) ?? null : null);
 
-  useEffect(() => {
-    if (!finished && !task && !exit) onFinish();
-  }, [finished, task, exit, onFinish]);
+  // Nothing left: the end of the run. Not a separate phase, so an Undo from
+  // the end brings the last card straight back.
+  const finished = !task && !exit;
 
   // The clock while staying with something.
   useEffect(() => {
@@ -307,6 +314,7 @@ function Run({ ids, tasks, streams, sections, today, finished, onFinish, onAgain
       setLeaving(null);
       setTurn((n) => n + 1);
       busy.current = false;
+      if (pendingUndo.current) { pendingUndo.current = false; window.setTimeout(() => undoRef.current(), 0); }
     }, prefersReducedMotion() ? 0 : EXIT_MS[how]);
     push({ message, actionLabel: 'Undo', onAction: () => undoRef.current(), duration: 5000, replaceKey: 'focus' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -325,8 +333,9 @@ function Run({ ids, tasks, streams, sections, today, finished, onFinish, onAgain
   const historyRef = useRef(history);
   historyRef.current = history;
   const undo = useCallback(() => {
+    if (busy.current) { pendingUndo.current = true; return; }
     const last = historyRef.current.at(-1);
-    if (busy.current || !last) return;
+    if (!last) return;
     last.revert?.();
     setQueue(last.queue);
     setOutcomes(last.outcomes);

@@ -67,6 +67,11 @@ await p.keyboard.press('z');
 await settle(p);
 ok((await title()) === first, 'undo brings the last one back');
 await p.keyboard.press('d');
+await settle(p, 60);
+await p.locator('.toast button', { hasText: 'Undo' }).click();
+await settle(p, 1000);
+ok((await title()) === first, 'undo pressed while the card is still leaving is not lost');
+await p.keyboard.press('d');
 await settle(p, 1000);
 
 await p.keyboard.press('l');
@@ -148,11 +153,22 @@ for (let i = 0; i < n; i++) { await settle(p, 120); await p.keyboard.press('d');
 await p.waitForSelector('.fx__end');
 ok((await p.locator('.fx__endnum').textContent()).trim() === String(n), `the end says how many were done (${n})`);
 ok((await p.locator('.fx__endh').textContent()).includes('Every one done'), 'and says so');
+await p.locator('.toast button', { hasText: 'Undo' }).click();
+await settle(p, 900);
+ok(await p.locator('.fx__card').isVisible(), 'undo at the end brings the last card back');
+await p.keyboard.press('d');
+await settle(p, 900);
+await p.waitForSelector('.fx__end');
 await p.screenshot({ path: `${out}/desk-focus-end.png` });
 await p.getByRole('button', { name: 'Another pile' }).click();
+
 await settle(p, 300);
 ok(await p.locator('.fx__setup').isVisible(), 'another pile goes back to choosing');
 ok((await count()) === 0, 'and that project is now clear');
+await p.getByRole('button', { name: 'Close one by one' }).focus();
+await p.keyboard.press('Enter');
+await settle(p, 400);
+ok(new URL(p.url()).pathname !== '/focus', 'Enter on a focused control does what that control does');
 await ctx.close();
 
 // ── a phone ────────────────────────────────────────────────────────
