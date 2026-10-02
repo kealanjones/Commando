@@ -115,7 +115,10 @@ export function parseProposals(raw: string): ParsedProposals {
   const root = data as { summary?: unknown; items?: unknown; memory?: unknown };
   const rawItems = Array.isArray(data) ? data : Array.isArray(root.items) ? root.items : null;
   if (!rawItems) throw new Error('No items found in that. Expected a JSON object with an "items" array.');
-  if (rawItems.length === 0) throw new Error('That came back with no items in it.');
+  // No actions is fine when there is something to remember; with neither,
+  // there is nothing to bring in.
+  const hasMemory = typeof root.memory === 'string' && root.memory.trim().length > 0;
+  if (rawItems.length === 0 && !hasMemory) throw new Error('That came back with no items in it.');
 
   const items: ParsedProposals['items'] = [];
   const duplicateTitles: (string | null)[] = [];
@@ -145,7 +148,7 @@ export function parseProposals(raw: string): ParsedProposals {
     duplicateTitles.push(str(o.duplicate_of_title));
   });
 
-  if (items.length === 0) throw new Error('Every item in that was missing a title.');
+  if (rawItems.length > 0 && items.length === 0) throw new Error('Every item in that was missing a title.');
 
   return {
     summary: typeof root.summary === 'string' ? root.summary : '',

@@ -1,5 +1,6 @@
 import { byKind, exportMarkdown, memoryDigest, timeline } from '../src/lib/memory.ts';
 import { parseProposals, buildPrompt } from '../src/lib/proposalFormat.ts';
+import { missingColumn, missingTable } from '../src/lib/dbError.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };
@@ -48,6 +49,17 @@ const prompt = buildPrompt([], [], [], 'notes', d);
 ok(prompt.includes('WHAT YOU ALREADY KNOW') && prompt.includes('Sponsorship is the critical path.'), 'the Via Claude prompt carries what the memory knows');
 ok(prompt.includes('"memory":'), 'and asks for a memory part in the reply');
 ok(!buildPrompt([], [], [], 'notes').includes('WHAT YOU ALREADY KNOW from my earlier meetings'), 'an empty memory adds nothing to the prompt');
+
+const memOnly = parseProposals('```json\n{"summary":"Board update","memory":"The board backed the Kyoto route.","items":[]}\n```');
+ok(memOnly.items.length === 0 && memOnly.memory.includes('Kyoto'), 'a reply with no actions but something to remember is accepted');
+let threw = false;
+try { parseProposals('```json\n{"summary":"x","items":[]}\n```'); } catch { threw = true; }
+ok(threw, 'a reply with neither actions nor memory is still refused');
+
+ok(missingColumn({ code: 'PGRST204', message: "Could not find the 'memory_text' column" }), 'PostgREST\'s missing column (PGRST204) is recognised');
+ok(missingColumn({ code: '42703' }), 'as is Postgres\'s (42703)');
+ok(missingTable({ code: 'PGRST205' }) && missingTable({ code: '42P01' }), 'a missing table is recognised either way');
+ok(!missingTable({ message: 'Failed to fetch' }) && !missingTable({ code: 'PGRST301' }), 'being offline or signed out is not a missing table');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

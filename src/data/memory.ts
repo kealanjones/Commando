@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { enqueue } from '@/lib/queue';
 import { DEMO, demoAnswer } from '@/lib/demo';
+import { missingTable } from '@/lib/dbError';
 import type { MemoryEntry, MemoryMeeting, MemoryNote } from '@/lib/types';
 
 export const memoryKeys = {
@@ -84,7 +85,11 @@ export function useMemory() {
     entries: (entries.data ?? []).filter((e) => !e.deleted_at),
     meetings: meetings.data ?? [],
     isLoading: notes.isLoading || entries.isLoading || meetings.isLoading,
-    missing: Boolean(notes.error || entries.error),
+    // Only a missing table means the database needs 0012. Anything else
+    // (offline, signed out, a server hiccup) is an error to retry.
+    missing: [notes.error, entries.error].some((e) => missingTable(e)),
+    error: [notes.error, entries.error, meetings.error].find((e) => e && !missingTable(e)) as Error | undefined,
+    retry: () => { void notes.refetch(); void entries.refetch(); void meetings.refetch(); },
   };
 }
 

@@ -2,7 +2,7 @@
  * The memory endpoint's guards, without an Anthropic key: everything up to
  * the model call is ordinary logic and worth proving.
  */
-const { default: handler } = await import('../api/memory.ts');
+const { default: handler, fallbackNow } = await import('../api/memory.ts');
 
 const make = () => {
   const out = { code: 0, body: null };
@@ -34,6 +34,13 @@ out = await run({ method: 'POST', body: { action: 'rewrite-everything' } });
 ok(out.code === 400, `an unknown action is refused before anything else (${out.code})`);
 out = await run({ method: 'POST', body: { action: 'absorb', intake_id: 'x' } });
 ok(out.code === 401, `no session, no memory (${out.code})`);
+
+const left = [
+  { happened_on: '2026-09-01', text: 'One.' }, { happened_on: '2026-09-02', text: 'Two.' },
+  { happened_on: '2026-09-03', text: 'Three.' }, { happened_on: '2026-09-04', text: 'Four.' },
+];
+ok(fallbackNow(left) === 'Two. Three. Four.', 'when the model cannot rewrite a note, its "now" is built from the latest lines left');
+ok(fallbackNow([]) === '', 'and from nothing, nothing');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

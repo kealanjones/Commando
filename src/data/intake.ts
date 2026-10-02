@@ -13,6 +13,7 @@ import { keys } from './store';
 import { parseProposals, placeItems } from '@/lib/proposalFormat';
 import { describeWriteError } from '@/lib/dbError';
 import { structureSaved, withoutEmptyTag } from '@/lib/queue';
+import { missingColumn } from '@/lib/dbError';
 import type { IntakeItem, Section, Task } from '@/lib/types';
 import type { RecordKind } from '@/lib/recordKind';
 
@@ -117,7 +118,7 @@ export function useImportProposals() {
         let { error: intakeErr } = await supabase.from('intakes').insert(
           parsed.memory ? { ...intakeRow, memory_text: parsed.memory } : intakeRow,
         );
-        if (intakeErr?.code === '42703') ({ error: intakeErr } = await supabase.from('intakes').insert(intakeRow));
+        if (intakeErr && missingColumn(intakeErr)) ({ error: intakeErr } = await supabase.from('intakes').insert(intakeRow));
         if (intakeErr) throw new Error(describeWriteError(intakeErr, 'save that'));
 
         const { error: itemsErr } = await supabase.from('intake_items').insert(

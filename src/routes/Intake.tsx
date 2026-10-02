@@ -82,9 +82,15 @@ export function Intake() {
       const res = await importProposals.mutateAsync({
         raw: paste, label: label.trim() || undefined, sections, openTasks,
       });
+      remember(res.intake_id);
+      if (!res.items.length) {
+        // Nothing to do, but worth remembering: no triage to show.
+        push({ message: 'No actions in that one. It is going into the memory.' });
+        startOver();
+        return;
+      }
       setSummary(res.summary);
       setIntakeId(res.intake_id);
-      remember(res.intake_id);
     } catch (e) {
       push({
         message: (e as Error).message, tone: 'warn', duration: 0,

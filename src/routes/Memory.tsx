@@ -16,7 +16,7 @@ const shortDate = (iso: string) =>
  * the lot.
  */
 export function Memory() {
-  const { notes, entries, meetings, isLoading, missing } = useMemory();
+  const { notes, entries, meetings, isLoading, missing, error, retry } = useMemory();
   const [kind, setKind] = useState<MemoryNote['kind']>('project');
   const groups = useMemo(() => byKind(notes), [notes]);
   const meetingById = useMemo(() => new Map(meetings.map((m) => [m.id, m])), [meetings]);
@@ -29,6 +29,19 @@ export function Memory() {
         <div className="empty">
           <h3>One database update first</h3>
           <p>Run <code>supabase/migrations/0012_memory.sql</code> in the Supabase SQL Editor, then come back.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error && !notes.length) {
+    return (
+      <section aria-labelledby="mem-head">
+        <header className="shead"><h2 id="mem-head">Memory</h2></header>
+        <div className="empty">
+          <h3>The memory could not be loaded</h3>
+          <p>{navigator.onLine ? 'The server did not answer. ' : 'You are offline. '}Nothing is lost.</p>
+          <button type="button" className="btn btn--ghost" onClick={retry}>Try again</button>
         </div>
       </section>
     );
