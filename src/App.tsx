@@ -26,6 +26,7 @@ import { useApplyLook, useRealm } from '@/lib/modes';
 import { LeavingContext, SelectedContext, useWide } from '@/lib/selection';
 import { Glide } from '@/components/Motion';
 import { Stamps } from '@/components/Progress';
+import { announceTick } from '@/lib/progress';
 import { ensureProfile } from '@/lib/profile';
 import {
   useCreateTask, usePeople, useRealtime, useSections, useSoftDelete, useStreams, useTasks, useUpdateTask,
@@ -113,6 +114,7 @@ function Register({ email }: { email: string }) {
   const onToggle = useCallback(
     (task: Task) => {
       const next = !task.done;
+      if (next) announceTick();
       update.mutate({ id: task.id, patch: { done: next, cleared_at: null } });
       if (!next) return;
       push({
@@ -176,6 +178,8 @@ function Register({ email }: { email: string }) {
   // list is driven from the keys as well. Nothing fires while typing.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // The receipt owns the keys while it is open, shortcuts and all.
+      if (document.querySelector('.receipt')) return;
       const el = e.target as HTMLElement | null;
       const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'
         || el.tagName === 'SELECT' || el.isContentEditable);
@@ -185,8 +189,6 @@ function Register({ email }: { email: string }) {
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === '/') { e.preventDefault(); setSearching(true); return; }
       if (searching || adding || editing) return;
-      // The receipt owns the keys while it is open.
-      if (document.querySelector('.receipt')) return;
       if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setAdding(true); return; }
       if (!wide) return;
 

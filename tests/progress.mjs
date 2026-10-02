@@ -1,4 +1,4 @@
-import { doneToday, tallyGroups, stampFor, verdict, receipt, receiptText } from '../src/lib/progress.ts';
+import { msToMidnight, doneToday, tallyGroups, stampFor, verdict, receipt, receiptText } from '../src/lib/progress.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };
@@ -48,6 +48,9 @@ ok(receipt([], () => '').busiest === null, 'no busiest hour on an empty day');
 const text = receiptText(r, now);
 ok(text.includes('09:05  Early one (DIR)') && text.includes('Total done: 3') && text.includes('Overdue, now done: 1'),
   'the copied text reads as a list');
+
+ok(msToMidnight(new Date(2026, 9, 2, 23, 59, 0)) === 60_000, 'a minute to midnight is a minute');
+ok(msToMidnight(new Date(2026, 9, 25, 12, 0)) > 0, 'midnight is always ahead, clocks changing or not');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

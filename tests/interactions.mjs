@@ -175,11 +175,19 @@ ok(total, 'app shell served');
   await d.waitForSelector('.receipt');
   ok((await d.locator('.receipt__lines li').count()) === 5, 'the receipt lists the five');
   ok((await d.locator('.receipt__total').textContent()).includes('5'), 'with a total');
+  ok(await d.evaluate(() => document.activeElement?.classList.contains('receipt__tear')), 'focus moves into the receipt');
+  for (let i = 0; i < 3; i++) await d.keyboard.press('Tab');
+  ok(await d.evaluate(() => Boolean(document.activeElement?.closest('.receipt'))), 'and Tab keeps it there');
+  await d.keyboard.press('/');
+  await d.keyboard.press('Control+k');
+  await d.waitForTimeout(200);
+  ok((await d.locator('.find').count()) === 0, 'search shortcuts do not open behind the receipt');
   await d.keyboard.press('x');
   ok((await d.locator('.task .check:checked').count()) === 5, 'the list keys do nothing behind the receipt');
   await d.getByRole('button', { name: 'Tear off' }).click();
   await d.waitForTimeout(700);
   ok((await d.locator('.receipt').count()) === 0, 'tearing it off closes it');
+  ok(await d.evaluate(() => document.activeElement?.classList.contains('daytally--index')), 'and focus goes back to the tally');
   await ctx3.close();
 }
 

@@ -4,13 +4,14 @@
  * All writes are optimistic: the cache is patched immediately, the write
  * goes on the offline queue, and realtime reconciles when it lands.
  */
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { enqueue } from '@/lib/queue';
 import { DEMO } from '@/lib/demo';
 import { inScope, useRealm } from '@/lib/modes';
 import { isoDay, todayGroups } from '@/lib/today';
+import { msToMidnight } from '@/lib/progress';
 import type { Person, Section, Stream, StreamHealth, Task } from '@/lib/types';
 
 export const keys = {
@@ -268,9 +269,24 @@ export function useHealth(): StreamHealth[] {
 }
 
 /** Today's three groups, in the realm showing. See lib/today.ts. */
+/**
+ * Today's date, which changes at midnight even if nothing else does, so
+ * anything counted "today" starts again with the app left open overnight.
+ */
+export function useDay(): string {
+  const [day, setDay] = useState(() => isoDay(new Date()));
+  useEffect(() => {
+    const t = window.setTimeout(() => setDay(isoDay(new Date())), msToMidnight(new Date()) + 1000);
+    return () => window.clearTimeout(t);
+  }, [day]);
+  return day;
+}
+
 export function useToday() {
   const { data: tasks = [], isLoading } = useTasks();
-  const groups = useMemo(() => todayGroups(tasks, new Date()), [tasks]);
+  const day = useDay();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const groups = useMemo(() => todayGroups(tasks, new Date()), [tasks, day]);
   return { ...groups, isLoading };
 }
 

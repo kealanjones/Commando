@@ -6,6 +6,10 @@
 import { isoDay } from './today';
 import type { Task } from './types';
 
+/** Milliseconds until the next local midnight. */
+export const msToMidnight = (now: Date) =>
+  new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
+
 /** Everything ticked today, in the order it was ticked. Cleared ones count. */
 export function doneToday(tasks: Task[], now: Date = new Date()): Task[] {
   const today = isoDay(now);
@@ -29,6 +33,10 @@ export const STAMPS: { at: number; text: string }[] = [
   { at: 20, text: 'Unstoppable' },
   { at: 30, text: 'Legendary' },
 ];
+
+/** Said by the app when you tick something done, so a stamp knows it was you. */
+export const TICK = 'commando:tick';
+export const announceTick = () => window.dispatchEvent(new Event(TICK));
 
 /**
  * The stamp a single tick has just earned, if any. Only a step of one

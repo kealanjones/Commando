@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useStreams, useTasks, useToday } from '@/data/store';
+import { useDay, useStreams, useTasks, useToday } from '@/data/store';
 import { prefersReducedMotion } from '@/lib/expand';
-import { doneToday, receipt, receiptText, stampFor, tallyGroups } from '@/lib/progress';
+import { TICK, doneToday, receipt, receiptText, stampFor, tallyGroups } from '@/lib/progress';
 import { isoDay } from '@/lib/today';
 
 /** Beyond this many strokes the tally stops drawing and says "+n". */
@@ -17,7 +17,9 @@ const wobble = (i: number) => (((i * 7919) % 13) - 6) / 10;
  */
 export function DayTally({ className = '' }: { className?: string }) {
   const { data: tasks = [] } = useTasks();
-  const n = useMemo(() => doneToday(tasks).length, [tasks]);
+  const day = useDay();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const n = useMemo(() => doneToday(tasks).length, [tasks, day]);
   const [printing, setPrinting] = useState(false);
   const shown = Math.min(n, MOST_STROKES);
 
@@ -82,6 +84,15 @@ export function ReceiptSheet({ onClose }: { onClose: () => void }) {
   }, [tasks, streams]);
   const [tearing, setTearing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  // Focus moves into the receipt, stays there, and goes back where it
+  // came from when the receipt is torn off.
+  useEffect(() => {
+    const from = document.activeElement as HTMLElement | null;
+    box.current?.querySelector<HTMLElement>('.receipt__tear')?.focus();
+    return () => from?.focus?.();
+  }, []);
 
   const tear = () => {
     if (tearing) return;
@@ -91,7 +102,16 @@ export function ReceiptSheet({ onClose }: { onClose: () => void }) {
   };
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); tear(); } };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.stopPropagation(); tear(); return; }
+      if (e.key !== 'Tab' || !box.current) return;
+      const stops = [...box.current.querySelectorAll<HTMLElement>('button')];
+      if (!stops.length) return;
+      const at = stops.indexOf(document.activeElement as HTMLElement);
+      const next = e.shiftKey ? (at <= 0 ? stops.length - 1 : at - 1) : (at === stops.length - 1 ? 0 : at + 1);
+      e.preventDefault();
+      stops[next].focus();
+    };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
   });
@@ -112,7 +132,7 @@ export function ReceiptSheet({ onClose }: { onClose: () => void }) {
       className={`scrim scrim--receipt${tearing ? ' scrim--leaving' : ''}`}
       onClick={(e) => { if (e.target === e.currentTarget) tear(); }}
     >
-      <div className="receipt" role="dialog" aria-modal="true" aria-label="Today's receipt">
+      <div className="receipt" role="dialog" aria-modal="true" aria-label="Today's receipt" ref={box}>
         <div className="receipt__slot" aria-hidden="true" />
         <div className={`receipt__paper${tearing ? ' receipt__paper--torn' : ''}`}>
           <p className="receipt__shop">The Register</p>
@@ -146,7 +166,7 @@ export function ReceiptSheet({ onClose }: { onClose: () => void }) {
         </div>
         <div className="receipt__acts">
           <button type="button" className="btn btn--ghost" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
-          <button type="button" className="btn btn--primary" onClick={tear}>Tear off</button>
+          <button type="button" className="btn btn--primary receipt__tear" onClick={tear}>Tear off</button>
         </div>
       </div>
     </div>,
@@ -174,13 +194,24 @@ export function Stamps() {
   const { doneToday: n, isLoading } = useToday();
   const last = useRef<number | null>(null);
   const timer = useRef<number>();
+  // Set when you tick something; a count that moves for any other reason
+  // (switching life, a sync from another device) never stamps.
+  const yours = useRef(false);
+  useEffect(() => {
+    const mark = () => { yours.current = true; };
+    window.addEventListener(TICK, mark);
+    return () => window.removeEventListener(TICK, mark);
+  }, []);
   const [stamp, setStamp] = useState<{ text: string; n: number } | null>(null);
 
   useEffect(() => {
     if (isLoading) return;
     const prev = last.current;
     last.current = n;
-    if (prev === null) return;
+    if (prev === null || n === prev) return;
+    const mine = yours.current;
+    yours.current = false;
+    if (!mine) return;
     const day = isoDay(new Date());
     const s = stampFor(prev, n, readStamped(day));
     if (!s) return;

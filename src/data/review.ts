@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { DEMO } from '@/lib/demo';
 import { useTasks, useUpdateTask, useSoftDelete } from './store';
+import { announceTick } from '@/lib/progress';
 import type { Decision, ReviewCard, ReviewMode, ReviewReason, Task } from '@/lib/types';
 
 /** Untouched for this long and it needs a decision, not more patience. */
@@ -140,7 +141,8 @@ export function useDecide() {
         case 'drop':
           return remove(task.id);
         case 'done':
-          return update.mutate({ id: task.id, patch: { done: true, reviewed_at: now } });
+          announceTick();
+          return update.mutate({ id: task.id, patch: { done: true, cleared_at: null, reviewed_at: now } });
         case 'chased':
           // Chasing is contact, not completion: it resets the clock without
           // pretending the thing is finished.
