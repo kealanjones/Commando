@@ -25,6 +25,7 @@ import { DEMO } from '@/lib/demo';
 import { useApplyLook, useRealm } from '@/lib/modes';
 import { LeavingContext, SelectedContext, useWide } from '@/lib/selection';
 import { Glide } from '@/components/Motion';
+import { Stamps } from '@/components/Progress';
 import { ensureProfile } from '@/lib/profile';
 import {
   useCreateTask, usePeople, useRealtime, useSections, useSoftDelete, useStreams, useTasks, useUpdateTask,
@@ -184,6 +185,8 @@ function Register({ email }: { email: string }) {
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === '/') { e.preventDefault(); setSearching(true); return; }
       if (searching || adding || editing) return;
+      // The receipt owns the keys while it is open.
+      if (document.querySelector('.receipt')) return;
       if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setAdding(true); return; }
       if (!wide) return;
 
@@ -299,6 +302,7 @@ function Register({ email }: { email: string }) {
           onClose={() => setAdding(false)}
         />
       )}
+      <Stamps />
     </LeavingContext.Provider>
     </SelectedContext.Provider>
   );

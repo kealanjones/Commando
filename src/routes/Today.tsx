@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { TaskCard } from '@/components/TaskCard';
 import { Num } from '@/components/Motion';
 import { ClearDone } from '@/components/ClearDone';
+import { DayTally } from '@/components/Progress';
 import { useSections, useStreams, useToday } from '@/data/store';
 import type { Task } from '@/lib/types';
 
@@ -80,6 +81,9 @@ export function Today({
           <ClearDone struck={struck} onClear={onClearDone} />
         </div>
       </header>
+
+      {/* At a desk the tally sits under the date in the index. */}
+      <DayTally className="daytally--phone" />
 
       <ColumnHead />
 

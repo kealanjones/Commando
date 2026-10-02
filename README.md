@@ -85,6 +85,10 @@ A ticked item stays where it was, struck through, as a record of what got
 done. **Clear done** (next to the count, and on a stream or a person) takes
 the struck ones off the page; they are still under a stream's **Done**.
 
+Under the date, each tick draws a tally mark. Press them for today's receipt:
+everything you finished, when, and a total, ready to copy. Pass 5, 10, 15, 20
+or 30 in a day and a stamp comes down on the page. It all resets each morning.
+
 ### Work and personal
 
 The switch in the header decides which life the register is. It is applied
