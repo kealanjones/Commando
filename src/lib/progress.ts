@@ -69,7 +69,7 @@ export interface Receipt {
   verdict: string;
 }
 
-export function receipt(done: Task[], codeOf: (streamId: string) => string): Receipt {
+export function receipt(done: Task[], codeOf: (streamId: Task['stream_id']) => string): Receipt {
   const lines = done.map((t) => ({
     id: t.id,
     time: hhmm(t.done_at!),
