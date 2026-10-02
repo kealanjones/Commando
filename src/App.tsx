@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 
 import { DeskBar, Index, PhoneBottom, PhoneTop } from '@/components/Chrome';
@@ -10,6 +10,7 @@ import { Search } from '@/components/Search';
 import { useToast } from '@/components/Toasts';
 import { Today } from '@/routes/Today';
 import { Streams } from '@/routes/Streams';
+import { Organise } from '@/routes/Organise';
 import { Intake } from '@/routes/Intake';
 import { Brief } from '@/routes/Brief';
 import { Plan } from '@/routes/Plan';
@@ -232,7 +233,7 @@ function Register({ email }: { email: string }) {
 
         <main className="page" id="main">
           <PhoneTop onSearch={() => setSearching(true)} />
-          <DeskBar onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} />
+          <DeskBar onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} onMeeting={() => navigate('/intake')} />
 
           <div className="page__body">
             {wide && <Glide selectedId={selectedId} watch={`${location.pathname}|${tasks.length}|${leaving.size}`} />}
@@ -240,8 +241,12 @@ function Register({ email }: { email: string }) {
             <div className="route" key={location.pathname}>
             <Routes>
               <Route path="/" element={<Today onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
-              <Route path="/streams" element={<Streams onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
-              <Route path="/streams/:streamId" element={<Streams onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
+              <Route path="/projects" element={<Streams onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
+              <Route path="/projects/organise" element={<Organise />} />
+              <Route path="/projects/:streamId" element={<Streams onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
+              {/* Projects were called streams; old links and bookmarks still land. */}
+              <Route path="/streams" element={<Navigate to="/projects" replace />} />
+              <Route path="/streams/:streamId" element={<OldStream />} />
               <Route path="/people" element={<People />} />
               <Route path="/people/:personId" element={<Person onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
               <Route path="/people/:personId/review" element={<Review />} />
@@ -308,4 +313,10 @@ function Register({ email }: { email: string }) {
     </LeavingContext.Provider>
     </SelectedContext.Provider>
   );
+}
+
+/** /streams/:id from before the rename. */
+function OldStream() {
+  const { streamId = '' } = useParams();
+  return <Navigate to={`/projects/${streamId}`} replace />;
 }

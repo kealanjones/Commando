@@ -23,6 +23,7 @@ const tasks = [
   T('7', 'Book the flights', { section_id: 'aus', context: 'Emirates, Birmingham to Sydney, 14 September' }),
   T('8', 'Speak to Steph about travel', { section_id: 'travel', note: 'She is chasing Emirates for the fare basis' }),
   T('9', 'Clarify VAT treatment', { do_now: true, section_id: 'pay' }),
+  T('10', 'Get the signed letter back', { section_id: 'spons', tag: 'Collateral' }),
 ];
 const sections = [S('aus', 'Australia and Sydney'), S('spons', 'Sponsorship'), S('travel', 'Travel'), S('pay', 'Finance')];
 const streams = [{ id: 'isodp', title: 'ISODP 2027', short: 'ISODP', code: 'ISODP', owner_id: '', position: 0 }];
@@ -62,6 +63,7 @@ ok(h.filter((p) => p.hit).map((p) => p.text).join('') === 'Belaal', 'highlight m
 ok(h.map((p) => p.text).join('') === 'Chase Belaal for an update', 'highlight loses no characters');
 const h2 = highlight('Speak to Steph about travel', 'steph travel');
 ok(h2.filter((p) => p.hit).length === 2, 'every term is highlighted');
+ok(ids('collateral').includes('10'), 'an item is found by its tag, the old section it came from');
 ok(highlight('anything', '').length === 1, 'an empty query highlights nothing');
 ok(terms('  two   words ').length === 2, 'terms collapse whitespace');
 

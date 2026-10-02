@@ -21,3 +21,13 @@ for f in supabase/migrations/0*.sql; do
   psql -h "$PGH" -p "$PGP" -U postgres -d reg_mig -v ON_ERROR_STOP=1 -q -f "$f"
 done
 psql -h "$PGH" -p "$PGP" -U postgres -d reg_mig -v ON_ERROR_STOP=1 -f tests/one_kind.sql 2>&1 | grep -E 'PASS|FAIL|ERROR'
+
+# 0011 folds three levels into two, so prove it on a register that has
+# groups with sections in them: migrate to 0010, add them, then apply it.
+psql -h "$PGH" -p "$PGP" -U postgres -q -c "drop database if exists reg_two;" -c "create database reg_two;"
+psql -h "$PGH" -p "$PGP" -U postgres -d reg_two -v ON_ERROR_STOP=1 -q -f tests/supabase-shim.sql
+for f in supabase/migrations/0*.sql; do
+  case "$f" in *0011_two_levels.sql) continue;; esac
+  psql -h "$PGH" -p "$PGP" -U postgres -d reg_two -v ON_ERROR_STOP=1 -q -f "$f"
+done
+psql -h "$PGH" -p "$PGP" -U postgres -d reg_two -v ON_ERROR_STOP=1 -f tests/two_levels.sql 2>&1 | grep -E 'PASS|FAIL|ERROR'

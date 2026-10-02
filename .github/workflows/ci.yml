@@ -48,6 +48,12 @@ jobs:
       - name: Progress
         run: npm run test:progress
 
+      - name: Structure
+        run: npm run test:structure
+
+      - name: Queue
+        run: npm run test:queue
+
       # Built in demo mode so CI needs no Supabase credentials. The env
       # validation that guards the real build is exercised separately below.
       - name: Build
@@ -68,6 +74,7 @@ jobs:
           npm run test:planning
           npm run test:modes
           npm run test:groups
+          npm run test:organise
 
   database:
     name: Migrations and RLS

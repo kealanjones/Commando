@@ -46,7 +46,7 @@ export function Index() {
 
   const places: [string, string, string | number][] = [
     ['/', 'Today', toDo],
-    ['/streams', 'Streams', open],
+    ['/projects', 'Projects', open],
     ['/people', 'People', ''],
     ['/review', 'Review', review.session || ''],
   ];
@@ -74,13 +74,13 @@ export function Index() {
       </nav>
 
       <div className="index__streams">
-        <h2 className="label">Streams</h2>
+        <h2 className="label">Projects</h2>
         {health.map((h) => (
           <Link
             key={h.id}
-            to={`/streams/${h.id}`}
+            to={`/projects/${h.id}`}
             className="index__stream"
-            aria-current={pathname === `/streams/${h.id}` ? 'page' : undefined}
+            aria-current={pathname === `/projects/${h.id}` ? 'page' : undefined}
           >
             <span className="index__code">{h.code}</span>
             <span className="index__name">{h.short}</span>
@@ -98,13 +98,18 @@ export function Index() {
 }
 
 /** Across the top of the list at a desk: find something, or add something. */
-export function DeskBar({ onAdd, onSearch }: { onAdd: () => void; onSearch: () => void }) {
+export function DeskBar({ onAdd, onSearch, onMeeting }: {
+  onAdd: () => void; onSearch: () => void; onMeeting: () => void;
+}) {
   return (
     <div className="deskbar">
       <button className="deskbar__search" onClick={onSearch} aria-label="Search the register">
         <SearchIcon />
         <span>Search the register</span>
         <kbd>/</kbd>
+      </button>
+      <button className="btn btn--ghost deskbar__meeting" onClick={onMeeting} aria-label="Bring in a meeting">
+        Meeting
       </button>
       <button className="btn btn--primary deskbar__new" onClick={onAdd} aria-label="Add an item">
         New item <kbd>N</kbd>
@@ -146,7 +151,7 @@ export function PhoneBottom({ onAdd }: { onAdd: () => void }) {
       </button>
       <nav className="nav tabs" aria-label="Sections">
         <NavLink to="/" end>Today</NavLink>
-        <NavLink to="/streams">Streams</NavLink>
+        <NavLink to="/projects">Projects</NavLink>
         <NavLink to="/people">People</NavLink>
         <NavLink to="/review">Review</NavLink>
       </nav>

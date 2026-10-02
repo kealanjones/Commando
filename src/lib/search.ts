@@ -75,7 +75,8 @@ export function search(
         [scoreField(task.title, term), 'title'],
         [scoreField(task.context ?? '', term) * 0.5, 'context'],
         [scoreField(task.note ?? '', term) * 0.5, 'note'],
-        [scoreField(section?.title ?? '', term) * 0.3, 'section'],
+        // The tag is the old section an item came from (0011): as good as a section.
+        [Math.max(scoreField(section?.title ?? '', term), scoreField(task.tag ?? '', term)) * 0.3, 'section'],
         [Math.max(0, ...names.map((n) => scoreField(n, term))) * 0.4, 'person'],
       ];
       const [top, field] = scores.reduce((a, b) => (b[0] > a[0] ? b : a));

@@ -12,6 +12,7 @@ import { DEMO, demoExtraction } from '@/lib/demo';
 import { keys } from './store';
 import { parseProposals, placeItems } from '@/lib/proposalFormat';
 import { describeWriteError } from '@/lib/dbError';
+import { withoutEmptyTag } from '@/lib/queue';
 import type { IntakeItem, Section, Task } from '@/lib/types';
 
 export interface ExtractResult {
@@ -176,7 +177,7 @@ export function useAcceptItems() {
         kind: 'task',
         context: i.context,
         note: null,
-        done: false, done_at: null, cleared_at: null,
+        done: false, done_at: null, cleared_at: null, tag: null,
         do_now: i.do_now,
         due: i.due,
         position: 9999,
@@ -190,7 +191,7 @@ export function useAcceptItems() {
       if (!DEMO && rows.length) {
         const { error } = await supabase
           .from('tasks')
-          .insert(rows.map((r, n) => ({ ...r, intake_item_id: items[n].id })));
+          .insert(rows.map((r, n) => withoutEmptyTag({ ...r, intake_item_id: items[n].id })));
         if (error) throw new Error(describeWriteError(error, 'add those to the register'));
 
         const { error: markErr } = await supabase

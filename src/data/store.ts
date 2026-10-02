@@ -12,7 +12,8 @@ import { DEMO } from '@/lib/demo';
 import { inScope, useRealm } from '@/lib/modes';
 import { isoDay, todayGroups } from '@/lib/today';
 import { msToMidnight } from '@/lib/progress';
-import type { Person, Section, Stream, StreamHealth, Task } from '@/lib/types';
+import { newId, shift } from '@/lib/structure';
+import type { Person, Realm, Section, Stream, StreamHealth, Task } from '@/lib/types';
 
 export const keys = {
   streams: ['streams'] as const,
@@ -33,7 +34,9 @@ const streamsQuery = {
   queryFn: async (): Promise<Stream[]> => {
     const { data, error } = await supabase.from('streams').select('*').order('position');
     if (error) throw error;
-    return data as Stream[];
+    // Filtered here rather than in the query, so a database that has not
+    // run 0011 (no deleted_at yet) still loads.
+    return (data as Stream[]).filter((r) => !r.deleted_at);
   },
   staleTime: 5 * 60_000,
 };
@@ -65,50 +68,74 @@ function useScope(): Set<string> | null {
   return useMemo(() => (ids === null ? null : new Set(ids.split(','))), [ids]);
 }
 
+const sectionsQuery = {
+  queryKey: keys.sections,
+  queryFn: async (): Promise<Section[]> => {
+    const { data, error } = await supabase
+      .from('sections').select('*').is('deleted_at', null).order('position');
+    if (error) throw error;
+    return data as Section[];
+  },
+  staleTime: 5 * 60_000,
+};
+
 export function useSections() {
   const scope = useScope();
   return useQuery({
-    queryKey: keys.sections,
-    queryFn: async (): Promise<Section[]> => {
-      const { data, error } = await supabase
-        .from('sections').select('*').is('deleted_at', null).order('position');
-      if (error) throw error;
-      return data as Section[];
-    },
+    ...sectionsQuery,
     select: useCallback(
-      (rows: Section[]) => (scope ? rows.filter((r) => scope.has(r.stream_id)) : rows),
+      (rows: Section[]) => rows.filter((r) => !r.deleted_at && (!scope || scope.has(r.stream_id))),
       [scope],
     ),
-    staleTime: 5 * 60_000,
   });
 }
+
+/** Every sub-focus in both lives: Organise shows the whole structure. */
+export function useAllSections() {
+  return useQuery({
+    ...sectionsQuery,
+    select: useCallback((rows: Section[]) => rows.filter((r) => !r.deleted_at), []),
+  });
+}
+
+const tasksQuery = {
+  queryKey: keys.tasks,
+  queryFn: async (): Promise<Task[]> => {
+    // Paged: the register is ~290 rows now but grows, and PostgREST
+    // caps a plain select at 1000.
+    const out: Task[] = [];
+    const size = 1000;
+    for (let from = 0; ; from += size) {
+      const { data, error } = await supabase
+        .from('tasks').select('*').is('deleted_at', null)
+        .order('position').range(from, from + size - 1);
+      if (error) throw error;
+      out.push(...(data as Task[]));
+      if (!data || data.length < size) break;
+    }
+    return out;
+  },
+  staleTime: 30_000,
+};
 
 export function useTasks() {
   const scope = useScope();
   return useQuery({
-    queryKey: keys.tasks,
-    queryFn: async (): Promise<Task[]> => {
-      // Paged: the register is ~190 rows now but grows, and PostgREST
-      // caps a plain select at 1000.
-      const out: Task[] = [];
-      const size = 1000;
-      for (let from = 0; ; from += size) {
-        const { data, error } = await supabase
-          .from('tasks').select('*').is('deleted_at', null)
-          .order('position').range(from, from + size - 1);
-        if (error) throw error;
-        out.push(...(data as Task[]));
-        if (!data || data.length < size) break;
-      }
-      return out;
-    },
+    ...tasksQuery,
     // Soft-deleted rows stay in the cache so Undo can put them straight
     // back; every consumer sees the live list only, in the realm showing.
     select: useCallback(
       (rows: Task[]) => rows.filter((r) => !r.deleted_at && (!scope || scope.has(r.stream_id))),
       [scope],
     ),
-    staleTime: 30_000,
+  });
+}
+
+/** Every live item in both lives, for counting what is in each sub-focus. */
+export function useAllTasks() {
+  return useQuery({
+    ...tasksQuery,
+    select: useCallback((rows: Task[]) => rows.filter((r) => !r.deleted_at), []),
   });
 }
 
@@ -216,7 +243,7 @@ export function useCreateTask() {
         kind: 'task',
         context: null,
         note: input.note ?? null,
-        done: false, done_at: null, cleared_at: null,
+        done: false, done_at: null, cleared_at: null, tag: null,
         do_now: input.do_now ?? false,
         due: input.due ?? null,
         position: 9999,
@@ -319,4 +346,114 @@ export function useSoftDelete() {
   );
 
   return { remove, restore };
+}
+
+// ── structure ──────────────────────────────────────────────────────
+//
+// Projects and their sub-focuses, created, renamed, reordered, moved and
+// deleted from Organise. Same pattern as items: patch the cache, queue
+// the write. Deleting is always a timestamp; an item is never deleted by
+// deleting where it lives, it is moved somewhere else first.
+
+export function useStructure() {
+  const qc = useQueryClient();
+  const owner = async () => (await supabase.auth.getUser()).data.user?.id ?? '';
+  const streams = () => qc.getQueryData<Stream[]>(keys.streams) ?? [];
+  const sections = () => qc.getQueryData<Section[]>(keys.sections) ?? [];
+  const tasks = () => qc.getQueryData<Task[]>(keys.tasks) ?? [];
+
+  const patchStream = (id: string, patch: Partial<Stream>) => {
+    qc.setQueryData<Stream[]>(keys.streams, (old) =>
+      (old ?? []).map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    enqueue({ kind: 'patch', table: 'streams', match: { id }, patch });
+  };
+  const patchSection = (id: string, patch: Partial<Section>) => {
+    qc.setQueryData<Section[]>(keys.sections, (old) =>
+      (old ?? []).map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    enqueue({ kind: 'patch', table: 'sections', match: { id }, patch });
+  };
+  /** Every item in one place, moved to another: one write, not hundreds. */
+  const moveItems = (match: { section_id: string } | { stream_id: string }, to: Section) => {
+    const now = new Date().toISOString();
+    const hit = (t: Task) => ('section_id' in match ? t.section_id === match.section_id : t.stream_id === match.stream_id);
+    qc.setQueryData<Task[]>(keys.tasks, (old) =>
+      (old ?? []).map((t) => (hit(t) ? { ...t, section_id: to.id, stream_id: to.stream_id, touched_at: now } : t)));
+    enqueue({ kind: 'patch', table: 'tasks', match, patch: { section_id: to.id, stream_id: to.stream_id } });
+  };
+  const live = (s: Section) => !s.deleted_at;
+
+  return {
+    async addProject(input: { title: string; code: string; realm: Realm }) {
+      const all = streams();
+      const row: Stream = {
+        id: newId(input.title, all.map((s) => s.id)),
+        owner_id: await owner(),
+        title: input.title, short: input.title,
+        code: input.code || input.title.slice(0, 5).toUpperCase(),
+        realm: input.realm,
+        position: all.reduce((n, s) => Math.max(n, s.position + 1), 0),
+      };
+      qc.setQueryData<Stream[]>(keys.streams, (old) => [...(old ?? []), row]);
+      enqueue({ kind: 'add', table: 'streams', row: row as unknown as Record<string, unknown> });
+      return row;
+    },
+    renameProject: (id: string, title: string) => patchStream(id, { title, short: title }),
+    recodeProject: (id: string, code: string) => patchStream(id, { code }),
+    setRealm: (id: string, realm: Realm) => patchStream(id, { realm }),
+    /** Up or down among the projects in the same life, the list Organise shows. */
+    moveProject(id: string, by: -1 | 1) {
+      const me = streams().find((s) => s.id === id);
+      if (!me) return;
+      const siblings = streams().filter((s) => s.realm === me.realm);
+      for (const p of shift(siblings, id, by)) patchStream(p.id, { position: p.position });
+    },
+    /** Only an empty project goes; its (empty) sub-focuses go with it. */
+    deleteProject(id: string, moveTo?: Section) {
+      if (moveTo) moveItems({ stream_id: id }, moveTo);
+      if (tasks().some((t) => t.stream_id === id && !t.deleted_at)) return false;
+      const now = new Date().toISOString();
+      for (const s of sections().filter((x) => x.stream_id === id && live(x))) patchSection(s.id, { deleted_at: now });
+      patchStream(id, { deleted_at: now });
+      qc.setQueryData<Stream[]>(keys.streams, (old) => (old ?? []).filter((r) => r.id !== id));
+      return true;
+    },
+
+    async addFocus(streamId: string, title: string) {
+      const all = sections();
+      const mine = all.filter((s) => s.stream_id === streamId && live(s));
+      const row: Section = {
+        id: newId(title, all.map((s) => s.id), `${streamId}-`),
+        owner_id: await owner(), stream_id: streamId, title,
+        parent_id: null, monitor: false,
+        position: mine.reduce((n, s) => Math.max(n, s.position + 1), 0),
+        deleted_at: null,
+      };
+      qc.setQueryData<Section[]>(keys.sections, (old) => [...(old ?? []), row]);
+      enqueue({ kind: 'add', table: 'sections', row: row as unknown as Record<string, unknown> });
+      return row;
+    },
+    renameFocus: (id: string, title: string) => patchSection(id, { title }),
+    moveFocus(id: string, by: -1 | 1) {
+      const me = sections().find((s) => s.id === id);
+      if (!me) return;
+      const siblings = sections().filter((s) => s.stream_id === me.stream_id && live(s));
+      for (const p of shift(siblings, id, by)) patchSection(p.id, { position: p.position });
+    },
+    /** A sub-focus, and everything in it, to another project. */
+    reparentFocus(id: string, streamId: string) {
+      const top = sections().filter((s) => s.stream_id === streamId && live(s))
+        .reduce((n, s) => Math.max(n, s.position + 1), 0);
+      patchSection(id, { stream_id: streamId, position: top });
+      const moved = sections().find((s) => s.id === id)!;
+      moveItems({ section_id: id }, moved);
+    },
+    /** Items move to `moveTo` first (that is also how two merge). */
+    deleteFocus(id: string, moveTo?: Section) {
+      if (moveTo) moveItems({ section_id: id }, moveTo);
+      if (tasks().some((t) => t.section_id === id && !t.deleted_at)) return false;
+      patchSection(id, { deleted_at: new Date().toISOString() });
+      qc.setQueryData<Section[]>(keys.sections, (old) => (old ?? []).filter((r) => r.id !== id));
+      return true;
+    },
+  };
 }

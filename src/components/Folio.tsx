@@ -179,7 +179,7 @@ function FolioFor({
         </div>
 
         <div>
-          <dt><label htmlFor="folio-section">Filed under</label></dt>
+          <dt><label htmlFor="folio-section">Sub-focus</label></dt>
           <dd>
             <select
               id="folio-section"

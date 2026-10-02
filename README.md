@@ -11,7 +11,7 @@ in its place, until you go and look.
 | | |
 |---|---|
 | **Today** | What is overdue, what is due today, and what you flagged urgent. One list, three headings, and a count beside the title. Nothing else. |
-| **Streams** | Every stream on one line — how much is open, what is overdue, when you last touched it. Open one and it is broken down area by area, section by section. |
+| **Projects** | Every project on one line — how much is open, what is overdue, when you last touched it. Open one and it is broken down by sub-focus. **Organise** adds, renames, reorders, moves, merges and deletes projects and sub-focuses. |
 | **People** | Who owes you what. Open a person before a catch-up: everything that names them, a **Brief** to paste, and **Go through them** one at a time. |
 | **Review** | The weekly review — a short deck of things that have gone stale, one decision each — and **Plan**, for giving undated items a day against a calendar of how busy each day already is. |
 
@@ -19,7 +19,7 @@ in its place, until you go and look.
 
 A ruled page: square corners, a black rule between panes and under a
 heading, a hairline between rows, a double rule under a total, and the date
-of each item in the left margin like a diary. Streams are short codes rather
+of each item in the left margin like a diary. Projects are short codes rather
 than colours; red means overdue and nothing else.
 
 **At a desk** (1100px and wider) the register is three panes: the **index**
@@ -62,7 +62,7 @@ across the line you are on, a pen stroke through what is done, the open item
 as an index card taped beside the page, and toasts as sticky notes. Either can **follow the device** into dark, or be fixed light or dark.
 All of it is kept on the device; none of it is written to the register.
 
-Meeting notes come in from **Add → Paste meeting notes instead**.
+Meeting notes come in from **Meeting**, next to New item at a desk, or **Add → Paste meeting notes instead**.
 
 ## One kind of item
 
@@ -221,6 +221,7 @@ supabase db push
 | `0008_realm.sql` | Work or personal, on each stream |
 | `0009_one_kind.sql` | One kind of item: watch items become ordinary items, parked items go back into play |
 | `0010_cleared.sql` | Done items stay on the page, struck through, until **Clear done** |
+| `0011_two_levels.sql` | Two levels: projects and sub-focuses. Grouped sections fold into their group; items keep the old name as a tag |
 
 ### 3. Sign in once
 
@@ -437,7 +438,7 @@ data/register.seed.ts     the seed source of truth — edit this
 data/people.ts            names extracted into the waiting-on dimension
 supabase/migrations/      schema, RLS, realtime
 scripts/seed.ts           idempotent reconciling seeder
-src/routes/               Today, Streams, People, Person, Review, Plan, Brief, Intake, Settings, sign-in
+src/routes/               Today, Streams (projects), Organise, People, Person, Review, Plan, Brief, Intake, Settings, sign-in
 src/components/           the index and phone bars, rows, the folio, the card, sheets, search, toasts
 src/data/store.ts         queries, optimistic mutations, derived signals
 src/data/review.ts        the review queue and the decision mutations

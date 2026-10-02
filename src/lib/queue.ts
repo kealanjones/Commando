@@ -12,13 +12,19 @@
  */
 import { supabase } from './supabase';
 import { DEMO } from './demo';
+import { drain } from './queueCore';
 
 const STORE = 'register.queue.v1';
 
 /** What a caller hands in. */
 export type NewOp =
   | { kind: 'update'; taskId: string; patch: Record<string, unknown> }
-  | { kind: 'insert'; row: Record<string, unknown> };
+  | { kind: 'insert'; row: Record<string, unknown> }
+  /** Structure edits: projects and sub-focuses, or many items at once. */
+  | { kind: 'patch'; table: Table; match: Record<string, string>; patch: Record<string, unknown> }
+  | { kind: 'add'; table: Table; row: Record<string, unknown> };
+
+type Table = 'tasks' | 'streams' | 'sections';
 
 /** What is stored, once the queue has stamped it. */
 export type QueuedOp = NewOp & { id: string; at: number; tries: number };
@@ -99,41 +105,31 @@ function permanent(code: string | undefined, status: number | undefined): boolea
       || code === 'PGRST116';    // no rows where one was required
 }
 
+/**
+ * A new item with no tag leaves the column out, so adding items still
+ * works against a database that has not run 0011 yet.
+ */
+export function withoutEmptyTag(row: Record<string, unknown>): Record<string, unknown> {
+  if (row.tag != null) return row;
+  const { tag: _tag, ...rest } = row;
+  return rest;
+}
+
+/** Sends one op. */
+async function send(op: QueuedOp) {
+  const res =
+    op.kind === 'update' ? await supabase.from('tasks').update(op.patch).eq('id', op.taskId)
+    : op.kind === 'insert' ? await supabase.from('tasks').insert(withoutEmptyTag(op.row))
+    : op.kind === 'patch' ? await supabase.from(op.table).update(op.patch).match(op.match)
+    : await supabase.from(op.table).insert(op.row);
+  return res.error as { code?: string; message: string; status?: number } | null;
+}
+
 export async function flush(): Promise<void> {
   if (DEMO || flushing || !navigator.onLine) return;
   flushing = true;
   try {
-    let ops = read();
-    while (ops.length) {
-      const op = ops[0];
-      const res =
-        op.kind === 'update'
-          ? await supabase.from('tasks').update(op.patch).eq('id', op.taskId)
-          : await supabase.from('tasks').insert(op.row);
-
-      if (!res.error) {
-        ops = ops.slice(1);
-        write(ops);
-        emit();
-        continue;
-      }
-
-      if (permanent(res.error.code, (res.error as { status?: number }).status)) {
-        // Drop it, but say so loudly. Losing a change silently is the one
-        // thing this queue exists to prevent.
-        failed = { op, message: res.error.message };
-        ops = ops.slice(1);
-        write(ops);
-        emit();
-        continue;
-      }
-
-      // Transient: leave it at the head and try again on the next trigger.
-      op.tries += 1;
-      write(ops);
-      emit();
-      break;
-    }
+    await drain({ read, write, emit }, send, (op, message) => { failed = { op, message }; }, permanent);
   } finally {
     flushing = false;
   }

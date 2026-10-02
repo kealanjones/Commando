@@ -36,7 +36,7 @@ const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); if (!c) fail
   await p.screenshot({ path: `${out}/brief.png` });
 
   // A stream's brief, from the stream: a different shape, not just other rows.
-  await p.getByRole('link', { name: 'Streams' }).click();
+  await p.getByRole('link', { name: 'Projects' }).click();
   await p.waitForTimeout(600);
   await p.locator('.srow', { hasText: 'ISODP' }).click();
   await p.waitForTimeout(600);

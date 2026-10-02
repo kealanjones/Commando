@@ -58,6 +58,13 @@ actually used.
   rows that are a title and a date, a count at the bottom. No stream cards,
   prompts, nudges, periphery or tally above or around it. Being on Today is
   explained by a date or a flag you set, never by a score.
+- **Two levels: projects and sub-focuses.** Streams are called projects, and
+  a project holds sub-focuses (ISODP → Sponsorship). The old middle level of
+  groups made filing an item a choice among forty-odd sections; 0011 folds
+  each group's sections into it and keeps the old name on each item as a tag.
+  **Organise** (from Projects or Settings) adds, renames, reorders, moves,
+  merges and deletes them. Deleting never deletes items: anything inside is
+  moved first, which is also how two sub-focuses merge.
 - **The day's progress, today only.** Tally marks under the date (above the
   list on a phone), one stroke a tick; pressing them prints a till receipt
   of the day; a rubber stamp comes down at 5, 10, 15, 20 and 30. This is not

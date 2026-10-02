@@ -77,7 +77,7 @@ export function Brief({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   return (
     <section aria-labelledby="brief-head" className="brief" data-stream={streamId}>
       <Link
-        to={subject.kind === 'person' ? `/people/${subject.id}` : `/streams/${subject.id}`}
+        to={subject.kind === 'person' ? `/people/${subject.id}` : `/projects/${subject.id}`}
         className="back"
       >
         ← Back

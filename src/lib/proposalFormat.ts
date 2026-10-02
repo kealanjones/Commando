@@ -56,7 +56,7 @@ Reply with ONE fenced json block and nothing else, in exactly this shape:
   "items": [
     {
       "title": "Send Isaac the revised registration cost model",
-      "section_id": "isodp-pay",
+      "section_id": "isodp-g-finance",
       "context": "He cannot sign off the budget line without them.",
       "do_now": true,
       "due": null,

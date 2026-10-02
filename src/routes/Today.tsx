@@ -92,7 +92,7 @@ export function Today({
           <h3>Nothing due, nothing urgent</h3>
           <p>
             Nothing is overdue, due today or flagged urgent.{' '}
-            <Link to="/streams" className="inline">See everything</Link>
+            <Link to="/projects" className="inline">See everything</Link>
           </p>
         </div>
       ) : (
@@ -115,7 +115,7 @@ export function Today({
 export function ColumnHead({ second = 'Item' }: { second?: string }) {
   return (
     <div className="colhead" aria-hidden="true">
-      <span>Due</span><span /><span>{second}</span><span>Filed under</span><span>Stream</span>
+      <span>Due</span><span /><span>{second}</span><span>Sub-focus</span><span>Project</span>
     </div>
   );
 }

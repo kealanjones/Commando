@@ -12,6 +12,7 @@
 import { GROUPS, SECTIONS, STREAMS } from '@data/register.seed';
 import { KNOWN_PEOPLE } from '@data/people';
 import { naturalKey } from './slug';
+import { fold } from './structure';
 import type { IntakeItem, Person, Section, Stream, StreamId, Task } from './types';
 
 export const DEMO = import.meta.env.VITE_DEMO === '1';
@@ -25,7 +26,8 @@ export function demoStreams(): Stream[] {
   }));
 }
 
-export function demoSections(): Section[] {
+/** Fixture sections as the old seed laid them out: three levels. */
+function seedSections(): Section[] {
   // Groups come first so a parent always exists before the sections that
   // name it — the same order the seeder writes them in.
   const groups: Section[] = GROUPS.map((g, i) => ({
@@ -67,7 +69,16 @@ export function demoTaskPeople(tasks: Task[]): { task_id: string; person_id: str
   return out;
 }
 
+/** Fixture sections, folded into sub-focuses the way 0011 folds a real register. */
+export function demoSections(): Section[] {
+  return fold(seedSections(), []).sections;
+}
+
 export function demoTasks(): Task[] {
+  return fold(seedSections(), seedTasks()).tasks;
+}
+
+function seedTasks(): Task[] {
   const now = new Date().toISOString();
   const out: Task[] = [];
 
@@ -96,7 +107,7 @@ export function demoTasks(): Task[] {
         kind: 'task',
         context: it.note ?? null,
         note: null,
-        done: false, done_at: null, cleared_at: null,
+        done: false, done_at: null, cleared_at: null, tag: null,
         do_now: it.p === 1,
         due: it.due ?? null,
         // Former watch items follow the section's tasks (0009).
@@ -143,7 +154,7 @@ export function demoTasks(): Task[] {
     out.push({
       id: `done-${i}`, owner_id: OWNER, stream_id: stream, section_id: section.id,
       natural_key: null, title, kind: 'task', context: null, note: null,
-      done: true, done_at: stamp(daysAgo), cleared_at: stamp(daysAgo), do_now: false, due: null, position: 900 + i,
+      done: true, done_at: stamp(daysAgo), cleared_at: stamp(daysAgo), tag: null, do_now: false, due: null, position: 900 + i,
       user_edited: true, reviewed_at: null, unclear: false, touched_at: stamp(daysAgo),
       created_at: now, updated_at: now, deleted_at: null,
     });
@@ -190,19 +201,19 @@ export function demoExtraction(text: string, label?: string) {
   });
 
   const items: IntakeItem[] = [
-    mk(0, 'Send Isaac the revised registration cost model before Friday', 'task', 'isodp-pay', 'isodp', {
+    mk(0, 'Send Isaac the revised registration cost model before Friday', 'task', 'isodp-g-finance', 'isodp', {
       do_now: true,
       waiting_on: ['Isaac'],
       confidence: 'high',
       evidence: 'Isaac needs the revised numbers before he can sign anything off — end of the week at the latest.',
       context: 'He cannot approve the budget line without them.',
     }),
-    mk(1, 'Ask Suzanne how TTS handled multi-currency registration at Kyoto', 'task', 'isodp-pay', 'isodp', {
+    mk(1, 'Ask Suzanne how TTS handled multi-currency registration at Kyoto', 'task', 'isodp-g-finance', 'isodp', {
       waiting_on: ['Suzanne'],
       confidence: 'high',
       evidence: 'Suzanne will know — they had exactly this problem in Kyoto.',
     }),
-    mk(2, 'Confirm the QEII holds the October LOC date before booking travel', 'task', 'isodp-hotels', 'isodp', {
+    mk(2, 'Confirm the QEII holds the October LOC date before booking travel', 'task', 'isodp-g-logistics', 'isodp', {
       confidence: 'medium',
       evidence: 'We should not book anything until the QEII confirms the room.',
     }),
