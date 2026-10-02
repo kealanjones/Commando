@@ -166,6 +166,7 @@ function StreamDetail({
         </div>
         <div className="stream__acts">
           <ClearDone struck={struck} onClear={onClearDone} />
+          <Link to={`/focus?project=${stream.id}`} className="btn btn--ghost">One by one</Link>
           <Link to={`/brief?stream=${stream.id}`} className="btn btn--ghost">Brief</Link>
         </div>
       </div>

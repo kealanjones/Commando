@@ -12,6 +12,7 @@ import { Today } from '@/routes/Today';
 import { Streams } from '@/routes/Streams';
 import { Organise } from '@/routes/Organise';
 import { Memory } from '@/routes/Memory';
+import { Focus } from '@/routes/Focus';
 import { Intake } from '@/routes/Intake';
 import { Brief } from '@/routes/Brief';
 import { Plan } from '@/routes/Plan';
@@ -182,6 +183,8 @@ function Register({ email }: { email: string }) {
     const onKey = (e: KeyboardEvent) => {
       // The receipt owns the keys while it is open, shortcuts and all.
       if (document.querySelector('.receipt')) return;
+      // So does one by one, which has its own.
+      if (document.querySelector('.fx')) return;
       const el = e.target as HTMLElement | null;
       const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'
         || el.tagName === 'SELECT' || el.isContentEditable);
@@ -192,6 +195,7 @@ function Register({ email }: { email: string }) {
       if (e.key === '/') { e.preventDefault(); setSearching(true); return; }
       if (searching || adding || editing) return;
       if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setAdding(true); return; }
+      if (e.key === 'o' || e.key === 'O') { e.preventDefault(); navigate('/focus'); return; }
       if (!wide) return;
 
       const rows = [...document.querySelectorAll<HTMLElement>('main [data-task]')];
@@ -222,7 +226,17 @@ function Register({ email }: { email: string }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [wide, selectedId, selected, searching, adding, editing, onToggle, update]);
+  }, [wide, selectedId, selected, searching, adding, editing, onToggle, update, navigate]);
+
+  // One by one takes the whole screen: nothing else in sight.
+  if (location.pathname === '/focus') {
+    return (
+      <>
+        <Focus />
+        <Stamps />
+      </>
+    );
+  }
 
   return (
     <SelectedContext.Provider value={wide ? selectedId : null}>
@@ -233,8 +247,8 @@ function Register({ email }: { email: string }) {
         <Index />
 
         <main className="page" id="main">
-          <PhoneTop onSearch={() => setSearching(true)} />
-          <DeskBar onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} onMeeting={() => navigate('/intake')} />
+          <PhoneTop onSearch={() => setSearching(true)} onFocus={() => navigate('/focus')} />
+          <DeskBar onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} onMeeting={() => navigate('/intake')} onFocus={() => navigate('/focus')} />
 
           <div className="page__body">
             {wide && <Glide selectedId={selectedId} watch={`${location.pathname}|${tasks.length}|${leaving.size}`} />}

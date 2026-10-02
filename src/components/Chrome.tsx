@@ -99,8 +99,8 @@ export function Index() {
 }
 
 /** Across the top of the list at a desk: find something, or add something. */
-export function DeskBar({ onAdd, onSearch, onMeeting }: {
-  onAdd: () => void; onSearch: () => void; onMeeting: () => void;
+export function DeskBar({ onAdd, onSearch, onMeeting, onFocus }: {
+  onAdd: () => void; onSearch: () => void; onMeeting: () => void; onFocus: () => void;
 }) {
   return (
     <div className="deskbar">
@@ -108,6 +108,9 @@ export function DeskBar({ onAdd, onSearch, onMeeting }: {
         <SearchIcon />
         <span>Search the register</span>
         <kbd>/</kbd>
+      </button>
+      <button className="btn btn--ghost deskbar__new" onClick={onFocus} aria-label="Go through items one by one">
+        One by one <kbd>O</kbd>
       </button>
       <button className="btn btn--ghost deskbar__meeting" onClick={onMeeting} aria-label="Bring in a meeting">
         Meeting
@@ -120,7 +123,7 @@ export function DeskBar({ onAdd, onSearch, onMeeting }: {
 }
 
 /** The top of a phone: the date, search, settings, and which life. */
-export function PhoneTop({ onSearch }: { onSearch: () => void }) {
+export function PhoneTop({ onSearch, onFocus }: { onSearch: () => void; onFocus: () => void }) {
   return (
     <header className="phonetop">
       <div className="phonetop__row">
@@ -130,6 +133,12 @@ export function PhoneTop({ onSearch }: { onSearch: () => void }) {
           <span className="label">{now().toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()}</span>
         </span>
         <SyncBadge />
+        <button className="iconbtn" onClick={onFocus} aria-label="Go through items one by one">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+            <rect x="5" y="6" width="14" height="14" /><path d="M8 3h8" />
+          </svg>
+        </button>
         <button className="iconbtn" onClick={onSearch} aria-label="Search the register"><SearchIcon /></button>
         <Link to="/settings" className="iconbtn" aria-label="Settings">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
