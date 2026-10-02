@@ -62,7 +62,7 @@ across the line you are on, a pen stroke through what is done, the open item
 as an index card taped beside the page, and toasts as sticky notes. Either can **follow the device** into dark, or be fixed light or dark.
 All of it is kept on the device; none of it is written to the register.
 
-Meeting notes come in from **Meeting**, next to New item at a desk, or **Add → Paste meeting notes instead**.
+Meetings come in from **Meeting**, next to New item at a desk, or **Add → Paste meeting notes instead**. Paste notes or a transcript: a **Notes / Transcript** switch (guessed from what you paste) tells the reader which it is, since notes are read line by line and a transcript for what people agreed to do.
 
 ## One kind of item
 

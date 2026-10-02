@@ -14,6 +14,7 @@ import { parseProposals, placeItems } from '@/lib/proposalFormat';
 import { describeWriteError } from '@/lib/dbError';
 import { withoutEmptyTag } from '@/lib/queue';
 import type { IntakeItem, Section, Task } from '@/lib/types';
+import type { RecordKind } from '@/lib/recordKind';
 
 export interface ExtractResult {
   intake_id: string;
@@ -25,7 +26,7 @@ export interface ExtractResult {
 export function useExtract() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { text: string; label?: string; meetingDate?: string }): Promise<ExtractResult> => {
+    mutationFn: async (input: { text: string; label?: string; meetingDate?: string; kind?: RecordKind }): Promise<ExtractResult> => {
       if (DEMO) return demoExtraction(input.text, input.label);
 
       // /api/extract ships with the app on Vercel, so it is same-origin: no
@@ -40,7 +41,7 @@ export function useExtract() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
-            text: input.text, label: input.label, meeting_date: input.meetingDate,
+            text: input.text, label: input.label, meeting_date: input.meetingDate, kind: input.kind ?? 'notes',
           }),
         });
       } catch {
