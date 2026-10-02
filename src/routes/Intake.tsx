@@ -351,9 +351,9 @@ function Triage({
                     const sec = sections.find((s) => s.id === e.target.value);
                     edit(raw.id, { section_id: sec?.id ?? null, stream_id: sec?.stream_id ?? null });
                   }}
-                  aria-label="Section"
+                  aria-label="Sub-focus"
                 >
-                  <option value="">Not placed — choose a section</option>
+                  <option value="">Not placed — choose a sub-focus</option>
                   {streams.map((s) => (
                     <optgroup key={s.id} label={s.title}>
                       {sectionsFor.filter((sec) => sec.stream_id === s.id).map((sec) => (
@@ -383,7 +383,7 @@ function Triage({
       <div className="commit">
         <div className="commit__count">
           <b>{ready}</b> ready
-          {unplaced.length > 0 && <span> · {unplaced.length} need a section</span>}
+          {unplaced.length > 0 && <span> · {unplaced.length} need a sub-focus</span>}
         </div>
         <button className="btn btn--ghost" onClick={onDone} style={{ flex: 'none' }}>Discard all</button>
         <button

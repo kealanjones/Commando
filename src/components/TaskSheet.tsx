@@ -282,7 +282,7 @@ export function TaskSheet({
               />
             </div>
             <div>
-              <h3><label htmlFor="sheet-section">Filed under</label></h3>
+              <h3><label htmlFor="sheet-section">Sub-focus</label></h3>
               <select
                 id="sheet-section"
                 className="select"

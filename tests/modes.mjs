@@ -14,7 +14,7 @@ const pills = async (p) => {
 };
 const tab = (p, name) => p.locator('.nav').getByRole('link', { name });
 const streamRows = async (p) => {
-  await tab(p, 'Streams').click();
+  await tab(p, 'Projects').click();
   await p.waitForTimeout(600);
   return p.locator('.srow').count();
 };
@@ -31,7 +31,7 @@ const streamRows = async (p) => {
   const both = await pills(p);
   ok(both.some((x) => /career|per/i.test(x)) && both.some((x) => /isodp|dir|cttl/i.test(x)),
     `with both lives showing, Today holds both (${[...new Set(both)].join(', ')})`);
-  ok(await streamRows(p) === 5, 'and Streams lists all five');
+  ok(await streamRows(p) === 5, 'and Projects lists all five');
   ok((await p.locator('.zone').allTextContents()).join(',') === 'Work,Personal',
     'with a word where one life ends and the other begins');
 

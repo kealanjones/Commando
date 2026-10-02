@@ -80,7 +80,7 @@ export function AddSheet({
 
         <div className="field row2">
           <div>
-            <label htmlFor="add-section">Section</label>
+            <label htmlFor="add-section">Sub-focus</label>
             <select
               id="add-section" className="select" value={sectionId}
               onChange={(e) => setSectionId(e.target.value)}

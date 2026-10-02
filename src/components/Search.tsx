@@ -117,6 +117,7 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
                     <span className="find__meta">
                       <i className="find__dot" />
                       {hit.section ? pathOf(sections, hit.section.id) : 'Unfiled'}
+                      {hit.task.tag && ` · ${hit.task.tag}`}
                       {hit.task.done && ' · done'}
                       {hit.people.length > 0 && ` · ${hit.people.join(', ')}`}
                     </span>

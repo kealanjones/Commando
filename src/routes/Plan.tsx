@@ -127,7 +127,7 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
         Pick a day for the item in hand. The darker a day, the more is already on it.
       </p>
 
-      <div className="filters" role="group" aria-label="Limit to one stream">
+      <div className="filters" role="group" aria-label="Limit to one project">
         <button className="chip" aria-pressed={onlyStream === null} onClick={() => setOnlyStream(null)}>
           Everything
         </button>
@@ -166,7 +166,7 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
           <h3>Everything has a day</h3>
           <p>
             {onlyStream
-              ? 'Nothing left undated in this stream.'
+              ? 'Nothing left undated in this project.'
               : 'Every open item now carries a date, so Today can rank by what is actually closing.'}
           </p>
           <p style={{ marginTop: 12 }}><Link to="/review" className="inline">Back to Review</Link></p>

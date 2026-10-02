@@ -74,6 +74,10 @@ const sql = `-- ═════════════════════�
 -- Generated from data/register.seed.ts by scripts/seed-sql.ts. Do not edit
 -- this file by hand — edit the seed source and regenerate.
 --
+-- ONLY FOR A NEW, EMPTY REGISTER. Once a register is in use, and above all
+-- after 0011 (projects and sub-focuses), do not run this again: it would
+-- bring back the old three-level sections, empty, alongside your own.
+--
 -- HOW TO RUN
 --   Supabase dashboard → SQL Editor → paste the whole file → Run.
 --   Change the email on the ONE marked line below to the account you sign in

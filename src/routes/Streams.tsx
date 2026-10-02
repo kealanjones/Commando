@@ -45,13 +45,14 @@ function StreamIndex({ health }: { health: StreamHealth[] }) {
   return (
     <section aria-labelledby="streams-head">
       <div className="shead">
-        <h2 id="streams-head">Streams</h2>
-        <span className="shead__meta">
-          {health.reduce((n, h) => n + h.openTasks, 0)} open
+        <h2 id="streams-head">Projects</h2>
+        <span className="shead__side">
+          <span className="shead__meta">{health.reduce((n, h) => n + h.openTasks, 0)} open</span>
+          <Link to="/projects/organise" className="btn btn--ghost">Organise</Link>
         </span>
       </div>
       <div className="colhead colhead--streams" aria-hidden="true">
-        <span>Code</span><span>Stream</span><span>Open</span>
+        <span>Code</span><span>Project</span><span>Open</span>
       </div>
       <ul className="list">
         {health.map((h, i) => {
@@ -65,7 +66,7 @@ function StreamIndex({ health }: { health: StreamHealth[] }) {
                   {h.realm === 'work' ? 'Work' : 'Personal'}
                 </h3>
               )}
-              <Link to={`/streams/${h.id}`} className="srow" data-stream={h.id}>
+              <Link to={`/projects/${h.id}`} className="srow" data-stream={h.id}>
                 <span className="srow__code">{h.code}</span>
                 <span className="srow__body">
                   <b>{h.title}</b>
@@ -151,7 +152,7 @@ function StreamDetail({
 
   return (
     <section data-stream={stream.id} aria-labelledby="stream-head">
-      <Link to="/streams" className="back">← Streams</Link>
+      <Link to="/projects" className="back">← Projects</Link>
 
       <div className="stream__head">
         <div>

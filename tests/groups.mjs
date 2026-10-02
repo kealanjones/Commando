@@ -1,4 +1,4 @@
-/** The middle level in the browser: reading it, filing into it, finding through it. */
+/** Two levels in the browser: a project, its sub-focuses, and the tags items kept (0011). */
 import { launch, out } from './browser.mjs';
 
 const base = 'http://127.0.0.1:4173';
@@ -12,59 +12,37 @@ const p = await ctx.newPage();
 p.on('pageerror', (e) => fail.push('PAGEERROR ' + e.message));
 
 // ── reading it ──────────────────────────────────────────────────────
-await p.goto(`${base}/streams/isodp`, { waitUntil: 'networkidle' });
+await p.goto(`${base}/projects/isodp`, { waitUntil: 'networkidle' });
 await p.waitForTimeout(900);
 
-const groups = await p.locator('.groupblock__head h3').allTextContents();
-ok(groups.includes('Sponsorship') && groups.includes('Finance'),
-  `ISODP reads as areas, not a flat list (${groups.join(', ')})`);
-ok(groups.length <= 6, `and there are few enough of them to take in (${groups.length})`);
-await p.screenshot({ path: `${out}/phone-groups.png` });
+const focuses = await p.locator('.sectionblock__head h3').allTextContents();
+ok(focuses.includes('Sponsorship') && focuses.includes('Finance'),
+  `ISODP reads as its sub-focuses (${focuses.join(', ')})`);
+ok(focuses.length <= 6, `few enough to take in (${focuses.length})`);
+ok((await p.locator('.groupblock').count()) === 0, 'and there is no third level any more');
+ok(!focuses.includes('OrganOx'), 'a folded section is not a sub-focus of its own');
+await p.screenshot({ path: `${out}/phone-focuses.png` });
 
-const first = p.locator('.groupblock').first();
-ok(/\d+ in \d+ sections?/.test((await first.locator('.groupblock__meta').textContent()) ?? ''),
-  'each area says how much is in it and how far it spreads');
-
-const inside = await first.locator('.sectionblock__head h3').allTextContents();
-ok(inside.length >= 2, `sections sit inside their area (${inside.slice(0, 3).join(', ')})`);
-ok(!inside.some((t) => t.includes('—')),
-  'and no longer spell their parent out in their own name');
-
-// The area collapses as one, taking its sections with it.
-const before = await p.locator('.sectionblock').count();
-await first.locator('.groupblock__head').click();
-await p.waitForTimeout(500);
-ok((await first.locator('.groupblock__head').getAttribute('aria-expanded')) === 'false',
-  'an area collapses');
-const shrunk = await p.evaluate(() => {
-  const body = document.querySelector('.groupblock .collapse');
-  return body.getBoundingClientRect().height < 8;
-});
-ok(shrunk, 'and takes its sections down with it');
-await first.locator('.groupblock__head').click();
-await p.waitForTimeout(500);
-ok((await p.locator('.sectionblock').count()) === before, 'opening it brings them back');
+const tags = await p.locator('.task__tag').allTextContents();
+ok(tags.some((t) => /organox/i.test(t)), `items keep the old section as a tag (${[...new Set(tags)].slice(0, 3).join(', ')})`);
 
 const over = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 ok(over === 0, `no sideways overflow at 375px (${over}px)`);
 
-// A stream with few sections is left flat rather than given empty headings.
+// An old link still lands.
 await p.goto(`${base}/streams/cttl`, { waitUntil: 'networkidle' });
-await p.waitForTimeout(700);
-ok((await p.locator('.groupblock').count()) === 0,
-  'a small stream keeps no middle level it does not need');
-ok((await p.locator('.sectionblock').count()) > 0, 'its sections still show');
+await p.waitForTimeout(600);
+ok(new URL(p.url()).pathname === '/projects/cttl', `an old /streams link lands on its project (${new URL(p.url()).pathname})`);
 
 // ── filing into it ──────────────────────────────────────────────────
-await p.goto(`${base}/streams/isodp`, { waitUntil: 'networkidle' });
+await p.goto(`${base}/projects/isodp`, { waitUntil: 'networkidle' });
 await p.waitForTimeout(800);
 await p.locator('.task__open').first().click();
 await p.waitForSelector('#sheet-section');
 const options = await p.locator('#sheet-section option').allTextContents();
-ok(options.some((o) => o.includes('›')), `the picker carries the area (${options.find((o) => o.includes('›'))})`);
-ok(!options.some((o) => o.trim() === 'Sponsorship'),
-  'and an area itself is never offered as somewhere to put a task');
-ok(options.includes('Website'), 'a section with no area is offered plainly');
+ok(options.includes('Sponsorship'), 'the picker offers a sub-focus by its plain name');
+ok(!options.some((o) => o.includes('›')), 'with no area spelled out in front of it');
+ok(!options.includes('OrganOx'), 'and no folded section');
 await p.keyboard.press('Escape');
 await p.waitForTimeout(300);
 
@@ -74,10 +52,9 @@ await p.waitForSelector('.find__input');
 await p.locator('.find__input').fill('OrganOx');
 await p.waitForTimeout(500);
 const metas = await p.locator('.find__meta').allTextContents();
-ok(metas.some((m) => m.includes('›')),
-  `a result says which area it came from (${metas.find((m) => m.includes('›')) ?? metas[0]})`);
-await p.screenshot({ path: `${out}/phone-groupsearch.png` });
+ok(metas.some((m) => /Sponsorship · OrganOx/.test(m)),
+  `a result says its sub-focus and its tag (${metas[0]})`);
 
-console.log(fail.length ? `\n${fail.length} FAILING:\n- ` + fail.join('\n- ') : '\nAll grouping checks passed');
+console.log(fail.length ? `\n${fail.length} FAILING:\n- ` + fail.join('\n- ') : '\nAll two-level checks passed');
 await b.close();
 process.exit(fail.length ? 1 : 0);

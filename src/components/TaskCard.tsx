@@ -40,6 +40,8 @@ export const TaskCard = memo(function TaskCard({
   const selected = useSelectedId() === task.id;
   const leaving = useLeaving().has(task.id);
   const ref = useRef<HTMLLIElement>(null);
+  // The old section an item came from (0011) reads after its sub-focus.
+  const place = where && task.tag ? `${where} · ${task.tag}` : where;
 
   const open = () => {
     // Hand the card the rectangle to grow out of (narrow screens).
@@ -83,17 +85,18 @@ export const TaskCard = memo(function TaskCard({
           {!compact && task.context && <span className="task__context">{task.context}</span>}
           {!compact && task.note && <span className="task__note">{task.note}</span>}
 
-          {((!compact && task.do_now) || (waitingOn && waitingOn.length > 0) || where) && (
+          {((!compact && task.do_now) || (waitingOn && waitingOn.length > 0) || place || task.tag) && (
             <span className="task__meta">
               {!compact && task.do_now && <span className="pill pill--flag">Urgent</span>}
-              {where && <span className="task__wheresmall">{where}</span>}
+              {!where && task.tag && <span className="task__tag">{task.tag}</span>}
+              {place && <span className="task__wheresmall">{place}</span>}
               {waitingOn && waitingOn.length > 0 && (
                 <span className="meta">waiting on <b>{waitingOn.join(', ')}</b></span>
               )}
             </span>
           )}
         </span>
-        {where && <span className="task__where">{where}</span>}
+        {place && <span className="task__where">{place}</span>}
         {streamLabel && <span className="pill task__code">{streamLabel}</span>}
       </button>
     </li>

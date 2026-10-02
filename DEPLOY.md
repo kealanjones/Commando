@@ -38,6 +38,7 @@ the whole file, paste, and press Run — **in order**:
 8. `supabase/migrations/0008_realm.sql`
 9. `supabase/migrations/0009_one_kind.sql`
 10. `supabase/migrations/0010_cleared.sql`
+11. `supabase/migrations/0011_two_levels.sql`
 
 **Migrations go before the code that needs them.** The app auto-deploys from the
 default branch, so a new version can be live before its migration has run. It
@@ -177,6 +178,7 @@ Paste each file into **SQL Editor**, in order, and run it:
 8. `supabase/migrations/0008_realm.sql`
 9. `supabase/migrations/0009_one_kind.sql`
 10. `supabase/migrations/0010_cleared.sql`
+11. `supabase/migrations/0011_two_levels.sql`
 
 Or, with the CLI:
 

@@ -33,7 +33,9 @@
     "test:plan": "tsx tests/plan.mjs",
     "test:dberror": "tsx tests/dberror.mjs",
     "test:today": "tsx tests/today.mjs",
-    "test:progress": "tsx tests/progress.mjs"
+    "test:progress": "tsx tests/progress.mjs",
+    "test:structure": "tsx tests/structure.mjs",
+    "test:organise": "node tests/organise.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

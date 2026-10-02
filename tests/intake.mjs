@@ -49,7 +49,7 @@ ok(readyBefore === 4, `unplaced items are excluded from the ready count (${ready
 
 // nothing written yet
 const leakedBefore = await p.evaluate(async () => {
-  const r = await fetch('/streams'); return r.ok;
+  const r = await fetch('/projects'); return r.ok;
 });
 void leakedBefore;
 
@@ -92,7 +92,7 @@ ok(await p.locator('.toast', { hasText: 'added to the register' }).isVisible(), 
 
 // Navigate in-app, not with goto: a full reload would re-prime the fixture
 // cache from the seed file and discard everything added this session.
-await p.getByRole('link', { name: 'Streams' }).click();
+await p.getByRole('link', { name: 'Projects' }).click();
 await p.waitForTimeout(700);
 await p.locator('.srow', { hasText: 'ISODP' }).click();
 await p.waitForTimeout(900);

@@ -146,6 +146,7 @@ kbd {
 }
 .deskbar__search span { flex: 1; }
 .deskbar__search:hover { border-color: var(--ink); color: var(--ink); }
+.btn.deskbar__meeting { flex: none; height: 40px; padding: 0 14px; }
 .btn.deskbar__new { flex: none; height: 40px; padding: 0 14px; display: inline-flex; align-items: center; gap: 10px; }
 .deskbar__new kbd { border-color: currentColor; color: inherit; opacity: .7; }
 
@@ -314,6 +315,10 @@ kbd {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .task__wheresmall { font-size: 12.5px; color: var(--pencil); }
+.task__tag {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--pencil); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px;
+}
 @media (min-width: 1100px) {
   .task__where { display: block; }
   .task__wheresmall { display: none; }
@@ -1513,3 +1518,55 @@ body.is-carded .page { transform: scale(.99); filter: saturate(.8); }
   .stamp__ink { animation: stampfade 2300ms linear both; transform: rotate(-8deg); }
 }
 @keyframes stampfade { 0%, 100% { opacity: 0; } 8%, 85% { opacity: 1; } }
+
+/* ══ organise: projects and sub-focuses ═════════════════════════════ */
+.org { padding-bottom: 60px; }
+.org__lede { margin: 14px 0 6px; color: var(--pencil); max-width: 60ch; }
+.org__realm { margin-top: 18px; }
+.org__project { border-top: 1px solid var(--rule); padding: 12px 0 10px; }
+.org__phead, .org__frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.org__name {
+  flex: 1 1 180px; min-width: 0; padding: 6px 8px; margin-left: -8px;
+  border: 1px solid transparent; border-radius: 4px; background: transparent;
+  font: inherit; color: var(--ink);
+  transition: border-color var(--t-quick) var(--ease), background var(--t-quick) var(--ease);
+}
+.org__name:hover { border-color: var(--line); }
+.org__name:focus { outline: none; border-color: var(--ink); background: var(--paper); }
+.org__pname { font-family: var(--title); font-weight: var(--title-weight); font-size: 22px; letter-spacing: var(--track-tight); }
+.org__code {
+  flex: 0 0 76px; font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--pencil);
+}
+.org__arrows { display: inline-flex; gap: 2px; }
+.org__arrows .iconbtn { width: 32px; height: 32px; font-size: 15px; }
+.org__arrows .iconbtn:disabled { opacity: .25; cursor: default; }
+.org__del { color: var(--pencil); font-size: 13px; }
+.org__del:hover { color: var(--red); }
+.org__realmseg button { padding: 4px 10px; font-size: 12.5px; }
+.org__focuses { list-style: none; margin: 4px 0 0; padding: 0 0 0 22px; border-left: 1px solid var(--hair); }
+.org__focus { border-bottom: 1px solid var(--hair); padding: 2px 0; }
+.org__n { min-width: 28px; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--pencil); }
+.org__move { width: auto; max-width: 150px; height: 32px; padding: 0 28px 0 8px; font-size: 13px; }
+.org__dest { width: auto; max-width: 260px; height: 36px; font-size: 13px; }
+.org__confirm {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 8px; padding: 10px 12px;
+  background: var(--select); border-radius: 6px; font-size: 14px;
+  animation: rise var(--t-move) var(--ease) both;
+}
+.org__confirm .btn { flex: none; height: 36px; }
+.org__add { display: flex; gap: 8px; margin: 8px 0 0 22px; }
+.org__add .input { flex: 1; max-width: 360px; height: 36px; }
+.org__add .btn { flex: none; height: 36px; }
+.org__new { margin-top: 30px; border-top: 1px solid var(--rule); padding-top: 4px; }
+.org__newrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.org__newrow .input { flex: 1 1 220px; height: 40px; }
+.org__newrow .org__newcode { flex: 0 0 96px; text-transform: uppercase; font-family: var(--mono); }
+.org__newrow .btn { flex: none; height: 40px; }
+.org__hint { margin: 8px 0 0; font-size: 13px; color: var(--pencil); }
+.choice__hint { margin: 0 0 10px; color: var(--pencil); font-size: 14px; }
+@media (max-width: 640px) {
+  .org__focuses { padding-left: 10px; }
+  .org__add { margin-left: 10px; }
+  .org__move { max-width: 120px; }
+}
+[data-paper='notebook'] .org__code, [data-paper='notebook'] .task__tag { font-family: var(--mono); }

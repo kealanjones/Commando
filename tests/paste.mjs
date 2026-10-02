@@ -26,7 +26,7 @@ await p.getByRole('button', { name: 'Copy the prompt' }).click();
 await p.waitForTimeout(400);
 const clip = await p.evaluate(() => navigator.clipboard.readText());
 ok(clip.length > 500, `a prompt reaches the clipboard (${clip.length} chars)`);
-ok(/isodp-pay/.test(clip), 'it carries real section ids');
+ok(/isodp-g-finance/.test(clip), "it carries real sub-focus ids");
 ok(/Send Anthony the short priority sponsor list/.test(clip), 'it carries existing items so nothing is duplicated');
 ok(/When unsure whether something is an action, leave it out/.test(clip), 'it says to leave out what is not an action');
 ok(!/WATCH/.test(clip), 'and no longer asks for a task-or-watch decision');
@@ -38,11 +38,11 @@ const reply = `Here's what I found.
 {
   "summary": "Mostly the sponsor payment route.",
   "items": [
-    {"title":"Send Isaac the revised registration cost model","kind":"task","section_id":"isodp-pay",
+    {"title":"Send Isaac the revised registration cost model","kind":"task","section_id":"isodp-g-finance",
      "context":"He cannot sign off without them.","do_now":true,"due":null,"waiting_on":["Isaac"],
      "evidence":"Isaac needs the revised numbers before he can sign anything off.","confidence":"high",
      "duplicate_of_title":null},
-    {"title":"Getinge are reorganising their European marketing team","kind":"watch","section_id":"isodp-leads",
+    {"title":"Getinge are reorganising their European marketing team","kind":"watch","section_id":"isodp-g-sponsorship",
      "context":null,"do_now":false,"due":null,"waiting_on":[],
      "evidence":"Their marketing lead mentioned a reorganisation.","confidence":"medium","duplicate_of_title":null},
     {"title":"Decide whether the Fellowship panel needs an external member","kind":"task","section_id":"not-a-real-section",

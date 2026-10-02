@@ -1,4 +1,5 @@
-export type StreamId = 'cttl' | 'isodp' | 'dir' | 'career' | 'per';
+/** A project's id. The seeded ones are short words ('isodp'); new ones are slugs. */
+export type StreamId = string;
 /**
  * Legacy. Since 0009 every item is a task; 'watch' only survives in a
  * database that has not run that migration, and the app treats it the same.
@@ -18,6 +19,8 @@ export interface Stream {
   code: string;
   realm: Realm;
   position: number;
+  /** Set when the project was deleted (0011). Absent before that migration. */
+  deleted_at?: string | null;
 }
 
 export interface Section {
@@ -52,6 +55,8 @@ export interface Task {
    * clearing stays where it was, struck through (0010).
    */
   cleared_at: string | null;
+  /** The section an item sat in before sub-focuses replaced them (0011). */
+  tag: string | null;
   do_now: boolean;
   due: string | null;
   position: number;

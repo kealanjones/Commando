@@ -18,7 +18,12 @@ const STORE = 'register.queue.v1';
 /** What a caller hands in. */
 export type NewOp =
   | { kind: 'update'; taskId: string; patch: Record<string, unknown> }
-  | { kind: 'insert'; row: Record<string, unknown> };
+  | { kind: 'insert'; row: Record<string, unknown> }
+  /** Structure edits: projects and sub-focuses, or many items at once. */
+  | { kind: 'patch'; table: Table; match: Record<string, string>; patch: Record<string, unknown> }
+  | { kind: 'add'; table: Table; row: Record<string, unknown> };
+
+type Table = 'tasks' | 'streams' | 'sections';
 
 /** What is stored, once the queue has stamped it. */
 export type QueuedOp = NewOp & { id: string; at: number; tries: number };
@@ -107,9 +112,10 @@ export async function flush(): Promise<void> {
     while (ops.length) {
       const op = ops[0];
       const res =
-        op.kind === 'update'
-          ? await supabase.from('tasks').update(op.patch).eq('id', op.taskId)
-          : await supabase.from('tasks').insert(op.row);
+        op.kind === 'update' ? await supabase.from('tasks').update(op.patch).eq('id', op.taskId)
+        : op.kind === 'insert' ? await supabase.from('tasks').insert(op.row)
+        : op.kind === 'patch' ? await supabase.from(op.table).update(op.patch).match(op.match)
+        : await supabase.from(op.table).insert(op.row);
 
       if (!res.error) {
         ops = ops.slice(1);

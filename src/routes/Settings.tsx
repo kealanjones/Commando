@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   REALM_LABEL, setLight, setPaper, setRealm, useLight, usePaper, useRealm,
   type Light, type Paper,
@@ -52,10 +52,15 @@ export function Settings({ email }: { email: string }) {
           onChange={setRealm}
           options={[
             ['all', REALM_LABEL.all, 'Work and personal together.'],
-            ['work', REALM_LABEL.work, 'The personal streams are not there at all.'],
-            ['personal', REALM_LABEL.personal, 'The work streams are not there at all.'],
+            ['work', REALM_LABEL.work, 'The personal projects are not there at all.'],
+            ['personal', REALM_LABEL.personal, 'The work projects are not there at all.'],
           ]}
         />
+        <fieldset className="choice">
+          <legend className="label">Projects</legend>
+          <p className="choice__hint">Add, rename, reorder, merge and delete projects and their sub-focuses.</p>
+          <Link to="/projects/organise" className="btn btn--ghost">Organise projects</Link>
+        </fieldset>
         <fieldset className="choice">
           <legend className="label">Account</legend>
           <p className="settings__email">{email}</p>
