@@ -146,3 +146,34 @@ export type Decision =
   | { kind: 'done' }
   | { kind: 'chased' }
   | { kind: 'keep' };
+
+/** A living note in the memory: one per project, person or topic (0012). */
+export interface MemoryNote {
+  id: string;
+  kind: 'project' | 'person' | 'topic';
+  key: string;
+  title: string;
+  /** Where things stand, in a few sentences. */
+  now: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+/** One dated line a meeting added to a note. */
+export interface MemoryEntry {
+  id: string;
+  note_id: string;
+  intake_id: string | null;
+  happened_on: string | null;
+  text: string;
+  deleted_at?: string | null;
+}
+
+/** A meeting as the memory sees it. */
+export interface MemoryMeeting {
+  id: string;
+  label: string | null;
+  created_at: string;
+  in_memory: boolean;
+  remembered_at: string | null;
+}

@@ -13,7 +13,7 @@ import { GROUPS, SECTIONS, STREAMS } from '@data/register.seed';
 import { KNOWN_PEOPLE } from '@data/people';
 import { naturalKey } from './slug';
 import { fold } from './structure';
-import type { IntakeItem, Person, Section, Stream, StreamId, Task } from './types';
+import type { IntakeItem, MemoryEntry, MemoryMeeting, MemoryNote, Person, Section, Stream, StreamId, Task } from './types';
 
 export const DEMO = import.meta.env.VITE_DEMO === '1';
 
@@ -240,5 +240,47 @@ export function demoExtraction(text: string, label?: string) {
       `not read from your ${text.trim().split(/\s+/).length} words.)`,
     count: items.length,
     duplicates: items.filter((i) => i.duplicate_of).length,
+  };
+}
+
+// ── memory, in fixture mode ─────────────────────────────────────────
+// A small memory as two meetings would have built it, so the Memory page
+// can be seen and tested without the database or an API key.
+
+export function demoMemory(): { notes: MemoryNote[]; entries: MemoryEntry[]; meetings: MemoryMeeting[] } {
+  const day = (n: number) => {
+    const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString();
+  };
+  const meetings: MemoryMeeting[] = [
+    { id: 'demo-meeting-1', label: 'SMT, sponsorship', created_at: day(9), in_memory: true, remembered_at: day(9) },
+    { id: 'demo-meeting-2', label: 'ISODP weekly', created_at: day(2), in_memory: true, remembered_at: day(2) },
+    { id: 'demo-meeting-3', label: 'Catch-up with Steph', created_at: day(1), in_memory: true, remembered_at: null },
+  ];
+  const notes: MemoryNote[] = [
+    { id: 'demo-note-isodp', kind: 'project', key: 'isodp', title: 'ISODP 2027',
+      now: 'Sponsorship is the critical path: OrganOx has agreed in principle and the payment route is still the blocker. Registration numbers go to Isaac before he can sign off the budget.',
+      updated_at: day(2) },
+    { id: 'demo-note-anthony', kind: 'person', key: 'anthony', title: 'Anthony',
+      now: 'Director. Wants the priority sponsor list before Sydney and prefers a short chasing text over long emails.',
+      updated_at: day(2) },
+    { id: 'demo-note-payments', kind: 'topic', key: 'sponsor-payments', title: 'Sponsor payments',
+      now: 'No agreed route for taking sponsor money yet. Suzanne solved the same problem at Kyoto with TTS.',
+      updated_at: day(9) },
+  ];
+  const entries: MemoryEntry[] = [
+    { id: 'demo-entry-1', note_id: 'demo-note-isodp', intake_id: 'demo-meeting-1', happened_on: day(9).slice(0, 10), text: 'OrganOx agreed in principle to a headline sponsorship, pending a signed letter.' },
+    { id: 'demo-entry-2', note_id: 'demo-note-isodp', intake_id: 'demo-meeting-2', happened_on: day(2).slice(0, 10), text: 'Isaac will not sign off the budget line until he has the revised registration numbers.' },
+    { id: 'demo-entry-3', note_id: 'demo-note-anthony', intake_id: 'demo-meeting-2', happened_on: day(2).slice(0, 10), text: 'Anthony asked for the short priority sponsor list before Sydney.' },
+    { id: 'demo-entry-4', note_id: 'demo-note-payments', intake_id: 'demo-meeting-1', happened_on: day(9).slice(0, 10), text: 'Suzanne handled multi-currency registration at Kyoto through TTS; worth asking how.' },
+  ];
+  return { notes, entries, meetings };
+}
+
+/** A fixed answer in fixture mode, citing the first meeting. */
+export function demoAnswer(question: string): { answer: string; sources: { intake_id: string; label: string; date: string }[] } {
+  const m = demoMemory().meetings[0];
+  return {
+    answer: `From the memory: OrganOx agreed in principle to a headline sponsorship, pending a signed letter. (Fixture answer to "${question}".)`,
+    sources: [{ intake_id: m.id, label: m.label ?? 'Meeting', date: m.created_at.slice(0, 10) }],
   };
 }

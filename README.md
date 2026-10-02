@@ -105,6 +105,33 @@ anything untouched for three weeks. Each gets one decision — **give it a date*
 **done**, **drop it**, or **leave it** — and every decision can be undone. A
 decided item is left alone for a month.
 
+### Memory
+
+Every meeting read in also feeds a **memory** of the work: a note per project,
+per person and per recurring topic, each with where things stand **now** and a
+dated **timeline**. Each meeting adds a few lines and refreshes the "now" of the
+notes it touched, so the memory grows with every meeting without ever being
+rewritten wholesale. Every line keeps the meeting it came from.
+
+- **The reader uses it.** Each new meeting is read with what the memory already
+  knows, so it files things better and understands shorthand.
+- **Ask it** on the Memory page ("What did we agree with OrganOx?"): answers come
+  from the memory and the open register, and name the meetings they rest on.
+- **Browse and correct it:** fix a "now", strike a wrong line.
+- **Export for Claude:** one Markdown file of the whole memory, to add to a
+  Claude Project so everyday chats know the work too.
+- **Forget a meeting** takes out exactly what it added; **Erase memory** takes
+  out everything (the meetings stay, and can be remembered again).
+
+It runs through `/api/memory` with the same `ANTHROPIC_API_KEY` as Intake. On the
+Via Claude route the record never reaches the app, so Claude's reply includes a
+`memory` part and that is what is remembered.
+
+**Information governance.** The memory is a concentrated, searchable record of
+conversations, names and decisions. It is personal under RLS, like intake, but
+check with NHSBT information governance that keeping it is acceptable before
+relying on it for sensitive work.
+
 ### Intake
 
 Paste notes, a transcript or an email chain and get back proposed items, each
@@ -222,6 +249,7 @@ supabase db push
 | `0009_one_kind.sql` | One kind of item: watch items become ordinary items, parked items go back into play |
 | `0010_cleared.sql` | Done items stay on the page, struck through, until **Clear done** |
 | `0011_two_levels.sql` | Two levels: projects and sub-focuses. Grouped sections fold into their group; items keep the old name as a tag |
+| `0012_memory.sql` | Memory: living notes per project, person and topic, built from every meeting |
 
 ### 3. Sign in once
 

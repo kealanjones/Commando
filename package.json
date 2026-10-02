@@ -37,6 +37,8 @@
     "test:structure": "tsx tests/structure.mjs",
     "test:queue": "tsx tests/queue.mjs",
     "test:recordkind": "tsx tests/recordKind.mjs",
+    "test:memory": "tsx tests/memory.mjs && tsx tests/memory-api.mjs",
+    "test:memory-ui": "node tests/memory-ui.mjs",
     "test:organise": "node tests/organise.mjs"
   },
   "dependencies": {

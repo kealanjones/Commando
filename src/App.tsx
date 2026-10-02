@@ -11,6 +11,7 @@ import { useToast } from '@/components/Toasts';
 import { Today } from '@/routes/Today';
 import { Streams } from '@/routes/Streams';
 import { Organise } from '@/routes/Organise';
+import { Memory } from '@/routes/Memory';
 import { Intake } from '@/routes/Intake';
 import { Brief } from '@/routes/Brief';
 import { Plan } from '@/routes/Plan';
@@ -243,6 +244,7 @@ function Register({ email }: { email: string }) {
               <Route path="/" element={<Today onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
               <Route path="/projects" element={<Streams onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
               <Route path="/projects/organise" element={<Organise />} />
+              <Route path="/memory" element={<Memory />} />
               <Route path="/projects/:streamId" element={<Streams onToggle={onToggle} onOpen={onOpen} onClearDone={clearDone} />} />
               {/* Projects were called streams; old links and bookmarks still land. */}
               <Route path="/streams" element={<Navigate to="/projects" replace />} />
