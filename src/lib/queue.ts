@@ -12,6 +12,7 @@
  */
 import { supabase } from './supabase';
 import { DEMO } from './demo';
+import { drain } from './queueCore';
 
 const STORE = 'register.queue.v1';
 
@@ -114,42 +115,21 @@ export function withoutEmptyTag(row: Record<string, unknown>): Record<string, un
   return rest;
 }
 
+/** Sends one op. */
+async function send(op: QueuedOp) {
+  const res =
+    op.kind === 'update' ? await supabase.from('tasks').update(op.patch).eq('id', op.taskId)
+    : op.kind === 'insert' ? await supabase.from('tasks').insert(withoutEmptyTag(op.row))
+    : op.kind === 'patch' ? await supabase.from(op.table).update(op.patch).match(op.match)
+    : await supabase.from(op.table).insert(op.row);
+  return res.error as { code?: string; message: string; status?: number } | null;
+}
+
 export async function flush(): Promise<void> {
   if (DEMO || flushing || !navigator.onLine) return;
   flushing = true;
   try {
-    let ops = read();
-    while (ops.length) {
-      const op = ops[0];
-      const res =
-        op.kind === 'update' ? await supabase.from('tasks').update(op.patch).eq('id', op.taskId)
-        : op.kind === 'insert' ? await supabase.from('tasks').insert(withoutEmptyTag(op.row))
-        : op.kind === 'patch' ? await supabase.from(op.table).update(op.patch).match(op.match)
-        : await supabase.from(op.table).insert(op.row);
-
-      if (!res.error) {
-        ops = ops.slice(1);
-        write(ops);
-        emit();
-        continue;
-      }
-
-      if (permanent(res.error.code, (res.error as { status?: number }).status)) {
-        // Drop it, but say so loudly. Losing a change silently is the one
-        // thing this queue exists to prevent.
-        failed = { op, message: res.error.message };
-        ops = ops.slice(1);
-        write(ops);
-        emit();
-        continue;
-      }
-
-      // Transient: leave it at the head and try again on the next trigger.
-      op.tries += 1;
-      write(ops);
-      emit();
-      break;
-    }
+    await drain({ read, write, emit }, send, (op, message) => { failed = { op, message }; }, permanent);
   } finally {
     flushing = false;
   }

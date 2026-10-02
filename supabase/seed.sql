@@ -598,6 +598,47 @@ begin
 end
 $seed$;
 
+-- ── two levels (0011) ──────────────────────────────────────────────
+-- The seed source still describes groups with sections inside them, so
+-- fold them here exactly as 0011 does: on a new register, migrations run
+-- before the seed and 0011 would have had nothing to fold.
+-- Items in a folded section move to its group, after anything already
+-- there, keeping the order the sections and items were in.
+with base as (
+  select owner_id, section_id, max(position) as top
+    from public.tasks
+   group by owner_id, section_id
+),
+moved as (
+  select t.id,
+         s.parent_id as to_section,
+         s.title     as from_title,
+         coalesce(b.top, -1)
+           + row_number() over (partition by t.owner_id, s.parent_id order by s.position, t.position)
+           as pos
+    from public.tasks t
+    join public.sections s on s.owner_id = t.owner_id and s.id = t.section_id
+    left join base b on b.owner_id = t.owner_id and b.section_id = s.parent_id
+   where s.parent_id is not null
+)
+update public.tasks t
+   set section_id = m.to_section,
+       tag        = coalesce(t.tag, m.from_title),
+       position   = m.pos
+  from moved m
+ where t.id = m.id;
+
+-- Meeting proposals that pointed at a folded section point at its group.
+update public.intake_items i
+   set section_id = s.parent_id
+  from public.sections s
+ where s.owner_id = i.owner_id and s.id = i.section_id and s.parent_id is not null;
+
+-- The folded sections are empty now. Keep the rows, out of sight.
+update public.sections
+   set deleted_at = coalesce(deleted_at, now())
+ where parent_id is not null;
+
 -- Confirm. Expect at least 290 open items.
 select count(*) as items
   from public.tasks

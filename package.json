@@ -35,6 +35,7 @@
     "test:today": "tsx tests/today.mjs",
     "test:progress": "tsx tests/progress.mjs",
     "test:structure": "tsx tests/structure.mjs",
+    "test:queue": "tsx tests/queue.mjs",
     "test:organise": "node tests/organise.mjs"
   },
   "dependencies": {

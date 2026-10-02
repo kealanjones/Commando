@@ -1,4 +1,4 @@
-import { fold, slugId, shift } from '../src/lib/structure.ts';
+import { fold, newId, slugId, shift } from '../src/lib/structure.ts';
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`); c ? pass++ : fail++; };
@@ -36,6 +36,9 @@ ok(ids(fold(f.sections, f.tasks).sections) === ids(f.sections), 'folding twice c
 ok(slugId('ISODP 2027', []) === 'isodp-2027', 'a new id reads like its name');
 ok(slugId('Sponsorship', ['isodp-sponsorship'], 'isodp-') === 'isodp-sponsorship-2', 'and never collides');
 ok(slugId('!!!', []) === 'new', 'a name with no letters still gets an id');
+const a = newId('Sponsorship', [], 'isodp-'), b = newId('Sponsorship', [a], 'isodp-');
+ok(/^isodp-sponsorship-[a-z0-9]{4}$/.test(a), `a new id reads like its name, with a short tail (${a})`);
+ok(a !== b, 'the same name twice gets two ids, so a name reused after a delete never meets the old row');
 
 const list = [{ id: 'a', position: 0 }, { id: 'b', position: 1 }, { id: 'c', position: 2 }];
 ok(JSON.stringify(shift(list, 'b', -1)) === JSON.stringify([{ id: 'b', position: 0 }, { id: 'a', position: 1 }]),

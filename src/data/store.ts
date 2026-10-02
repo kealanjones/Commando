@@ -12,7 +12,7 @@ import { DEMO } from '@/lib/demo';
 import { inScope, useRealm } from '@/lib/modes';
 import { isoDay, todayGroups } from '@/lib/today';
 import { msToMidnight } from '@/lib/progress';
-import { shift, slugId } from '@/lib/structure';
+import { newId, shift } from '@/lib/structure';
 import type { Person, Realm, Section, Stream, StreamHealth, Task } from '@/lib/types';
 
 export const keys = {
@@ -386,7 +386,7 @@ export function useStructure() {
     async addProject(input: { title: string; code: string; realm: Realm }) {
       const all = streams();
       const row: Stream = {
-        id: slugId(input.title, all.map((s) => s.id)),
+        id: newId(input.title, all.map((s) => s.id)),
         owner_id: await owner(),
         title: input.title, short: input.title,
         code: input.code || input.title.slice(0, 5).toUpperCase(),
@@ -400,8 +400,12 @@ export function useStructure() {
     renameProject: (id: string, title: string) => patchStream(id, { title, short: title }),
     recodeProject: (id: string, code: string) => patchStream(id, { code }),
     setRealm: (id: string, realm: Realm) => patchStream(id, { realm }),
+    /** Up or down among the projects in the same life, the list Organise shows. */
     moveProject(id: string, by: -1 | 1) {
-      for (const p of shift(streams(), id, by)) patchStream(p.id, { position: p.position });
+      const me = streams().find((s) => s.id === id);
+      if (!me) return;
+      const siblings = streams().filter((s) => s.realm === me.realm);
+      for (const p of shift(siblings, id, by)) patchStream(p.id, { position: p.position });
     },
     /** Only an empty project goes; its (empty) sub-focuses go with it. */
     deleteProject(id: string, moveTo?: Section) {
@@ -418,7 +422,7 @@ export function useStructure() {
       const all = sections();
       const mine = all.filter((s) => s.stream_id === streamId && live(s));
       const row: Section = {
-        id: slugId(title, all.map((s) => s.id), `${streamId}-`),
+        id: newId(title, all.map((s) => s.id), `${streamId}-`),
         owner_id: await owner(), stream_id: streamId, title,
         parent_id: null, monitor: false,
         position: mine.reduce((n, s) => Math.max(n, s.position + 1), 0),

@@ -14,6 +14,8 @@ p.on('pageerror', (e) => fail.push('PAGEERROR ' + e.message));
 const focus = (id) => p.locator(`.org__focus[data-focus="${id}"]`);
 const project = (id) => p.locator(`.org__project[data-project="${id}"]`);
 const names = (id) => project(id).locator('.org__focus .org__name').evaluateAll((els) => els.map((e) => e.value));
+// A life's list, found by its heading (every project row also says Work and Personal).
+const realm = (name) => p.locator('.org__realm').filter({ has: p.locator('h3.zone', { hasText: new RegExp(`^${name}$`) }) });
 const count = (id) => focus(id).locator('.org__n').textContent().then(Number);
 
 await p.goto(`${base}/projects`, { waitUntil: 'networkidle' });
@@ -90,7 +92,7 @@ ok((await allot.count()) === 1, 'a new project is added');
 ok((await allot.locator('.org__code').inputValue()) === 'ALOT', 'with its code, in capitals');
 ok((await allot.locator('.org__focus .org__name').evaluateAll((e) => e.map((x) => x.value))).join() === 'General',
   'and one sub-focus, General, ready for items');
-ok((await p.locator('.org__realm', { hasText: 'Personal' }).locator('input[value="Allotment"]').count()) === 1,
+ok((await realm('Personal').locator('input[value="Allotment"]').count()) === 1,
   'filed under the life chosen');
 ok((await p.locator('.index__stream', { hasText: 'Allotment' }).count()) === 1, 'and it is in the sidebar straight away');
 
@@ -127,8 +129,20 @@ await p.goBack();
 await p.waitForSelector('.org__project');
 await project('career').getByRole('button', { name: 'Work' }).click();
 await p.waitForTimeout(200);
-ok((await p.locator('.org__realm', { hasText: 'Work' }).locator('.org__project[data-project="career"]').count()) === 1,
+ok((await realm('Work').locator('.org__project[data-project="career"]').count()) === 1,
   'a project can switch lives');
+
+// Order is kept within a life: with ISODP moved into Personal, its
+// position sits among the work projects, and "up" must still pass the
+// project shown above it rather than one hidden in the other list.
+await project('isodp').getByRole('button', { name: 'Personal' }).click();
+await p.waitForTimeout(200);
+const personal = () => realm('Personal').locator('.org__project')
+  .evaluateAll((els) => els.map((e) => e.dataset.project));
+ok((await personal()).join() === 'isodp,per', `ISODP now heads the Personal list (${(await personal()).join()})`);
+await p.getByRole('button', { name: 'Move Personal up' }).click();
+await p.waitForTimeout(200);
+ok((await personal()).join() === 'per,isodp', `one press moves a project past the one shown above it (${(await personal()).join()})`);
 
 const over = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 ok(over === 0, `no sideways overflow (${over}px)`);

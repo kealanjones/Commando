@@ -54,6 +54,21 @@ export function slugId(title: string, taken: Iterable<string>, prefix = ''): str
   for (let n = 2; ; n++) if (!used.has(`${base}-${n}`)) return `${base}-${n}`;
 }
 
+/**
+ * An id for a new project or sub-focus: readable, plus a short random
+ * tail. Deleted ones keep their ids in the database (deleting is a
+ * timestamp) but are no longer in the app, so a name reused after a
+ * delete must never land on the old id.
+ */
+export function newId(title: string, taken: Iterable<string>, prefix = ''): string {
+  const used = new Set(taken);
+  for (;;) {
+    const tail = Math.random().toString(36).slice(2, 6).padEnd(4, '0');
+    const id = `${slugId(title, [], prefix)}-${tail}`;
+    if (!used.has(id)) return id;
+  }
+}
+
 /** Positions after moving one entry up or down a list; only what changed. */
 export function shift<T extends { id: string; position: number }>(
   list: T[], id: string, by: -1 | 1,
