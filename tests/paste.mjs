@@ -77,7 +77,7 @@ await p.getByRole('button', { name: /Add 3 to the register/ }).click();
 await p.waitForTimeout(900);
 ok(await p.locator('.toast', { hasText: 'added to the register' }).isVisible(), 'committing confirms');
 
-await p.getByRole('link', { name: 'Streams' }).click();
+await p.getByRole('link', { name: 'Projects' }).click();
 await p.waitForTimeout(700);
 await p.locator('.srow', { hasText: 'ISODP' }).click();
 await p.waitForTimeout(900);
