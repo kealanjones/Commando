@@ -132,6 +132,25 @@ const total = await p.evaluate(async () => {
 });
 ok(total, 'app shell served');
 
+// ── 9. on a person, a ticked row stays where it was ─────────────
+{
+  await p.goto('http://127.0.0.1:4173/people', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  // The person with the most open items, so there is an order to keep.
+  const href = await p.evaluate(() => [...document.querySelectorAll('a[href^="/people/"]')]
+    .map((a) => ({ h: a.getAttribute('href'), n: parseInt(a.textContent.match(/(\d+)\s*$/)?.[1] ?? '0', 10) }))
+    .sort((a, b) => b.n - a.n)[0]?.h);
+  await p.goto(`http://127.0.0.1:4173${href}`, { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  const before = await p.evaluate(() => [...document.querySelectorAll('.task .check')].map((c) => c.id));
+  ok(before.length >= 2, `the person has rows to keep in order (${before.length})`);
+  await p.locator(`#${before[0]}`).click();
+  await p.waitForTimeout(600);
+  const after = await p.evaluate(() => [...document.querySelectorAll('.task .check')].map((c) => c.id));
+  ok(JSON.stringify(before) === JSON.stringify(after), 'ticking on a person does not move the row');
+  ok((await p.locator('.cleardone').count()) === 1, 'and offers Clear done there too');
+}
+
 console.log(fail.length ? `\n${fail.length} FAILING:\n- ` + fail.join('\n- ') : '\nAll interaction checks passed');
 await b.close();
 process.exit(fail.length ? 1 : 0);

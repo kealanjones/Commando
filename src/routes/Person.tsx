@@ -32,7 +32,9 @@ export function Person({
 
   const theirs = useMemo(() => {
     const ids = new Set(links.filter((l) => l.person_id === personId).map((l) => l.task_id));
-    const age = (t: Task) => t.touched_at ?? t.created_at;
+    // By when it was raised: ticking or editing a row touches it, and a
+    // struck row has to stay where it was ticked.
+    const age = (t: Task) => t.created_at;
     return tasks
       .filter((t) => ids.has(t.id) && !t.deleted_at && (!t.done || lingers(t)))
       .sort((a, b) => age(a).localeCompare(age(b)));
