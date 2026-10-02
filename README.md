@@ -105,6 +105,32 @@ anything untouched for three weeks. Each gets one decision — **give it a date*
 **done**, **drop it**, or **leave it** — and every decision can be undone. A
 decided item is left alone for a month.
 
+### One by one
+
+**One by one** (the bar at a desk, the card icon on a phone, **O** anywhere,
+or a project's own page) takes the whole screen and shows one item at a
+time, large, with everything known about it: where it is filed, when it is
+due, how long it has been on the list, who it waits on, its notes, and what
+the memory says about its project.
+
+First choose the pile, as narrow or as broad as you like: everything open,
+Do now, overdue, due this week or undated; all projects, one project, or one
+sub-focus (a group takes in the sub-focuses under it); Do now first, by due
+date or oldest first. Then, for each item:
+
+| | |
+|---|---|
+| **Done** (D) | Ticks it off, stamped |
+| **Stay with it** (S) | A clock, and everything else steps back |
+| **Later** (L) | To the back of the pile; it comes round again |
+| **Snooze…** (T, then 1–4) | Tomorrow, Friday, next week, a month, or a day you pick |
+| **Do now** (P), **Move…** (M), **Note** (N) | Change it and stay on it |
+| **Delete** (Backspace, then Enter) | Asks first |
+| **Undo** (Z) | Every step can be taken back |
+
+The end of the run says what was done, snoozed and deleted, and how long you
+stayed with things.
+
 ### Memory
 
 Every meeting read in also feeds a **memory** of the work: a note per project,
@@ -189,6 +215,8 @@ Unit suites run directly; browser suites need the demo build being served
 | `npm run test:paste` | Copy prompt → paste reply → triage |
 | `npm run test:find` | Search in the browser |
 | `npm run test:groups` | Areas in the browser: reading, filing, finding |
+| `npm run test:focus` | One by one: choosing the pile, its order, dates and the clock |
+| `npm run test:focus-ui` | One by one in the browser: every decision, undo, a whole run, a phone |
 | `./tests/rls.sh` | Migrations on a real Postgres: the RLS proof, and 0009 on old data |
 | `npm run test:shots` | Screenshot the main routes at 375px and 1280px |
 

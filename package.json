@@ -39,7 +39,9 @@
     "test:recordkind": "tsx tests/recordKind.mjs",
     "test:memory": "tsx tests/memory.mjs && tsx tests/memory-api.mjs",
     "test:memory-ui": "node tests/memory-ui.mjs",
-    "test:organise": "node tests/organise.mjs"
+    "test:organise": "node tests/organise.mjs",
+    "test:focus": "tsx tests/focus.mjs",
+    "test:focus-ui": "node tests/focus-ui.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
