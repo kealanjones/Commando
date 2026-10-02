@@ -1570,3 +1570,8 @@ body.is-carded .page { transform: scale(.99); filter: saturate(.8); }
   .org__move { max-width: 120px; }
 }
 [data-paper='notebook'] .org__code, [data-paper='notebook'] .task__tag { font-family: var(--mono); }
+
+/* ══ intake: notes or a transcript ══════════════════════════════════ */
+.intake__kindlabel { display: block; }
+.intake__kind { margin-top: 6px; }
+.intake__kindhint { margin: 8px 0 0; font-size: 13px; color: var(--pencil); max-width: 62ch; }

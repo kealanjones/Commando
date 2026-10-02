@@ -54,6 +54,9 @@ jobs:
       - name: Queue
         run: npm run test:queue
 
+      - name: Notes or transcript
+        run: npm run test:recordkind
+
       # Built in demo mode so CI needs no Supabase credentials. The env
       # validation that guards the real build is exercised separately below.
       - name: Build

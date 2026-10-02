@@ -10,6 +10,7 @@
  * pipe that is always open.
  */
 import type { IntakeItem, Section, StreamId, Task } from './types';
+import { KIND_GUIDANCE, type RecordKind } from './recordKind';
 
 export interface Stream {
   id: StreamId;
@@ -21,6 +22,7 @@ export function buildPrompt(
   streams: Stream[],
   sections: Section[],
   openTitles: string[],
+  kind: RecordKind = 'notes',
 ): string {
   const today = new Date().toISOString().slice(0, 10);
 
@@ -32,17 +34,19 @@ Every entry in my register is something that has to get done — by me, or by so
 
 A long list where everything looks equally important is the problem this register exists to solve. When unsure whether something is an action, leave it out.
 
+${KIND_GUIDANCE[kind]}
+
 Rules:
 1. Extract only actions the record supports. If an action is implied but never agreed, leave it out.
 2. Never invent a date. Use "due" only where a date was stated, or a stated relative date resolves unambiguously against today, ${today}.
 3. Write titles I could act on cold in three weeks. "Chase Derek for the sponsor list before Sydney" — not "Follow up sponsors".
-4. Route every item into one of the sections below using its exact id. If nothing fits, use null and I will place it.
+4. Route every item into one of the sub-focuses below using its exact id. If nothing fits, use null and I will place it.
 5. Every item needs a short verbatim quote from the record as evidence. If you cannot quote it, do not extract it.
 6. If something restates one of my existing open items, set "duplicate_of_title" to that exact title.
 7. Ignore pleasantries, scheduling chatter, and anything already done.
 8. Prefer fewer, better items.
 
-SECTIONS — use these ids exactly:
+SUB-FOCUSES — use these ids exactly:
 ${sections.map((s) => `  ${s.id} [${streams.find((t) => t.id === s.stream_id)?.title ?? s.stream_id}] — ${s.title}`).join('\n')}
 
 MY EXISTING OPEN ITEMS — do not duplicate these:

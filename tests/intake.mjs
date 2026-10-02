@@ -36,6 +36,40 @@ await p.keyboard.type('Anthony opened by saying the sponsor payment route is sti
 const focused = await p.evaluate(() => document.activeElement?.id);
 ok(focused === 'intake-text', `focus stays in the paste box while typing (${focused})`);
 
+// ── notes or a transcript ────────────────────────────────────────
+const kindNow = () => p.locator('.intake__kind button[aria-pressed="true"]').textContent();
+ok((await kindNow()) === 'Notes', 'it starts on Notes');
+await p.locator('#intake-text').fill(`Anthony: Where are we on sponsorship?
+Kealan: OrganOx have the letter.
+Anthony: Can you sort the payment route before Sydney?
+Kealan: Yes, by Friday.`);
+await p.waitForTimeout(150);
+ok((await kindNow()) === 'Transcript', 'pasting a back-and-forth switches it to Transcript');
+ok((await p.locator('label[for="intake-text"]').textContent()) === 'The transcript', 'and the box says what it holds');
+ok((await p.locator('.intake__kindhint').textContent()).includes('Guessed'), 'and says it was a guess');
+await p.getByRole('button', { name: 'Notes', exact: true }).click();
+await p.locator('#intake-text').fill(`Kealan: one more line
+Anthony: and another
+Kealan: and another`);
+await p.waitForTimeout(150);
+ok((await kindNow()) === 'Notes', 'once chosen by hand, it stays as chosen');
+await p.locator('#intake-text').fill('');
+
+// The Via Claude prompt is written for whichever kind is chosen.
+await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
+await p.getByRole('button', { name: 'Via Claude' }).click();
+await p.getByRole('button', { name: 'Transcript', exact: true }).click();
+await p.getByRole('button', { name: 'Copy the prompt' }).click();
+await p.waitForTimeout(200);
+const clip = await p.evaluate(() => navigator.clipboard.readText());
+ok(clip.includes('This record is a transcript'), 'Via Claude: the copied prompt reads it as a transcript');
+await p.getByRole('button', { name: 'Notes', exact: true }).click();
+await p.getByRole('button', { name: 'Copy the prompt' }).click();
+await p.waitForTimeout(200);
+ok((await p.evaluate(() => navigator.clipboard.readText())).includes('This record is my own notes'), 'and as notes when switched back');
+await p.getByRole('button', { name: 'Read it here' }).click();
+await p.waitForTimeout(200);
+
 await paste();
 
 ok((await p.locator('.cand').count()) === 5, `triage lists every proposal (${await p.locator('.cand').count()})`);

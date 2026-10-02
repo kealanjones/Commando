@@ -36,6 +36,7 @@
     "test:progress": "tsx tests/progress.mjs",
     "test:structure": "tsx tests/structure.mjs",
     "test:queue": "tsx tests/queue.mjs",
+    "test:recordkind": "tsx tests/recordKind.mjs",
     "test:organise": "node tests/organise.mjs"
   },
   "dependencies": {

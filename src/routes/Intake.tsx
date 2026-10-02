@@ -4,6 +4,7 @@ import { useToast } from '@/components/Toasts';
 import { useSections, useStreams, useTasks } from '@/data/store';
 import { useAcceptItems, useExtract, useImportProposals, useIntakeItems, useTriage } from '@/data/intake';
 import { buildPrompt } from '@/lib/proposalFormat';
+import { KIND_LABEL, guessKind, type RecordKind } from '@/lib/recordKind';
 import type { IntakeItem } from '@/lib/types';
 
 /**
@@ -24,6 +25,14 @@ export function Intake() {
   const [summary, setSummary] = useState('');
   const [copied, setCopied] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  // Notes or a transcript. Guessed from what is pasted until you choose.
+  const [kind, setKind] = useState<RecordKind>('notes');
+  const [chosen, setChosen] = useState(false);
+  const choose = (k: RecordKind) => { setKind(k); setChosen(true); };
+  const onText = (v: string) => {
+    setText(v);
+    if (!chosen) setKind(guessKind(v));
+  };
 
   const extract = useExtract();
   const importProposals = useImportProposals();
@@ -40,8 +49,8 @@ export function Intake() {
   );
 
   const prompt = useMemo(
-    () => buildPrompt(streams, sections, openTasks.map((t) => t.title)),
-    [streams, sections, openTasks],
+    () => buildPrompt(streams, sections, openTasks.map((t) => t.title), kind),
+    [streams, sections, openTasks, kind],
   );
 
   const copyPrompt = async () => {
@@ -74,7 +83,7 @@ export function Intake() {
 
   const run = async () => {
     try {
-      const res = await extract.mutateAsync({ text, label: label.trim() || undefined });
+      const res = await extract.mutateAsync({ text, label: label.trim() || undefined, kind });
       setIntakeId(res.intake_id);
       setSummary(res.summary);
       if (res.count === 0) push({ message: 'Nothing in there needed adding.' });
@@ -88,6 +97,7 @@ export function Intake() {
 
   const startOver = () => {
     setIntakeId(null); setText(''); setPaste(''); setLabel(''); setSummary('');
+    setKind('notes'); setChosen(false);
     window.setTimeout(() => boxRef.current?.focus(), 0);
   };
 
@@ -122,12 +132,27 @@ export function Intake() {
         />
       </div>
 
+      <div className="field">
+        <span className="label intake__kindlabel" id="intake-kind">What you have</span>
+        <div className="seg intake__kind" role="group" aria-labelledby="intake-kind">
+          {(['notes', 'transcript'] as RecordKind[]).map((k) => (
+            <button key={k} type="button" aria-pressed={kind === k} onClick={() => choose(k)}>{KIND_LABEL[k]}</button>
+          ))}
+        </div>
+        <p className="intake__kindhint">
+          {kind === 'notes'
+            ? 'Your own notes: every short line can be an action.'
+            : 'A transcript: it looks for what people agreed to do, not everything that was said.'}
+          {!chosen && route === 'here' && text.trim() && ' Guessed from what you pasted; change it if wrong.'}
+        </p>
+      </div>
+
       {route === 'claude' ? (
         <>
           <ol className="steps">
             <li>
               <div>
-                <b>Copy the prompt.</b> It already knows your streams and sections, and every
+                <b>Copy the prompt.</b> It already knows your projects and sub-focuses, and every
                 item you have open, so nothing comes back misfiled or duplicated. Use this route
                 if you would rather nothing left the app at all.
               </div>
@@ -137,8 +162,8 @@ export function Intake() {
             </li>
             <li>
               <div>
-                <b>Paste it into Claude, then your meeting underneath.</b> Notes, a transcript, an
-                email chain — whatever you have.
+                <b>Paste it into Claude, then your {kind === 'notes' ? 'notes' : 'transcript'} underneath.</b>{' '}
+                The prompt is set up for {kind === 'notes' ? 'notes' : 'a transcript'}; switch above if it is the other.
               </div>
             </li>
             <li>
@@ -185,12 +210,15 @@ export function Intake() {
       ) : (
         <>
           <div className="field">
-            <label htmlFor="intake-text">The record</label>
+            <label htmlFor="intake-text">{kind === 'notes' ? 'Your notes' : 'The transcript'}</label>
             <textarea
-              id="intake-text" className="textarea" value={text}
-              onChange={(e) => setText(e.target.value)}
-              style={{ minHeight: 240, fontSize: 14, lineHeight: 1.6 }}
-              placeholder={'Anthony asked me to get the sponsor payment route sorted before Sydney…'}
+              id="intake-text" ref={boxRef} className="textarea" value={text}
+              onChange={(e) => onText(e.target.value)}
+              data-kind={kind}
+              style={{ minHeight: kind === 'notes' ? 240 : 320, fontSize: 14, lineHeight: 1.6 }}
+              placeholder={kind === 'notes'
+                ? '- Sponsor payment route → me, before Sydney\n- Derek: send priority list by Fri\n- AB to confirm QEII date'
+                : 'Anthony: Can you get the sponsor payment route sorted before Sydney?\nKealan: Yes, I\'ll have it by Friday.'}
             />
           </div>
 
@@ -216,7 +244,7 @@ export function Intake() {
           {extract.isPending && (
             <div className="reading" role="status">
               <span className="reading__bar" />
-              Reading {words.toLocaleString()} words, sorting them into your streams.
+              Reading {words.toLocaleString()} words of {kind === 'notes' ? 'notes' : 'transcript'}, sorting them into your projects.
             </div>
           )}
         </>
