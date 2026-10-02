@@ -104,6 +104,16 @@ function permanent(code: string | undefined, status: number | undefined): boolea
       || code === 'PGRST116';    // no rows where one was required
 }
 
+/**
+ * A new item with no tag leaves the column out, so adding items still
+ * works against a database that has not run 0011 yet.
+ */
+export function withoutEmptyTag(row: Record<string, unknown>): Record<string, unknown> {
+  if (row.tag != null) return row;
+  const { tag: _tag, ...rest } = row;
+  return rest;
+}
+
 export async function flush(): Promise<void> {
   if (DEMO || flushing || !navigator.onLine) return;
   flushing = true;
@@ -113,7 +123,7 @@ export async function flush(): Promise<void> {
       const op = ops[0];
       const res =
         op.kind === 'update' ? await supabase.from('tasks').update(op.patch).eq('id', op.taskId)
-        : op.kind === 'insert' ? await supabase.from('tasks').insert(op.row)
+        : op.kind === 'insert' ? await supabase.from('tasks').insert(withoutEmptyTag(op.row))
         : op.kind === 'patch' ? await supabase.from(op.table).update(op.patch).match(op.match)
         : await supabase.from(op.table).insert(op.row);
 
