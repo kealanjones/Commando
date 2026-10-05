@@ -41,7 +41,8 @@
     "test:memory-ui": "node tests/memory-ui.mjs",
     "test:organise": "node tests/organise.mjs",
     "test:focus": "tsx tests/focus.mjs",
-    "test:focus-ui": "node tests/focus-ui.mjs"
+    "test:focus-ui": "node tests/focus-ui.mjs",
+    "icons": "node scripts/icons.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
