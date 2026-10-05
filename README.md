@@ -231,6 +231,7 @@ system temp directory.
 | `npm run seed:dry` | Report what a seed would change, write nothing |
 | `npm run seed:sql` | Regenerate `supabase/seed.sql` for pasting into the dashboard |
 | `npm run build:preview` | Fold fixture mode into one self-contained `preview.html` |
+| `npm run icons` | Render `public/icon.svg` (the receipt) to the PNGs the manifest and iOS need |
 
 ---
 
