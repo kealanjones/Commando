@@ -1,4 +1,4 @@
-# Work Register
+# Check-out
 
 A personal register for five parallel workstreams. It answers one question
 first — **what must I do today?** — and keeps everything else broken down,

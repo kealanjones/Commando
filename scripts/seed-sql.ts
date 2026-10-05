@@ -68,7 +68,7 @@ for (const s of SECTIONS) {
 
 
 const sql = `-- ═══════════════════════════════════════════════════════════════════
--- Work Register — seed
+-- Check-out — seed
 --
 -- ${rows.length} items across ${SECTIONS.length} sections.
 -- Generated from data/register.seed.ts by scripts/seed-sql.ts. Do not edit

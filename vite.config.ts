@@ -94,8 +94,8 @@ export default defineConfig(({ mode }) => {
       injectRegister: false,
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Work Register',
-        short_name: 'Register',
+        name: 'Check-out',
+        short_name: 'Check-out',
         description: 'What must I do today, and which stream is falling behind.',
         theme_color: '#FFFFFF',
         background_color: '#FFFFFF',
