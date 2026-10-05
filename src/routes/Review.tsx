@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Close } from '@/components/icons';
 import { useToast } from '@/components/Toasts';
@@ -30,8 +30,6 @@ export function Review() {
   const decide = useDecide();
   const undo = useUndoDecision();
   const { unprint } = usePrinter();
-  /** The receipt line the last decision printed, so Undo takes it back. */
-  const lastLine = useRef<string | null>(null);
 
   const { data: streams = [] } = useStreams();
   const { data: sections = [] } = useSections();
@@ -63,8 +61,13 @@ export function Review() {
 
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       setExit(exitAs);
-      window.setTimeout(() => {
-        lastLine.current = decide(before, decision);
+      // The decision lands once the card has left. An Undo before then
+      // simply calls the card back; nothing has happened yet.
+      let line: string | null = null;
+      let landed = false;
+      const timer = window.setTimeout(() => {
+        landed = true;
+        line = decide(before, decision);
         setTally((t) => ({ ...t, [decision.kind]: (t[decision.kind] ?? 0) + 1, ...(reduced ? { _off: (t._off ?? 0) + 1 } : {}) }));
         setAt((n) => n + 1);
         setExit(null);
@@ -74,7 +77,10 @@ export function Review() {
       push({
         message: LABEL[decision.kind],
         actionLabel: 'Undo',
-        onAction: () => { undo(before); unprint(lastLine.current); setAt((n) => Math.max(0, n - 1)); },
+        onAction: () => {
+          if (!landed) { window.clearTimeout(timer); setExit(null); return; }
+          undo(before); unprint(line); setAt((n) => Math.max(0, n - 1));
+        },
         duration: 4000,
         replaceKey: 'decision',
       });

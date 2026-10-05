@@ -192,9 +192,8 @@ export function ReceiptSheet({ onClose, day: startDay }: { onClose: () => void; 
   const [said, setSaid] = useState<string | null>(null);
   const box = useRef<HTMLDivElement>(null);
   // The first receipt prints; the ones you flick to just arrive.
-  const flicked = useRef(false);
-  const arrive = flicked.current ? 'flick' : 'print';
-  useEffect(() => { flicked.current = true; }, []);
+  const firstDay = useRef(day);
+  const arrive = day === firstDay.current ? 'print' : 'flick';
 
   const back = stepDay(days, day, -1, today);
   const forward = stepDay(days, day, 1, today);
@@ -240,6 +239,7 @@ export function ReceiptSheet({ onClose, day: startDay }: { onClose: () => void; 
   };
   const share = async () => {
     const out = await shareReceipt(drawReceipt(r, label.toUpperCase()), `check-out-${day}`);
+    if (out === 'cancelled') return;
     say(out === 'shared' ? 'Shared' : out === 'saved' ? 'Saved' : 'Could not share');
   };
 

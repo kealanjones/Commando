@@ -369,8 +369,8 @@ function Run({ ids, tasks, streams, sections, today, onAgain, onClose }: {
     done: () => task && go('done', () => {
       announceTick();
       const undoPatch = patch(task, { done: true, cleared_at: null });
-      const stayed = (spentOn.current.get(task.id) ?? 0) + (staying !== null ? Date.now() - staying : 0);
-      const line = print('done', task, stayed / 60_000);
+      // go() has already stopped the clock, so the stay is all banked here.
+      const line = print('done', task, (spentOn.current.get(task.id) ?? 0) / 60_000);
       if (line) setPrinted((p) => [...p, line]);
       return () => { undoPatch(); unprint(line); };
     }, 'Done.'),

@@ -17,7 +17,9 @@
 
 create table if not exists public.receipt_lines (
   id         uuid primary key default gen_random_uuid(),
-  owner_id   uuid not null references public.profiles(id) on delete cascade,
+  -- Defaults to the caller, so a line can be queued offline with no
+  -- round trip to find out who you are.
+  owner_id   uuid not null default auth.uid() references public.profiles(id) on delete cascade,
   task_id    uuid references public.tasks(id) on delete set null,
   kind       text not null check (kind in ('done', 'returned', 'void')),
   title      text not null,

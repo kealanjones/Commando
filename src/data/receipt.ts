@@ -12,7 +12,6 @@ import { useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { enqueue } from '@/lib/queue';
-import { DEMO } from '@/lib/demo';
 import { missingTable } from '@/lib/dbError';
 import { linesFromTasks } from '@/lib/receipt';
 import { isoDay } from '@/lib/today';
@@ -89,11 +88,9 @@ export function usePrinter() {
         undone_at: null,
       };
       qc.setQueryData<ReceiptLine[]>(receiptKeys.lines, (old) => [...(old ?? []), line]);
-      if (!DEMO) {
-        void supabase.auth.getUser().then(({ data }) => {
-          enqueue({ kind: 'add', table: 'receipt_lines', row: { ...line, owner_id: data.user?.id ?? '' } });
-        });
-      }
+      // Queued at once, before any Undo can queue its patch; the table fills
+      // in owner_id from the session.
+      enqueue({ kind: 'add', table: 'receipt_lines', row: { ...line } });
       return line.id;
     },
     [qc, missing, streams],

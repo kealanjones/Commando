@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { useSections, useSoftDelete, useStreams, useTasks, useUpdateTask } from '@/data/store';
 import { useDecide } from '@/data/review';
 import { announceTick } from '@/lib/progress';
+import { usePrinter } from '@/data/receipt';
 import { pathOf } from '@/lib/tree';
 import {
   fmtDay, monthGrid, monthName, quickTargets, startOfDay, undated, weekAhead,
@@ -27,6 +28,7 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
   const decide = useDecide();
   const update = useUpdateTask();
   const { remove, restore } = useSoftDelete();
+  const { print, unprint } = usePrinter();
 
   const today = startOfDay();
   const [cursor, setCursor] = useState(() => ({ y: today.getFullYear(), m: today.getMonth() }));
@@ -83,22 +85,22 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
     const task = inHand;
     announceTick();
     update.mutate({ id: task.id, patch: { done: true, cleared_at: null } });
-    setLast({ kind: 'done', task });
+    setLast({ kind: 'done', task, line: print('done', task) });
   };
 
   const drop = () => {
     if (!inHand) return;
     const task = inHand;
     remove(task.id);
-    setLast({ kind: 'dropped', task });
+    setLast({ kind: 'dropped', task, line: print('void', task) });
   };
 
   /** Every decision on this screen is reversible from the same line. */
   const undo = () => {
     if (!last) return;
     if (last.kind === 'dated') update.mutate({ id: last.task.id, patch: { due: null } });
-    else if (last.kind === 'done') update.mutate({ id: last.task.id, patch: { done: false } });
-    else restore(last.task);
+    else if (last.kind === 'done') { update.mutate({ id: last.task.id, patch: { done: false } }); unprint(last.line); }
+    else { restore(last.task); unprint(last.line); }
     setLast(null);
   };
 
@@ -293,8 +295,8 @@ export function Plan({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
 
 type Done =
   | { kind: 'dated'; task: Task; due: string }
-  | { kind: 'done'; task: Task }
-  | { kind: 'dropped'; task: Task };
+  | { kind: 'done'; task: Task; line: string | null }
+  | { kind: 'dropped'; task: Task; line: string | null };
 
 const countAt = (onDay: Map<string, Task[]>, iso: string) => onDay.get(iso)?.length ?? 0;
 const loadAt = (week: { iso: string; load: number }[], iso: string) =>

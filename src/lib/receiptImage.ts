@@ -117,13 +117,14 @@ export function drawReceipt(r: Receipt, label: string): HTMLCanvasElement {
 }
 
 /** Hands the picture to the share sheet where there is one, else downloads it. */
-export async function shareReceipt(canvas: HTMLCanvasElement, name: string): Promise<'shared' | 'saved' | 'failed'> {
+export async function shareReceipt(canvas: HTMLCanvasElement, name: string): Promise<'shared' | 'saved' | 'cancelled' | 'failed'> {
   const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
   if (!blob) return 'failed';
   const file = new File([blob], `${name}.png`, { type: 'image/png' });
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
   if (nav.share && nav.canShare?.({ files: [file] })) {
-    try { await nav.share({ files: [file], title: name }); return 'shared'; } catch { return 'failed'; }
+    try { await nav.share({ files: [file], title: name }); return 'shared'; }
+    catch (e) { return (e as Error).name === 'AbortError' ? 'cancelled' : 'failed'; }
   }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
