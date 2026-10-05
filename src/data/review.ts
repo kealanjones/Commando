@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { DEMO } from '@/lib/demo';
 import { useTasks, useUpdateTask, useSoftDelete } from './store';
+import { usePrinter } from './receipt';
 import { announceTick } from '@/lib/progress';
 import type { Decision, ReviewCard, ReviewMode, ReviewReason, Task } from '@/lib/types';
 
@@ -127,31 +128,40 @@ export function useReviewStatus() {
   };
 }
 
-/** Apply one decision. Every one of them is reversible. */
+/**
+ * Apply one decision. Every one of them is reversible. Returns the id of
+ * the receipt line it printed, if it printed one, for the undo.
+ */
 export function useDecide() {
   const update = useUpdateTask();
   const { remove } = useSoftDelete();
+  const { print } = usePrinter();
 
   return useCallback(
-    (task: Task, decision: Decision) => {
+    (task: Task, decision: Decision): string | null => {
       const now = new Date().toISOString();
       switch (decision.kind) {
         case 'date':
-          return update.mutate({ id: task.id, patch: { due: decision.due, reviewed_at: now } });
+          update.mutate({ id: task.id, patch: { due: decision.due, reviewed_at: now } });
+          return null;
         case 'drop':
-          return remove(task.id);
+          remove(task.id);
+          return print('void', task);
         case 'done':
           announceTick();
-          return update.mutate({ id: task.id, patch: { done: true, cleared_at: null, reviewed_at: now } });
+          update.mutate({ id: task.id, patch: { done: true, cleared_at: null, reviewed_at: now } });
+          return print('done', task);
         case 'chased':
           // Chasing is contact, not completion: it resets the clock without
           // pretending the thing is finished.
-          return update.mutate({ id: task.id, patch: { reviewed_at: now } });
+          update.mutate({ id: task.id, patch: { reviewed_at: now } });
+          return null;
         case 'keep':
-          return update.mutate({ id: task.id, patch: { reviewed_at: now } });
+          update.mutate({ id: task.id, patch: { reviewed_at: now } });
+          return null;
       }
     },
-    [update, remove],
+    [update, remove, print],
   );
 }
 

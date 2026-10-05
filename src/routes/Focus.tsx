@@ -6,12 +6,15 @@ import { useToast } from '@/components/Toasts';
 import { useDay, usePeople, useSections, useSoftDelete, useStreams, useTasks, useUpdateTask } from '@/data/store';
 import { quickDates, useTaskPeople } from '@/data/review';
 import { useMemory } from '@/data/memory';
+import { usePrinter, useReceiptLines } from '@/data/receipt';
+import { ReceiptPaper } from '@/components/Progress';
+import { buildReceipt, linesFromTasks } from '@/lib/receipt';
 import { announceTick } from '@/lib/progress';
 import { prefersReducedMotion } from '@/lib/expand';
 import {
-  ORDER, WHICH, clock, dueLine, minutes, pile, scopeFrom, scopeParams, type FocusScope,
+  ORDER, WHICH, clock, dueLine, pile, scopeFrom, scopeParams, type FocusScope,
 } from '@/lib/focus';
-import type { Section, Stream, Task } from '@/lib/types';
+import type { ReceiptLine, Section, Stream, Task } from '@/lib/types';
 
 type Outcome = 'done' | 'snoozed' | 'gone';
 type Exit = 'done' | 'later' | 'snoozed' | 'gone';
@@ -34,7 +37,7 @@ const ageOf = (iso: string, today: string) =>
   Math.max(0, Math.round((new Date(`${today}T00:00:00`).getTime() - new Date(iso.slice(0, 10) + 'T00:00:00').getTime()) / 86_400_000));
 
 /**
- * One by one: a pile you choose, then each item on its own, large, with
+ * Check out: a pile you choose, then each item on its own, large, with
  * everything known about it. Done, stay with it, later, snooze, and the
  * smaller moves, all from the keys too.
  */
@@ -72,7 +75,7 @@ export function Focus() {
   };
 
   return (
-    <div className="fx" data-phase={phase} role="dialog" aria-modal="true" aria-label="One by one">
+    <div className="fx" data-phase={phase} role="dialog" aria-modal="true" aria-label="Check out">
       {phase === 'setup' && (
         <Setup
           scope={scope} setScope={setScope} streams={streams} sections={sections}
@@ -142,8 +145,8 @@ function Setup({ scope, setScope, streams, sections, preview, today, onStart, on
   return (
     <div className="fx__setup">
       <header className="fx__top">
-        <span className="label">One by one</span>
-        <button type="button" className="fx__close" onClick={onClose} aria-label="Close one by one"><Close /></button>
+        <span className="label">Check out</span>
+        <button type="button" className="fx__close" onClick={onClose} aria-label="Close check out"><Close /></button>
       </header>
 
       <div className="fx__setupgrid">
@@ -248,6 +251,12 @@ function Run({ ids, tasks, streams, sections, today, onAgain, onClose }: {
   const { data: people = [] } = usePeople();
   const { data: links = [] } = useTaskPeople();
   const { notes: memory } = useMemory();
+  const { print, unprint, missing: noRoll } = usePrinter();
+  const { lines: roll } = useReceiptLines();
+  /** The receipt lines this run has printed. */
+  const [printed, setPrinted] = useState<string[]>([]);
+  /** Time stayed with each item, for its line on the receipt. */
+  const spentOn = useRef(new Map<string, number>());
 
   const [queue, setQueue] = useState<string[]>(ids);
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
@@ -285,9 +294,13 @@ function Run({ ids, tasks, streams, sections, today, onAgain, onClose }: {
   }, [staying]);
 
   const stopStaying = useCallback(() => {
-    if (staying !== null) setSpent((s) => s + (Date.now() - staying));
+    if (staying !== null) {
+      const ms = Date.now() - staying;
+      setSpent((s) => s + ms);
+      if (task) spentOn.current.set(task.id, (spentOn.current.get(task.id) ?? 0) + ms);
+    }
     setStaying(null);
-  }, [staying]);
+  }, [staying, task]);
 
   const snapshot = (revert?: () => void): Step => ({ queue, outcomes, passed, revert });
 
@@ -355,14 +368,23 @@ function Run({ ids, tasks, streams, sections, today, onAgain, onClose }: {
   const actions = {
     done: () => task && go('done', () => {
       announceTick();
-      return patch(task, { done: true, cleared_at: null });
+      const undoPatch = patch(task, { done: true, cleared_at: null });
+      const stayed = (spentOn.current.get(task.id) ?? 0) + (staying !== null ? Date.now() - staying : 0);
+      const line = print('done', task, stayed / 60_000);
+      if (line) setPrinted((p) => [...p, line]);
+      return () => { undoPatch(); unprint(line); };
     }, 'Done.'),
     later: () => task && go('later', () => undefined, 'Later. It comes round again.'),
     snooze: (iso: string, label: string) => task && go('snoozed', () => patch(task, { due: iso }), `Snoozed to ${label.toLowerCase()}.`),
     remove: () => {
       if (!task) return;
       const copy = { ...task };
-      go('gone', () => { remove(copy.id); return () => restore(copy); }, 'Deleted.');
+      go('gone', () => {
+        remove(copy.id);
+        const line = print('void', copy);
+        if (line) setPrinted((p) => [...p, line]);
+        return () => { restore(copy); unprint(line); };
+      }, 'Deleted.');
     },
     pin: () => task && tweak(() => patch(task, { do_now: !task.do_now }), task.do_now ? 'Off Do now.' : 'On Do now.'),
     move: (s: Section) => task && tweak(
@@ -410,7 +432,17 @@ function Run({ ids, tasks, streams, sections, today, onAgain, onClose }: {
 
   if (finished) {
     const count = (o: Outcome) => Object.values(outcomes).filter((x) => x === o).length;
-    return <End done={count('done')} snoozed={count('snoozed')} gone={count('gone')} total={ids.length} spent={spent} onAgain={onAgain} onClose={onClose} />;
+    // The run's own receipt. Without the roll (0013 not run yet) it is
+    // read off the items instead.
+    const mine = new Set(printed);
+    const lines: ReceiptLine[] = noRoll
+      ? linesFromTasks(ids.filter((id) => outcomes[id] === 'done').map((id) => byId.get(id)!).filter(Boolean),
+          (sid) => streams.find((s) => s.id === sid)?.code ?? '')
+      : roll.filter((l) => mine.has(l.id));
+    return (
+      <End done={count('done')} snoozed={count('snoozed')} gone={count('gone')} total={ids.length} spent={spent}
+        lines={lines} today={today} onAgain={onAgain} onClose={onClose} />
+    );
   }
 
   const doneCount = Object.values(outcomes).filter((o) => o === 'done').length;
@@ -419,7 +451,7 @@ function Run({ ids, tasks, streams, sections, today, onAgain, onClose }: {
   return (
     <div className="fx__run" data-staying={staying !== null ? '' : undefined}>
       <header className="fx__top fx__fade">
-        <span className="label">One by one</span>
+        <span className="label">Check out</span>
         {ids.length <= MAX_TICKS ? (
           <ol className="fx__ticks" aria-hidden="true">
             {ids.map((id) => (
@@ -670,9 +702,9 @@ function MovePicker({ streams, sections, current, onPick, onCancel }: {
 
 // ── the end ────────────────────────────────────────────────────────
 
-function End({ done, snoozed, gone, total, spent, onAgain, onClose }: {
+function End({ done, snoozed, gone, total, spent, lines, today, onAgain, onClose }: {
   done: number; snoozed: number; gone: number; total: number; spent: number;
-  onAgain: () => void; onClose: () => void;
+  lines: ReceiptLine[]; today: string; onAgain: () => void; onClose: () => void;
 }) {
   const again = useRef<HTMLButtonElement>(null);
   useEffect(() => { again.current?.focus({ preventScroll: true }); }, []);
@@ -682,29 +714,35 @@ function End({ done, snoozed, gone, total, spent, onAgain, onClose }: {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const lines: [string, string | number][] = [
-    ['Done', done],
-    ['Snoozed', snoozed],
-    ['Deleted', gone],
-    ['Left as they were', Math.max(0, total - done - snoozed - gone)],
-  ];
-  if (spent > 0) lines.push(['Time staying with things', minutes(spent)]);
+  const r = buildReceipt(lines, today);
+  const left = Math.max(0, total - done - snoozed - gone);
+  const when = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const stayed = Math.round(spent / 60_000);
 
   return (
     <div className="fx__end">
-      <span className="label fx__endkicker">End of the run</span>
-      <div className="fx__endnum">{done}</div>
-      <h2 className="fx__endh">
-        {done === 0 ? 'All looked at.' : done === total ? 'Every one done.' : `${done} done. The list is ${done + gone} lighter.`}
-      </h2>
-      <ul className="fx__ledger">
-        {lines.map(([k, v], i) => (
-          <li key={k} style={{ '--i': i } as React.CSSProperties}><span>{k}</span><b>{v}</b></li>
-        ))}
-      </ul>
-      <div className="fx__endacts">
-        <button ref={again} type="button" className="fx__start" onClick={onAgain}>Another pile</button>
-        <button type="button" className="fx__opt fx__opt--quiet" onClick={onClose}>Back to the list</button>
+      <div className="fx__endtext">
+        <span className="label fx__endkicker">End of the run</span>
+        <div className="fx__endnum">{done}</div>
+        <h2 className="fx__endh">
+          {done === 0 ? 'All looked at.' : done === total ? 'Every one done.' : `${done} done. The list is ${done + gone} lighter.`}
+        </h2>
+        <p className="fx__endline">
+          {[
+            snoozed ? `${snoozed} snoozed` : '',
+            gone ? `${gone} deleted` : '',
+            left ? `${left} left as ${left === 1 ? 'it was' : 'they were'}` : '',
+            stayed ? `${stayed} min staying with things` : '',
+          ].filter(Boolean).join(' · ') || 'Nothing put off.'}
+        </p>
+        <div className="fx__endacts">
+          <button ref={again} type="button" className="fx__start" onClick={onAgain}>Another pile</button>
+          <button type="button" className="fx__opt fx__opt--quiet" onClick={onClose}>Back to the list</button>
+        </div>
+      </div>
+      <div className="fx__endpaper receipt">
+        <div className="receipt__slot" aria-hidden="true" />
+        <ReceiptPaper receipt={r} label={`THIS RUN · ${when}`} thanks="Thank you. Same again tomorrow." />
       </div>
     </div>
   );

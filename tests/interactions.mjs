@@ -173,8 +173,10 @@ ok(total, 'app shell served');
   ok((await d.locator('.task[data-selected]').count()) === 1, 'a row is selected');
   await d.locator('.daytally--index').click();
   await d.waitForSelector('.receipt');
-  ok((await d.locator('.receipt__lines li').count()) === 5, 'the receipt lists the five');
-  ok((await d.locator('.receipt__total').textContent()).includes('5'), 'with a total');
+  // Six ticks and one return: a till never un-prints, so the slip shows.
+  ok((await d.locator('.receipt__lines li[data-kind="done"]').count()) === 6, 'the receipt lists every tick');
+  ok((await d.locator('.receipt__lines li[data-kind="returned"]').count()) === 1, 'and the one returned');
+  ok((await d.locator('.receipt__total dd').textContent()) === '5', 'with a total of five');
   ok(await d.evaluate(() => document.activeElement?.classList.contains('receipt__tear')), 'focus moves into the receipt');
   for (let i = 0; i < 3; i++) await d.keyboard.press('Tab');
   ok(await d.evaluate(() => Boolean(document.activeElement?.closest('.receipt'))), 'and Tab keeps it there');

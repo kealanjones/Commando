@@ -1,4 +1,4 @@
-/** One by one in a real browser, in fixture mode. */
+/** Check out in a real browser, in fixture mode. */
 import { launch, out } from './browser.mjs';
 
 const base = 'http://127.0.0.1:4173';
@@ -15,9 +15,9 @@ await p.goto(`${base}/`, { waitUntil: 'networkidle' });
 await settle(p, 500);
 
 // ── choosing the pile ──────────────────────────────────────────────
-await p.getByRole('button', { name: 'Go through items one by one' }).click();
+await p.getByRole('button', { name: 'Check out items one by one' }).click();
 await p.waitForSelector('.fx__setup');
-ok(new URL(p.url()).pathname === '/focus', 'One by one opens from the bar at a desk');
+ok(new URL(p.url()).pathname === '/checkout', 'Check out opens from the bar at a desk');
 ok(!(await p.locator('.index').count()), 'it takes the whole screen: nothing else in sight');
 
 const count = async () => Number((await p.locator('.fx__count .num__in').textContent()).trim());
@@ -143,7 +143,7 @@ await p.keyboard.press('Escape');
 // ── a whole run, from a project page ───────────────────────────────
 await p.goto(`${base}/projects/per`, { waitUntil: 'networkidle' });
 await settle(p, 400);
-await p.getByRole('link', { name: 'One by one' }).click();
+await p.getByRole('link', { name: 'Check out' }).click();
 await p.waitForSelector('.fx__setup');
 ok((await p.locator('.fx__chip[aria-pressed="true"]').allTextContents()).includes('All of Personal'), 'from a project page, the project is already chosen');
 const n = await count();
@@ -153,6 +153,8 @@ for (let i = 0; i < n; i++) { await settle(p, 120); await p.keyboard.press('d');
 await p.waitForSelector('.fx__end');
 ok((await p.locator('.fx__endnum').textContent()).trim() === String(n), `the end says how many were done (${n})`);
 ok((await p.locator('.fx__endh').textContent()).includes('Every one done'), 'and says so');
+ok((await p.locator('.fx__endpaper .receipt__lines li').count()) === n, 'the run prints its own receipt');
+ok((await p.locator('.fx__endpaper .receipt__total dd').textContent()) === String(n), 'with the total');
 await p.locator('.toast button', { hasText: 'Undo' }).click();
 await settle(p, 900);
 ok(await p.locator('.fx__card').isVisible(), 'undo at the end brings the last card back');
@@ -165,10 +167,10 @@ await p.getByRole('button', { name: 'Another pile' }).click();
 await settle(p, 300);
 ok(await p.locator('.fx__setup').isVisible(), 'another pile goes back to choosing');
 ok((await count()) === 0, 'and that project is now clear');
-await p.getByRole('button', { name: 'Close one by one' }).focus();
+await p.getByRole('button', { name: 'Close check out' }).focus();
 await p.keyboard.press('Enter');
 await settle(p, 400);
-ok(new URL(p.url()).pathname !== '/focus', 'Enter on a focused control does what that control does');
+ok(new URL(p.url()).pathname !== '/checkout', 'Enter on a focused control does what that control does');
 await ctx.close();
 
 // ── a phone ────────────────────────────────────────────────────────
@@ -177,7 +179,7 @@ const q = await phone.newPage();
 q.on('pageerror', (e) => fail.push('PAGEERROR ' + e.message));
 await q.goto(`${base}/`, { waitUntil: 'networkidle' });
 await settle(q, 400);
-await q.getByRole('button', { name: 'Go through items one by one' }).click();
+await q.getByRole('button', { name: 'Check out items one by one' }).click();
 await q.waitForSelector('.fx__setup');
 await settle(q);
 const wide = () => q.evaluate(() => document.querySelector('.fx').scrollWidth <= window.innerWidth);

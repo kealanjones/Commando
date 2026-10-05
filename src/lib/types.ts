@@ -169,6 +169,22 @@ export interface MemoryEntry {
   deleted_at?: string | null;
 }
 
+/** One line on the till roll (0013). */
+export interface ReceiptLine {
+  id: string;
+  task_id: string | null;
+  kind: 'done' | 'returned' | 'void';
+  title: string;
+  code: string;
+  stream_id: string | null;
+  /** Minutes stayed with it in Check out, if any. */
+  minutes: number | null;
+  at: string;
+  /** The local day it belongs to, YYYY-MM-DD. */
+  day: string;
+  undone_at: string | null;
+}
+
 /** A meeting as the memory sees it. */
 export interface MemoryMeeting {
   id: string;

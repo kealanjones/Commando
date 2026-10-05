@@ -238,6 +238,46 @@ exception
 end $$;
 select assert(true, 'memory is never hard-deleted from the app');
 
+-- ── the till roll is personal, and a record ────────────────────────
+reset role;
+insert into public.receipt_lines (owner_id, kind, title, code, day) values
+  ('11111111-1111-1111-1111-111111111111', 'done', 'Sent the tiers', 'ISODP', '2026-10-05');
+set role authenticated;
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+select assert((select count(*) from public.receipt_lines) = 1, 'owner sees their own receipt');
+insert into public.receipt_lines (owner_id, kind, title, code, day) values
+  ('11111111-1111-1111-1111-111111111111', 'void', 'Old thing', 'DIR', '2026-10-05');
+select assert((select count(*) from public.receipt_lines where kind = 'void') = 1, 'and can print a line on it');
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+select assert((select count(*) from public.receipt_lines) = 0, 'another user sees none of it');
+do $$
+begin
+  insert into public.receipt_lines (owner_id, kind, title, day)
+  values ('11111111-1111-1111-1111-111111111111', 'done', 'Planted', '2026-10-05');
+  raise exception 'printed on someone else''s receipt';
+exception
+  when insufficient_privilege then null;
+end $$;
+select assert(true, 'and cannot print on it');
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+do $$
+begin
+  delete from public.receipt_lines;
+  raise exception 'a hard delete was allowed';
+exception
+  when insufficient_privilege then null;
+end $$;
+select assert(true, 'a receipt line is never removed, only marked undone');
+do $$
+begin
+  insert into public.receipt_lines (owner_id, kind, title, day)
+  values ('11111111-1111-1111-1111-111111111111', 'refund', 'Nope', '2026-10-05');
+  raise exception 'a fourth kind of line was accepted';
+exception
+  when check_violation then null;
+end $$;
+select assert(true, 'a line is done, returned or void: nothing else');
+
 -- ── RLS is on and forced everywhere ────────────────────────────────
 select assert(
   (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace

@@ -85,9 +85,19 @@ A ticked item stays where it was, struck through, as a record of what got
 done. **Clear done** (next to the count, and on a stream or a person) takes
 the struck ones off the page; they are still under a stream's **Done**.
 
-Under the date, each tick draws a tally mark. Press them for today's receipt:
-everything you finished, when, and a total, ready to copy. Pass 5, 10, 15, 20
-or 30 in a day and a stamp comes down on the page. It all resets each morning.
+**Check-out is a till.** Work comes in through the door (meetings, your own
+notes), sits on the shelves (projects and sub-focuses), and you ring it
+through one item at a time. Every tick prints a line on the receipt.
+
+Under the date, each tick draws a tally mark, and the **till** below it feeds
+out one more line of today's receipt. Press either for the whole thing:
+everything you rang through, when, how long you stayed with it, a subtotal
+per project, and a real barcode of the day. Un-ticking prints **RETURNED**
+and deleting prints **VOID**, the way a till never un-prints; an Undo in time
+takes the line back instead. **Copy** gives the text; **Share** gives a
+picture. The roll keeps every day for ever: flick back with the arrows
+(or ← →). Pass 5, 10, 15, 20 or 30 in a day and a stamp comes down on the
+page. The tally resets each morning; the roll does not.
 
 ### Work and personal
 
@@ -105,9 +115,9 @@ anything untouched for three weeks. Each gets one decision — **give it a date*
 **done**, **drop it**, or **leave it** — and every decision can be undone. A
 decided item is left alone for a month.
 
-### One by one
+### Check out
 
-**One by one** (the bar at a desk, the card icon on a phone, **O** anywhere,
+**Check out** (the bar at a desk, the card icon on a phone, **C** anywhere,
 or a project's own page) takes the whole screen and shows one item at a
 time, large, with everything known about it: where it is filed, when it is
 due, how long it has been on the list, who it waits on, its notes, and what
@@ -128,8 +138,8 @@ date or oldest first. Then, for each item:
 | **Delete** (Backspace, then Enter) | Asks first |
 | **Undo** (Z) | Every step can be taken back |
 
-The end of the run says what was done, snoozed and deleted, and how long you
-stayed with things.
+The end of the run prints the run's own receipt: what was done, how long you
+stayed with each thing, and what was voided.
 
 ### Memory
 
@@ -215,8 +225,10 @@ Unit suites run directly; browser suites need the demo build being served
 | `npm run test:paste` | Copy prompt → paste reply → triage |
 | `npm run test:find` | Search in the browser |
 | `npm run test:groups` | Areas in the browser: reading, filing, finding |
-| `npm run test:focus` | One by one: choosing the pile, its order, dates and the clock |
-| `npm run test:focus-ui` | One by one in the browser: every decision, undo, a whole run, a phone |
+| `npm run test:focus` | Check out: choosing the pile, its order, dates and the clock |
+| `npm run test:focus-ui` | Check out in the browser: every decision, undo, a whole run and its receipt, a phone |
+| `npm run test:receipt` | The till roll: totals, returns and voids, subtotals, the roll's days, Code 39 |
+| `npm run test:receipt-ui` | The till in the browser: lines as you tick, RETURNED and VOID, flicking through the roll |
 | `./tests/rls.sh` | Migrations on a real Postgres: the RLS proof, and 0009 on old data |
 | `npm run test:shots` | Screenshot the main routes at 375px and 1280px |
 
@@ -279,6 +291,7 @@ supabase db push
 | `0010_cleared.sql` | Done items stay on the page, struck through, until **Clear done** |
 | `0011_two_levels.sql` | Two levels: projects and sub-focuses. Grouped sections fold into their group; items keep the old name as a tag |
 | `0012_memory.sql` | Memory: living notes per project, person and topic, built from every meeting |
+| `0013_receipts.sql` | The till roll: a line per tick, return and void, kept for ever, back-filled from everything already done |
 
 ### 3. Sign in once
 

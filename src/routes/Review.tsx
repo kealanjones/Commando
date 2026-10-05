@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Close } from '@/components/icons';
 import { useToast } from '@/components/Toasts';
@@ -6,6 +6,7 @@ import { usePeople, useSections, useStreams } from '@/data/store';
 import {
   SESSION_SIZE, quickDates, useDecide, useReviewQueue, useUndoDecision,
 } from '@/data/review';
+import { usePrinter } from '@/data/receipt';
 import type { Decision, ReviewCard, ReviewMode, ReviewReason, Task } from '@/lib/types';
 
 /** What the card says about why it is in front of you. */
@@ -28,6 +29,9 @@ export function Review() {
   const { push } = useToast();
   const decide = useDecide();
   const undo = useUndoDecision();
+  const { unprint } = usePrinter();
+  /** The receipt line the last decision printed, so Undo takes it back. */
+  const lastLine = useRef<string | null>(null);
 
   const { data: streams = [] } = useStreams();
   const { data: sections = [] } = useSections();
@@ -60,7 +64,7 @@ export function Review() {
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       setExit(exitAs);
       window.setTimeout(() => {
-        decide(before, decision);
+        lastLine.current = decide(before, decision);
         setTally((t) => ({ ...t, [decision.kind]: (t[decision.kind] ?? 0) + 1, ...(reduced ? { _off: (t._off ?? 0) + 1 } : {}) }));
         setAt((n) => n + 1);
         setExit(null);
@@ -70,12 +74,12 @@ export function Review() {
       push({
         message: LABEL[decision.kind],
         actionLabel: 'Undo',
-        onAction: () => { undo(before); setAt((n) => Math.max(0, n - 1)); },
+        onAction: () => { undo(before); unprint(lastLine.current); setAt((n) => Math.max(0, n - 1)); },
         duration: 4000,
         replaceKey: 'decision',
       });
     },
-    [card, decide, undo, push],
+    [card, decide, undo, unprint, push],
   );
 
   if (deck.length === 0) return <Empty mode={mode} who={who} home={home} />;

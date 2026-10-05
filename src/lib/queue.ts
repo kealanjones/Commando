@@ -24,7 +24,7 @@ export type NewOp =
   | { kind: 'patch'; table: Table; match: Record<string, string>; patch: Record<string, unknown> }
   | { kind: 'add'; table: Table; row: Record<string, unknown> };
 
-type Table = 'tasks' | 'streams' | 'sections' | 'memory_notes' | 'memory_entries';
+type Table = 'tasks' | 'streams' | 'sections' | 'memory_notes' | 'memory_entries' | 'receipt_lines';
 
 /** What is stored, once the queue has stamped it. */
 export type QueuedOp = NewOp & { id: string; at: number; tries: number };
