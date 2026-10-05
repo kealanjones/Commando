@@ -41,7 +41,7 @@ export function SignIn() {
 
   return (
     <div className="setup">
-      <h1>Work Register</h1>
+      <h1>Check-out</h1>
       <p style={{ marginTop: 0 }}>
         What must I do today, and which stream is falling behind.
       </p>

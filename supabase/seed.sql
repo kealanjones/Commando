@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════
--- Work Register — seed
+-- Check-out — seed
 --
 -- 290 items across 39 sections.
 -- Generated from data/register.seed.ts by scripts/seed-sql.ts. Do not edit
