@@ -1420,6 +1420,40 @@ body.is-carded .page { transform: scale(.99); filter: saturate(.8); }
 [data-paper='notebook'] .daytally__gate path { stroke-width: 2.4; }
 [data-paper='notebook'] .daytally__caption { font-family: var(--hand); font-size: 15px; letter-spacing: 0; text-transform: none; }
 
+/* The till: a strip of today's receipt feeding out under the tally.
+   Each tick prints one more line. */
+.till {
+  display: block; width: 100%; margin-top: 14px; padding: 0; border: 0; background: none; cursor: pointer;
+  text-align: left; color: #1a1a1a; font-family: 'Courier Prime', 'Geist Mono', ui-monospace, monospace;
+}
+.till__slot {
+  display: block; height: 7px; margin: 0 -4px; border-radius: 3px; background: #1b1c1f; position: relative; z-index: 1;
+  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, .08);
+}
+.till__paper {
+  --roll: #FBFAF6;
+  display: flex; flex-direction: column; gap: 3px; margin-top: -3px; padding: 10px 10px 12px;
+  background: var(--roll); font-size: 11px; line-height: 1.4;
+  box-shadow: 0 10px 20px -14px rgba(0, 0, 0, .5);
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 6px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 9px 6px repeat-x;
+          mask: linear-gradient(#000 0 0) top / 100% calc(100% - 6px) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 9px 6px repeat-x;
+  transition: transform var(--t-quick) var(--spring);
+}
+.till:hover .till__paper { transform: translateY(1px); }
+.till:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.till__head { font-weight: 700; letter-spacing: .18em; text-transform: uppercase; font-size: 10px; text-align: center; margin-bottom: 4px; }
+.till__earlier, .till__empty { color: #777; font-size: 10.5px; }
+.till__empty { text-align: center; padding: 2px 0; }
+.till__line { display: grid; grid-template-columns: 34px 1fr; gap: 6px; animation: till-feed 420ms var(--ease) both; }
+@keyframes till-feed { from { opacity: 0; transform: translateY(-8px); clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.till__time { color: #777; font-size: 10.5px; }
+.till__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.till__line[data-kind='void'] .till__title, .till__line[data-kind='returned'] .till__title { color: #8a1d17; font-weight: 700; }
+[data-light='dark'] .till__paper { --roll: #EDEBE4; }
+[data-paper='notebook'] .till__paper { --roll: #FFFDF6; }
+
 /* The receipt: a till roll printed out of a slot. */
 .scrim--receipt { z-index: 85; align-items: center; padding: max(16px, var(--safe-t)) 16px max(16px, var(--safe-b)); }
 .receipt { position: relative; width: min(340px, 100%); display: flex; flex-direction: column; align-items: stretch; max-height: 100%; }
@@ -1439,8 +1473,10 @@ body.is-carded .page { transform: scale(.99); filter: saturate(.8); }
           mask: linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat,
     conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 12px 8px repeat-x;
   transform-origin: top center;
-  animation: print 1100ms cubic-bezier(.3, .7, .2, 1) both;
 }
+.receipt__paper--print { animation: print 1100ms cubic-bezier(.3, .7, .2, 1) both; }
+.receipt__paper--flick { animation: flick 300ms var(--ease) both; }
+@keyframes flick { from { opacity: 0; transform: translateY(-14px); } }
 @keyframes print {
   0%   { clip-path: inset(0 0 100% 0); transform: translateY(-40px); }
   30%  { clip-path: inset(0 0 62% 0); transform: translateY(-24px); }
@@ -1484,6 +1520,27 @@ body.is-carded .page { transform: scale(.99); filter: saturate(.8); }
 }
 .receipt__acts .btn { flex: none; min-width: 110px; }
 [data-light='dark'] .receipt__paper { --roll: #EDEBE4; }
+
+/* Flicking through the roll. */
+.receipt__nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.receipt__step {
+  width: 30px; height: 30px; border: 1px solid #bbb; background: none; color: #1a1a1a; cursor: pointer;
+  font-size: 18px; line-height: 1; font-family: inherit; display: grid; place-items: center;
+  transition: background var(--t-quick), transform var(--t-quick) var(--spring);
+}
+.receipt__step:hover:not(:disabled) { background: rgba(0, 0, 0, .06); }
+.receipt__step:active:not(:disabled) { transform: scale(.92); }
+.receipt__step:disabled { opacity: .3; cursor: default; }
+.receipt__place { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #666; text-align: center; }
+.receipt__lines li[data-kind='void'] .receipt__title, .receipt__lines li[data-kind='returned'] .receipt__title { color: #8a1d17; }
+.receipt__mark {
+  display: inline-block; margin-right: 6px; padding: 0 4px; border: 1.5px solid #8a1d17; color: #8a1d17;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; transform: rotate(-3deg);
+}
+.receipt__subs { margin-top: 8px !important; padding-top: 6px; border-top: 1px dotted #bbb; color: #555; font-size: 12px; }
+.receipt__bars { display: block; height: 38px; width: calc(100% - 36px); margin: 14px auto 2px; fill: #1a1a1a; }
+.receipt__day { text-align: center; font-size: 10px; letter-spacing: .2em; color: #666; margin-bottom: 8px !important; }
+.receipt__said { position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%); margin: 0; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--on-ink); background: var(--ink); padding: 3px 10px; animation: rise 200ms var(--ease) both; }
 
 /* The rubber stamp. */
 .stamp {
@@ -1972,10 +2029,15 @@ body:has(.fx) .toasts { bottom: calc(var(--safe-b) + 20px); }
 
 /* ── the end ───────────────────────────────────────────────────── */
 .fx__end {
-  display: grid; align-content: center; justify-items: start; gap: 14px; max-width: 560px; min-height: calc(100vh - 60px);
-  padding-block: 24px;
+  display: grid; align-content: center; align-items: center; gap: 40px; min-height: calc(100vh - 60px);
+  grid-template-columns: minmax(0, 1fr) 340px; padding-block: 24px;
 }
-.fx__end > * { animation: fx-lift 520ms var(--ease) both; }
+@media (max-width: 859px) { .fx__end { grid-template-columns: minmax(0, 1fr); min-height: 0; gap: 28px; } }
+.fx__endtext { display: grid; justify-items: start; gap: 14px; max-width: 560px; min-width: 0; }
+.fx__endtext > * { animation: fx-lift 520ms var(--ease) both; }
+.fx__endline { margin: 0; color: var(--pencil); font-size: 15px; animation-delay: 300ms !important; }
+.fx__endpaper { width: min(340px, 100%); justify-self: center; animation: fx-lift 600ms var(--ease) 320ms both; }
+.fx__endpaper .receipt__paper { max-height: min(70vh, 640px); }
 .fx__endnum {
   font-family: var(--title); font-weight: 700; font-size: clamp(96px, 20vw, 168px); line-height: .85; letter-spacing: -.06em;
   animation: fx-count 760ms var(--spring) 80ms both !important;
@@ -1985,13 +2047,6 @@ body:has(.fx) .toasts { bottom: calc(var(--safe-b) + 20px); }
   margin: 0; font-family: var(--title); font-weight: var(--title-weight); font-size: clamp(22px, 3.4vw, 30px);
   letter-spacing: -.02em; text-wrap: balance; animation-delay: 180ms !important;
 }
-.fx__ledger { list-style: none; margin: 8px 0 0; padding: 0; width: 100%; border-top: 2px solid var(--rule); animation: none !important; }
-.fx__ledger li {
-  display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--hair);
-  font-variant-numeric: tabular-nums; animation: fx-lift 420ms var(--ease) both; animation-delay: calc(260ms + var(--i, 0) * 70ms);
-}
-.fx__ledger li:last-child { border-bottom: 3px double var(--rule); }
-.fx__ledger b { font-weight: 600; }
 .fx__endacts { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; animation-delay: 560ms !important; }
 
 @media (prefers-reduced-motion: reduce) {

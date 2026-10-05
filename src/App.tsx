@@ -35,6 +35,7 @@ import {
   useCreateTask, usePeople, useRealtime, useSections, useSoftDelete, useStreams, useTasks, useUpdateTask,
 } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
+import { usePrinter } from '@/data/receipt';
 import type { Task } from '@/lib/types';
 
 export default function App() {
@@ -83,6 +84,7 @@ function Register({ email }: { email: string }) {
   const update = useUpdateTask();
   const create = useCreateTask();
   const { remove, restore } = useSoftDelete();
+  const { print, unprint } = usePrinter();
 
   /** The card, on a narrow screen. */
   const [editing, setEditing] = useState<Task | null>(null);
@@ -119,15 +121,17 @@ function Register({ email }: { email: string }) {
       const next = !task.done;
       if (next) announceTick();
       update.mutate({ id: task.id, patch: { done: next, cleared_at: null } });
+      // The till prints a line either way: a tick, or a return.
+      const line = print(next ? 'done' : 'returned', task);
       if (!next) return;
       push({
         message: 'Done.',
         actionLabel: 'Undo',
-        onAction: () => update.mutate({ id: task.id, patch: { done: false } }),
+        onAction: () => { update.mutate({ id: task.id, patch: { done: false } }); unprint(line); },
         duration: 5000,
       });
     },
-    [update, push],
+    [update, push, print, unprint],
   );
 
   /** Fold the struck rows shut, then file them away. Undo brings them back. */
@@ -154,16 +158,17 @@ function Register({ email }: { email: string }) {
   const onDelete = useCallback(
     (task: Task) => {
       remove(task.id);
+      const line = print('void', task);
       setEditing(null);
       setSelectedId((id) => (id === task.id ? null : id));
       push({
         message: 'Deleted.',
         actionLabel: 'Undo',
-        onAction: () => restore(task),
+        onAction: () => { restore(task); unprint(line); },
         duration: 9000,
       });
     },
-    [remove, restore, push],
+    [remove, restore, push, print, unprint],
   );
 
   const onSave = useCallback(
@@ -183,7 +188,7 @@ function Register({ email }: { email: string }) {
     const onKey = (e: KeyboardEvent) => {
       // The receipt owns the keys while it is open, shortcuts and all.
       if (document.querySelector('.receipt')) return;
-      // So does one by one, which has its own.
+      // So does Check out, which has its own.
       if (document.querySelector('.fx')) return;
       const el = e.target as HTMLElement | null;
       const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'
@@ -195,7 +200,7 @@ function Register({ email }: { email: string }) {
       if (e.key === '/') { e.preventDefault(); setSearching(true); return; }
       if (searching || adding || editing) return;
       if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setAdding(true); return; }
-      if (e.key === 'o' || e.key === 'O') { e.preventDefault(); navigate('/focus'); return; }
+      if (e.key === 'c' || e.key === 'C') { e.preventDefault(); navigate('/checkout'); return; }
       if (!wide) return;
 
       const rows = [...document.querySelectorAll<HTMLElement>('main [data-task]')];
@@ -228,8 +233,8 @@ function Register({ email }: { email: string }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [wide, selectedId, selected, searching, adding, editing, onToggle, update, navigate]);
 
-  // One by one takes the whole screen: nothing else in sight.
-  if (location.pathname === '/focus') {
+  // Check out takes the whole screen: nothing else in sight.
+  if (location.pathname === '/checkout') {
     return (
       <>
         <Focus />
@@ -247,8 +252,8 @@ function Register({ email }: { email: string }) {
         <Index />
 
         <main className="page" id="main">
-          <PhoneTop onSearch={() => setSearching(true)} onFocus={() => navigate('/focus')} />
-          <DeskBar onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} onMeeting={() => navigate('/intake')} onFocus={() => navigate('/focus')} />
+          <PhoneTop onSearch={() => setSearching(true)} onFocus={() => navigate('/checkout')} />
+          <DeskBar onAdd={() => setAdding(true)} onSearch={() => setSearching(true)} onMeeting={() => navigate('/intake')} onFocus={() => navigate('/checkout')} />
 
           <div className="page__body">
             {wide && <Glide selectedId={selectedId} watch={`${location.pathname}|${tasks.length}|${leaving.size}`} />}
@@ -273,6 +278,7 @@ function Register({ email }: { email: string }) {
               <Route path="/intake" element={<Intake />} />
               <Route path="/settings" element={<Settings email={email} />} />
               {/* Old addresses, so a bookmark or the installed app still lands. */}
+              <Route path="/focus" element={<OldFocus />} />
               <Route path="/plan" element={<Navigate to="/review/plan" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
@@ -329,6 +335,12 @@ function Register({ email }: { email: string }) {
     </LeavingContext.Provider>
     </SelectedContext.Provider>
   );
+}
+
+/** /focus from before Check out took the app's name. */
+function OldFocus() {
+  const { search } = useLocation();
+  return <Navigate to={`/checkout${search}`} replace />;
 }
 
 /** /streams/:id from before the rename. */

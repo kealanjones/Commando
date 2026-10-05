@@ -60,8 +60,11 @@ jobs:
       - name: Memory
         run: npm run test:memory
 
-      - name: One by one
+      - name: Check out
         run: npm run test:focus
+
+      - name: The till roll
+        run: npm run test:receipt
 
       # Built in demo mode so CI needs no Supabase credentials. The env
       # validation that guards the real build is exercised separately below.
@@ -86,6 +89,7 @@ jobs:
           npm run test:organise
           npm run test:memory-ui
           npm run test:focus-ui
+          npm run test:receipt-ui
 
   database:
     name: Migrations and RLS

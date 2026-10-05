@@ -726,3 +726,31 @@ what you do next.
 
 Everything else — the whole register, the people, the plan — is still one tap
 away on the nav, unchanged. Focus is persisted so a phone can live in it.
+
+
+## The till, and why a receipt never un-prints
+
+The app's name is Check-out and its icon is a receipt, so the receipt had to
+be the record and not a party trick. Before this it was worked out each
+time from the items: whatever was `done` today, in `done_at` order. That is
+fine for today and useless for history, because a done item can be renamed,
+moved or deleted later and the receipt would quietly change with it.
+
+So a tick now prints a line (0013), copying the title and code as they were
+at that moment. Un-ticking prints RETURNED and deleting prints VOID: a till
+does not un-print, it prints the correction underneath. The one exception
+is an Undo pressed in time, which marks the line undone and hides it: a slip
+of the thumb is not a decision and should leave no trace on the roll.
+
+Lines are kept for ever and the migration back-fills them from everything
+already done, so the roll reaches back before the roll existed. Without the
+table the app still works: the receipt is read off the items as before and
+nothing is printed, so a device ahead of its database loses nothing.
+
+Days are local. A tick at 23:50 in London belongs to that day and not to
+UTC's tomorrow, so the app stamps `day` from the device clock and the
+back-fill uses Europe/London. Someone ticking from Sydney would see their
+old days shift by a few hours; that is a problem for a future that has one.
+
+The barcode is a real Code 39 of the date rather than decoration, because a
+decorative barcode on a receipt is the kind of thing this app is not.

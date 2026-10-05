@@ -42,6 +42,8 @@
     "test:organise": "node tests/organise.mjs",
     "test:focus": "tsx tests/focus.mjs",
     "test:focus-ui": "node tests/focus-ui.mjs",
+    "test:receipt": "tsx tests/receipt.mjs",
+    "test:receipt-ui": "node tests/receipt-ui.mjs",
     "icons": "node scripts/icons.mjs"
   },
   "dependencies": {

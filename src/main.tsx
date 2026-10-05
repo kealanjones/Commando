@@ -4,6 +4,8 @@ import { BrowserRouter, HashRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import App from './App';
+import { receiptKeys } from './data/receipt';
+import { linesFromTasks } from './lib/receipt';
 import { DEMO, demoMemory, demoPeople, demoSections, demoStreams, demoTaskPeople, demoTasks } from './lib/demo';
 import { keys } from './data/store';
 import { memoryKeys } from './data/memory';
@@ -44,6 +46,8 @@ if (DEMO) {
   queryClient.setQueryData(memoryKeys.notes, memory.notes);
   queryClient.setQueryData(memoryKeys.entries, memory.entries);
   queryClient.setQueryData(memoryKeys.meetings, memory.meetings);
+  const codes = new Map(demoStreams().map((s) => [s.id, s.code]));
+  queryClient.setQueryData(receiptKeys.lines, linesFromTasks(tasks, (id) => codes.get(id) ?? ''));
   queryClient.setDefaultOptions({ queries: { staleTime: Infinity, retry: false, refetchOnWindowFocus: false } });
 }
 

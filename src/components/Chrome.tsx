@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Plus } from './icons';
 import { SyncBadge } from './SyncBadge';
 import { Num } from './Motion';
-import { DayTally } from './Progress';
+import { DayTally, Till } from './Progress';
 import { useHealth, useToday } from '@/data/store';
 import { useReviewStatus } from '@/data/review';
 import { REALM_LABEL, setRealm, useRealm } from '@/lib/modes';
@@ -61,6 +61,7 @@ export function Index() {
       </div>
 
       <DayTally className="daytally--index" />
+      <Till />
 
       <RealmSwitch />
 
@@ -109,8 +110,8 @@ export function DeskBar({ onAdd, onSearch, onMeeting, onFocus }: {
         <span>Search the register</span>
         <kbd>/</kbd>
       </button>
-      <button className="btn btn--ghost deskbar__new" onClick={onFocus} aria-label="Go through items one by one">
-        One by one <kbd>O</kbd>
+      <button className="btn btn--ghost deskbar__new" onClick={onFocus} aria-label="Check out items one by one">
+        Check out <kbd>C</kbd>
       </button>
       <button className="btn btn--ghost deskbar__meeting" onClick={onMeeting} aria-label="Bring in a meeting">
         Meeting
@@ -133,7 +134,7 @@ export function PhoneTop({ onSearch, onFocus }: { onSearch: () => void; onFocus:
           <span className="label">{now().toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()}</span>
         </span>
         <SyncBadge />
-        <button className="iconbtn" onClick={onFocus} aria-label="Go through items one by one">
+        <button className="iconbtn" onClick={onFocus} aria-label="Check out items one by one">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
             <rect x="5" y="6" width="14" height="14" /><path d="M8 3h8" />
