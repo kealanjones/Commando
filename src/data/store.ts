@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { enqueue } from '@/lib/queue';
+import { enqueue, pendingTaskInserts } from '@/lib/queue';
 import { DEMO } from '@/lib/demo';
 import { inScope, useRealm } from '@/lib/modes';
 import { isoDay, todayGroups } from '@/lib/today';
@@ -113,6 +113,11 @@ const tasksQuery = {
       out.push(...(data as Task[]));
       if (!data || data.length < size) break;
     }
+    // New items still queued on this device are not on the server yet.
+    // They stay on the page until they are, so closing and reopening the
+    // app never makes an unsent item look lost.
+    const have = new Set(out.map((t) => t.id));
+    for (const row of pendingTaskInserts<Task>()) if (!have.has(row.id)) out.push(row);
     return out;
   },
   staleTime: 30_000,
@@ -231,11 +236,15 @@ export function useCreateTask() {
       title: string; stream_id: Task['stream_id']; section_id: string;
       do_now?: boolean; due?: string | null; note?: string | null;
     }) => {
-      const { data: auth } = await supabase.auth.getUser();
+      // From the session held on this device: no network call, so a weak
+      // signal cannot leave the item without an owner (which the database
+      // would refuse, losing it).
+      const owner = DEMO ? 'demo' : (await supabase.auth.getSession()).data.session?.user.id;
+      if (!owner) throw new Error('You are signed out. Sign in again, then add it.');
       const now = new Date().toISOString();
       const row: Task = {
         id: crypto.randomUUID(),
-        owner_id: auth.user?.id ?? '',
+        owner_id: owner,
         stream_id: input.stream_id,
         section_id: input.section_id,
         natural_key: null,          // user-created: the seed must never touch it
@@ -357,7 +366,11 @@ export function useSoftDelete() {
 
 export function useStructure() {
   const qc = useQueryClient();
-  const owner = async () => (await supabase.auth.getUser()).data.user?.id ?? '';
+  const owner = async () => {
+    const id = DEMO ? 'demo' : (await supabase.auth.getSession()).data.session?.user.id;
+    if (!id) throw new Error('You are signed out. Sign in again, then try that.');
+    return id;
+  };
   const streams = () => qc.getQueryData<Stream[]>(keys.streams) ?? [];
   const sections = () => qc.getQueryData<Section[]>(keys.sections) ?? [];
   const tasks = () => qc.getQueryData<Task[]>(keys.tasks) ?? [];

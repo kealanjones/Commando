@@ -33,15 +33,42 @@ type Listener = (state: QueueState) => void;
 export interface QueueState {
   pending: number;
   online: boolean;
+  /**
+   * True while changes are waiting that this device could not store: they
+   * are sent as long as the app stays open, and lost if it closes first.
+   */
+  unstored?: boolean;
   /** Set when a write failed for a reason retrying will not fix. */
   failed: { op: QueuedOp; message: string } | null;
 }
 
+/** Writes the database refused for good. Kept, so nothing is lost with them. */
+const FAILED = 'register.failed.v1';
+type Failure = NonNullable<QueueState['failed']>;
+
+function readFailed(): Failure[] {
+  try { return JSON.parse(localStorage.getItem(FAILED) ?? '[]') as Failure[]; } catch { return []; }
+}
+function writeFailed(list: Failure[]) {
+  try { localStorage.setItem(FAILED, JSON.stringify(list.slice(-20))); } catch { /* still shown this session */ }
+}
+
 let listeners: Listener[] = [];
-let failed: QueueState['failed'] = null;
+// A failure from an earlier session is still a failure: it is shown again
+// until it is dismissed, not forgotten when the app closes.
+let failed: QueueState['failed'] = typeof localStorage === 'undefined' ? null : readFailed().at(-1) ?? null;
 let inFlight: Promise<void> | null = null;
 
+/**
+ * The queue when this device will not store it (storage full, or a private
+ * window). It is then held in memory instead, so the writes are still sent
+ * while the app stays open, and the app says plainly that they would not
+ * survive it closing. Before, such a write was dropped without a word.
+ */
+let unstored: QueuedOp[] | null = null;
+
 function read(): QueuedOp[] {
+  if (unstored) return unstored;
   try {
     return JSON.parse(localStorage.getItem(STORE) ?? '[]') as QueuedOp[];
   } catch {
@@ -52,13 +79,14 @@ function read(): QueuedOp[] {
 function write(ops: QueuedOp[]) {
   try {
     localStorage.setItem(STORE, JSON.stringify(ops));
+    unstored = null;
   } catch {
-    /* quota or private mode — the in-flight flush still runs */
+    unstored = ops.length ? ops : null;
   }
 }
 
 function state(): QueueState {
-  return { pending: read().length, online: navigator.onLine, failed };
+  return { pending: read().length, online: navigator.onLine, failed, unstored: Boolean(unstored?.length) };
 }
 
 function emit() {
@@ -75,8 +103,40 @@ export function subscribeQueue(fn: Listener): () => void {
 }
 
 export function dismissFailure() {
-  failed = null;
+  const rest = readFailed().filter((f) => f.op.id !== failed?.op.id);
+  writeFailed(rest);
+  failed = rest.at(-1) ?? null;
   emit();
+}
+
+/** What a refused write was, in words: the item's title where it has one. */
+export function describeOp(op: QueuedOp): string {
+  const row = (op.kind === 'insert' || op.kind === 'add' ? op.row : op.patch) as Record<string, unknown>;
+  const name = typeof row.title === 'string' ? row.title : typeof row.text === 'string' ? row.text : '';
+  const what = op.kind === 'insert' ? 'New item' : op.kind === 'add' ? 'New entry' : 'A change';
+  return name ? `${what} "${name.length > 70 ? `${name.slice(0, 70)}…` : name}"` : what;
+}
+
+/**
+ * New items queued on this device and not yet on the server, as they stand
+ * now: every later queued change to one (an edit, a tick, a delete) is
+ * applied in order, so a restored item never shows an older self.
+ */
+export function pendingTaskInserts<T extends { id: string }>(): T[] {
+  const rows = new Map<string, Record<string, unknown>>();
+  for (const o of read()) {
+    if (o.kind === 'insert') {
+      rows.set(String(o.row.id), { ...o.row });
+    } else if (o.kind === 'update') {
+      const row = rows.get(o.taskId);
+      if (row) Object.assign(row, o.patch);
+    } else if (o.kind === 'patch' && o.table === 'tasks') {
+      for (const row of rows.values()) {
+        if (Object.entries(o.match).every(([k, v]) => row[k] === v)) Object.assign(row, o.patch);
+      }
+    }
+  }
+  return [...rows.values()] as unknown as T[];
 }
 
 export function enqueue(op: NewOp) {
@@ -130,7 +190,10 @@ export function flush(): Promise<void> {
   // One drain at a time; a caller arriving mid-drain waits for that one,
   // which keeps going until the queue is empty or a write fails.
   if (inFlight) return inFlight;
-  inFlight = drain({ read, write, emit }, send, (op, message) => { failed = { op, message }; }, permanent)
+  inFlight = drain({ read, write, emit }, send, (op, message) => {
+    failed = { op, message };
+    writeFailed([...readFailed(), failed]);
+  }, permanent)
     .finally(() => { inFlight = null; });
   return inFlight;
 }
@@ -149,6 +212,11 @@ export async function structureSaved(): Promise<boolean> {
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => { emit(); void flush(); });
   window.addEventListener('offline', emit);
+  // Leaving with changes this device could not store would lose them, so
+  // the browser asks first.
+  window.addEventListener('beforeunload', (e) => {
+    if (unstored?.length) { e.preventDefault(); e.returnValue = ''; }
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') void flush();
   });

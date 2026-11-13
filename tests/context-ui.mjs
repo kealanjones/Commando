@@ -185,13 +185,29 @@ const rvKnows = await p.locator('.rv__card .knows').count();
 const rvStream = await p.locator('.rv__card').getAttribute('data-stream');
 ok(rvStream === 'isodp' ? rvKnows === 1 : rvKnows <= 1, `the review card shows it when it has some (${rvStream}: ${rvKnows})`);
 
-// From New item: something to know, not something to do.
+// From New item: an item, and something for the memory with it.
 await p.goto(`${base}/`, { waitUntil: 'networkidle' });
 await settle(p, 400);
 await p.keyboard.press('n');
-await p.getByRole('button', { name: 'Tell the memory something' }).click();
-ok(await sheet.isVisible() && (await p.locator('.sheet[aria-label="Add an item"]').count()) === 0, 'New item hands over to the tell sheet');
+await p.locator('#add-title').fill('Call 23Red about the campaign');
+await p.locator('#add-section').selectOption({ label: 'Sponsorship' });
+await p.locator('#add-remember').fill('23Red are the campaign agency; Maya leads the account.');
+await p.mouse.click(5, 500);   // a stray click outside the sheet
+ok((await p.locator('#add-title').inputValue()) === 'Call 23Red about the campaign', 'a click outside does not throw away a half-typed item');
+await p.getByRole('button', { name: 'Add', exact: true }).click();
+await settle(p, 600);
+ok((await p.locator('.toast').allTextContents()).some((t) => t.includes('Added.')), 'New item adds the item');
+ok((await toast()).includes('Remembered under ISODP 2027'), 'and tells the memory with it, under the item\'s project');
+await p.keyboard.press('/');
+await p.keyboard.type('23Red');
+await settle(p, 300);
+ok((await p.locator('.find__row', { hasText: 'Call 23Red about the campaign' }).count()) === 1, 'the item is there to be found');
 await p.keyboard.press('Escape');
+await p.locator('.index__nav a', { hasText: 'Memory' }).click();
+await p.waitForSelector('.mem');
+const isodp2 = p.locator('.mem__note', { hasText: 'ISODP 2027' });
+await isodp2.locator('.mem__notehead').click();
+ok((await isodp2.locator('.mem__timeline li', { hasText: 'Maya leads the account' }).count()) === 1, 'and the note is on that project\'s timeline');
 const over = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 ok(over === 0, `no sideways overflow (${over}px)`);
 await ctx.close();

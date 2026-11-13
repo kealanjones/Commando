@@ -77,7 +77,10 @@ export function TellSheet({ noteId, onClose }: { noteId?: string; onClose: () =>
   };
 
   return (
-    <div className="scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="scrim" onMouseDown={(e) => {
+      // A stray click outside must not throw away something half-typed.
+      if (e.target === e.currentTarget && !(text.trim())) onClose();
+    }}>
       <form className="sheet tell" onSubmit={submit} role="dialog" aria-modal="true" aria-label="Tell the memory something">
         <div className="sheet__grab" />
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>

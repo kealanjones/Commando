@@ -37,6 +37,7 @@ import {
 } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
 import { usePrinter } from '@/data/receipt';
+import { useMemoryEdits, useTell } from '@/data/memory';
 import type { Task } from '@/lib/types';
 
 export default function App() {
@@ -86,6 +87,8 @@ function Register({ email }: { email: string }) {
   const create = useCreateTask();
   const { remove, restore } = useSoftDelete();
   const { print, unprint } = usePrinter();
+  const tell = useTell();
+  const memoryEdit = useMemoryEdits();
 
   /** The card, on a narrow screen. */
   const [editing, setEditing] = useState<Task | null>(null);
@@ -332,12 +335,35 @@ function Register({ email }: { email: string }) {
         <AddSheet
           streams={streams}
           sections={sections}
-          onCreate={(input) => {
-            create.mutate(input);
+          onCreate={async ({ remember, ...input }) => {
+            // The item first, and on its own: a note for the memory must
+            // never stand between an item and its being saved. What was
+            // typed for the memory is saved on the item as its note in the
+            // same write, so it is on the device before any request starts;
+            // it comes off only once the memory has it.
+            let made: Task;
+            try {
+              made = await create.mutateAsync({ ...input, note: remember ?? null });
+            } catch (e) {
+              push({ message: `Not added: ${(e as Error).message}`, tone: 'warn', duration: 0, actionLabel: 'Dismiss' });
+              return;
+            }
             push({ message: 'Added.' });
+            if (!remember) return;
+            try {
+              const stream = streams.find((x) => x.id === input.stream_id);
+              const note = stream ? await memoryEdit.projectNote(stream) : undefined;
+              const out = await tell.mutateAsync({ text: remember, noteId: note?.id });
+              update.mutate({ id: made.id, patch: { note: null } });
+              push({ message: `Remembered under ${out.notes.map((n) => n.title).join(' and ')}.` });
+            } catch (e) {
+              push({
+                message: `The item was added. The memory could not take the note (${(e as Error).message}), so it is kept on the item instead.`,
+                tone: 'warn', duration: 0, actionLabel: 'Dismiss',
+              });
+            }
           }}
           onIntake={() => { setAdding(false); navigate('/intake'); }}
-          onTell={() => { setAdding(false); setTelling(true); }}
           onClose={() => setAdding(false)}
         />
       )}
