@@ -264,11 +264,26 @@ export function useMemoryEdits() {
       const at = new Date().toISOString();
       let note: MemoryNote = { id: crypto.randomUUID(), kind: 'project', key: stream.id, title: stream.title.slice(0, 120), now: '', updated_at: at };
       if (!DEMO) {
-        const { data, error } = await supabase.from('memory_notes')
-          .upsert({ owner_id: await uid(), kind: 'project', key: stream.id, title: note.title, updated_at: at, deleted_at: null }, { onConflict: 'owner_id,kind,key' })
-          .select('id,kind,key,title,now,updated_at').single();
-        if (error || !data) throw new Error(navigator.onLine ? `${stream.title} could not be opened in the memory. Try again.` : 'You are offline. Try again when you are back.');
-        note = data as MemoryNote;
+        const fail = () => new Error(navigator.onLine ? `${stream.title} could not be opened in the memory. Try again.` : 'You are offline. Try again when you are back.');
+        const cols = 'id,kind,key,title,now,updated_at,deleted_at';
+        const found = await supabase.from('memory_notes').select(cols).eq('kind', 'project').eq('key', stream.id).maybeSingle();
+        if (found.error) throw fail();
+        if (found.data && !found.data.deleted_at) {
+          // Live already; this device just had not heard of it yet.
+          note = found.data as MemoryNote;
+        } else if (found.data) {
+          // Deleted or erased earlier: it comes back empty. What was erased
+          // stays erased.
+          const { data, error } = await supabase.from('memory_notes')
+            .update({ deleted_at: null, now: '', title: note.title, updated_at: at }).eq('id', found.data.id).select(cols).single();
+          if (error || !data) throw fail();
+          note = data as MemoryNote;
+        } else {
+          const { data, error } = await supabase.from('memory_notes')
+            .insert({ owner_id: await uid(), kind: 'project', key: stream.id, title: note.title, now: '', updated_at: at }).select(cols).single();
+          if (error || !data) throw fail();
+          note = data as MemoryNote;
+        }
       }
       qc.setQueryData<MemoryNote[]>(memoryKeys.notes, (old) => [...(old ?? []).filter((n) => n.id !== note.id), note]);
       return note;

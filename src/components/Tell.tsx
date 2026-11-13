@@ -24,6 +24,10 @@ export function TellSheet({ noteId, onClose }: { noteId?: string; onClose: () =>
   const [text, setText] = useState('');
   const [under, setUnder] = useState(noteId ?? '');
   const [error, setError] = useState<string | null>(null);
+  // One submission at a time, across making a project's note and filing
+  // under it: a second click or Ctrl+Enter must not file it twice.
+  const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
   const box = useRef<HTMLTextAreaElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
   const groups = byKind(notes);
@@ -44,7 +48,9 @@ export function TellSheet({ noteId, onClose }: { noteId?: string; onClose: () =>
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const told = text.trim();
-    if (told.length < 3 || tell.isPending) { box.current?.focus(); return; }
+    if (told.length < 3 || inFlight.current) { box.current?.focus(); return; }
+    inFlight.current = true;
+    setBusy(true);
     setError(null);
     try {
       let noteId = under || undefined;
@@ -64,6 +70,9 @@ export function TellSheet({ noteId, onClose }: { noteId?: string; onClose: () =>
     } catch (err) {
       // The words stay in the box: nothing typed is lost to a failure.
       setError((err as Error).message);
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
     }
   };
 
@@ -114,8 +123,8 @@ export function TellSheet({ noteId, onClose }: { noteId?: string; onClose: () =>
             <div className="actions">
               <span className="actions__aside tell__hint">It goes on the timeline with today's date.</span>
               <button type="button" className="btn btn--ghost" onClick={onClose}>Cancel</button>
-              <button type="submit" className="btn btn--primary" disabled={text.trim().length < 3 || tell.isPending}>
-                {tell.isPending ? 'Filing…' : 'Remember'}
+              <button type="submit" className="btn btn--primary" disabled={text.trim().length < 3 || busy}>
+                {busy ? 'Filing…' : 'Remember'}
               </button>
             </div>
           </>

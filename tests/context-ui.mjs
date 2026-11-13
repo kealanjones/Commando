@@ -96,12 +96,13 @@ const offered = await p.locator('#tell-under optgroup[label="Projects"] option')
 ok(offered.length >= 5 && offered.includes('Directorate'), `every project is offered, noted or not (${offered.length})`);
 await p.locator('#tell-text').fill('The away day is moved to March.');
 await p.locator('#tell-under').selectOption({ label: 'Directorate' });
-await sheet.getByRole('button', { name: 'Remember' }).click();
+// Two presses in the same tick: it must still be filed once.
+await sheet.getByRole('button', { name: 'Remember' }).evaluate((b) => { b.click(); b.click(); });
 await settle(p, 500);
 ok((await toast()).includes('Directorate'), 'filing under one starts its note');
 const dir = p.locator('.mem__note', { hasText: 'Directorate' });
 await dir.locator('.mem__notehead').click();
-ok((await dir.locator('.mem__timeline li', { hasText: 'away day' }).count()) === 1, 'with the line on it');
+ok((await dir.locator('.mem__timeline li', { hasText: 'away day' }).count()) === 1, 'with the line on it, once, however fast Remember is pressed');
 
 // Escape keeps nothing and closes.
 await p.evaluate(() => document.activeElement?.blur());
