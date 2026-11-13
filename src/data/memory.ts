@@ -253,6 +253,26 @@ export function useMemoryEdits() {
       qc.setQueryData<MemoryNote[]>(memoryKeys.notes, (old) => [...(old ?? []).filter((n) => n.id !== note.id), note]);
       return note;
     },
+    /**
+     * The note for a project, made if the memory has none yet, so anything
+     * can be filed under any project from the first day.
+     */
+    async projectNote(stream: { id: string; title: string }): Promise<MemoryNote> {
+      const have = (qc.getQueryData<MemoryNote[]>(memoryKeys.notes) ?? [])
+        .find((n) => n.kind === 'project' && n.key === stream.id && !n.deleted_at);
+      if (have) return have;
+      const at = new Date().toISOString();
+      let note: MemoryNote = { id: crypto.randomUUID(), kind: 'project', key: stream.id, title: stream.title.slice(0, 120), now: '', updated_at: at };
+      if (!DEMO) {
+        const { data, error } = await supabase.from('memory_notes')
+          .upsert({ owner_id: await uid(), kind: 'project', key: stream.id, title: note.title, updated_at: at, deleted_at: null }, { onConflict: 'owner_id,kind,key' })
+          .select('id,kind,key,title,now,updated_at').single();
+        if (error || !data) throw new Error(navigator.onLine ? `${stream.title} could not be opened in the memory. Try again.` : 'You are offline. Try again when you are back.');
+        note = data as MemoryNote;
+      }
+      qc.setQueryData<MemoryNote[]>(memoryKeys.notes, (old) => [...(old ?? []).filter((n) => n.id !== note.id), note]);
+      return note;
+    },
     rename(id: string, title: string) {
       const t = title.trim().slice(0, 120);
       if (!t) return;

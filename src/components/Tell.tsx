@@ -2,9 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Close } from './icons';
 import { useToast } from './Toasts';
-import { useMemory, useTell } from '@/data/memory';
+import { useMemory, useMemoryEdits, useTell } from '@/data/memory';
+import { useAllStreams } from '@/data/store';
 import { KIND_TITLE, byKind } from '@/lib/memory';
 import type { MemoryNote } from '@/lib/types';
+
+/** A project the memory has no note for yet, as a value in the picker. */
+const NEW_PROJECT = 'project:';
 
 /**
  * Tell the memory something you have learnt: a fact, a decision, what
@@ -13,6 +17,8 @@ import type { MemoryNote } from '@/lib/types';
  */
 export function TellSheet({ noteId, onClose }: { noteId?: string; onClose: () => void }) {
   const { notes, missing } = useMemory();
+  const { data: streams = [] } = useAllStreams();
+  const edit = useMemoryEdits();
   const tell = useTell();
   const { push } = useToast();
   const [text, setText] = useState('');
@@ -21,6 +27,11 @@ export function TellSheet({ noteId, onClose }: { noteId?: string; onClose: () =>
   const box = useRef<HTMLTextAreaElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
   const groups = byKind(notes);
+  // Every project can be filed under, whether or not the memory has a note
+  // for it yet: one without is listed by its project, and made on saving.
+  const noted = new Map(groups.project.map((n) => [n.key, n]));
+  const projects = [...streams].sort((a, b) => a.position - b.position)
+    .map((s) => ({ value: noted.get(s.id)?.id ?? `${NEW_PROJECT}${s.id}`, title: s.title }));
 
   useEffect(() => {
     returnTo.current = document.activeElement as HTMLElement;
@@ -36,7 +47,13 @@ export function TellSheet({ noteId, onClose }: { noteId?: string; onClose: () =>
     if (told.length < 3 || tell.isPending) { box.current?.focus(); return; }
     setError(null);
     try {
-      const out = await tell.mutateAsync({ text: told, noteId: under || undefined });
+      let noteId = under || undefined;
+      if (noteId?.startsWith(NEW_PROJECT)) {
+        const stream = streams.find((s) => s.id === noteId!.slice(NEW_PROJECT.length));
+        noteId = stream ? (await edit.projectNote(stream)).id : undefined;
+        if (noteId) setUnder(noteId);
+      }
+      const out = await tell.mutateAsync({ text: told, noteId });
       const where = out.notes.map((n) => n.title).join(' and ');
       push({
         message: out.asWritten
@@ -79,7 +96,12 @@ export function TellSheet({ noteId, onClose }: { noteId?: string; onClose: () =>
               <label htmlFor="tell-under">File it under</label>
               <select id="tell-under" className="select" value={under} onChange={(e) => setUnder(e.target.value)}>
                 <option value="">Let it decide</option>
-                {(['project', 'person', 'topic'] as MemoryNote['kind'][]).map((k) => groups[k].length > 0 && (
+                {projects.length > 0 && (
+                  <optgroup label={KIND_TITLE.project}>
+                    {projects.map((o) => <option key={o.value} value={o.value}>{o.title}</option>)}
+                  </optgroup>
+                )}
+                {(['person', 'topic'] as MemoryNote['kind'][]).map((k) => groups[k].length > 0 && (
                   <optgroup key={k} label={KIND_TITLE[k]}>
                     {groups[k].map((n) => <option key={n.id} value={n.id}>{n.title}</option>)}
                   </optgroup>
