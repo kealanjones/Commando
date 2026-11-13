@@ -89,6 +89,21 @@ await isodp.locator('.mem__notehead').click();
 ok((await isodp.locator('.mem__timeline li', { hasText: 'venue contract' }).count()) === 1, 'and it is on that timeline');
 ok((await isodp.locator('.mem__rename').count()) === 0, 'a project\'s note is named by its project');
 
+// A project the memory has never heard of can still be filed under.
+await p.getByRole('button', { name: /^Tell it something/ }).first().click();
+await sheet.waitFor();
+const offered = await p.locator('#tell-under optgroup[label="Projects"] option').allTextContents();
+ok(offered.length >= 5 && offered.includes('Directorate'), `every project is offered, noted or not (${offered.length})`);
+await p.locator('#tell-text').fill('The away day is moved to March.');
+await p.locator('#tell-under').selectOption({ label: 'Directorate' });
+// Two presses in the same tick: it must still be filed once.
+await sheet.getByRole('button', { name: 'Remember' }).evaluate((b) => { b.click(); b.click(); });
+await settle(p, 500);
+ok((await toast()).includes('Directorate'), 'filing under one starts its note');
+const dir = p.locator('.mem__note', { hasText: 'Directorate' });
+await dir.locator('.mem__notehead').click();
+ok((await dir.locator('.mem__timeline li', { hasText: 'away day' }).count()) === 1, 'with the line on it, once, however fast Remember is pressed');
+
 // Escape keeps nothing and closes.
 await p.evaluate(() => document.activeElement?.blur());
 await p.keyboard.press('t');
