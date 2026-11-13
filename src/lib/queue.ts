@@ -33,6 +33,11 @@ type Listener = (state: QueueState) => void;
 export interface QueueState {
   pending: number;
   online: boolean;
+  /**
+   * True while changes are waiting that this device could not store: they
+   * are sent as long as the app stays open, and lost if it closes first.
+   */
+  unstored?: boolean;
   /** Set when a write failed for a reason retrying will not fix. */
   failed: { op: QueuedOp; message: string } | null;
 }
@@ -54,7 +59,16 @@ let listeners: Listener[] = [];
 let failed: QueueState['failed'] = typeof localStorage === 'undefined' ? null : readFailed().at(-1) ?? null;
 let inFlight: Promise<void> | null = null;
 
+/**
+ * The queue when this device will not store it (storage full, or a private
+ * window). It is then held in memory instead, so the writes are still sent
+ * while the app stays open, and the app says plainly that they would not
+ * survive it closing. Before, such a write was dropped without a word.
+ */
+let unstored: QueuedOp[] | null = null;
+
 function read(): QueuedOp[] {
+  if (unstored) return unstored;
   try {
     return JSON.parse(localStorage.getItem(STORE) ?? '[]') as QueuedOp[];
   } catch {
@@ -65,13 +79,14 @@ function read(): QueuedOp[] {
 function write(ops: QueuedOp[]) {
   try {
     localStorage.setItem(STORE, JSON.stringify(ops));
+    unstored = null;
   } catch {
-    /* quota or private mode — the in-flight flush still runs */
+    unstored = ops.length ? ops : null;
   }
 }
 
 function state(): QueueState {
-  return { pending: read().length, online: navigator.onLine, failed };
+  return { pending: read().length, online: navigator.onLine, failed, unstored: Boolean(unstored?.length) };
 }
 
 function emit() {
@@ -180,6 +195,11 @@ export async function structureSaved(): Promise<boolean> {
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => { emit(); void flush(); });
   window.addEventListener('offline', emit);
+  // Leaving with changes this device could not store would lose them, so
+  // the browser asks first.
+  window.addEventListener('beforeunload', (e) => {
+    if (unstored?.length) { e.preventDefault(); e.returnValue = ''; }
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') void flush();
   });

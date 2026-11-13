@@ -192,6 +192,8 @@ await p.keyboard.press('n');
 await p.locator('#add-title').fill('Call 23Red about the campaign');
 await p.locator('#add-section').selectOption({ label: 'Sponsorship' });
 await p.locator('#add-remember').fill('23Red are the campaign agency; Maya leads the account.');
+await p.mouse.click(5, 500);   // a stray click outside the sheet
+ok((await p.locator('#add-title').inputValue()) === 'Call 23Red about the campaign', 'a click outside does not throw away a half-typed item');
 await p.getByRole('button', { name: 'Add', exact: true }).click();
 await settle(p, 600);
 ok((await p.locator('.toast').allTextContents()).some((t) => t.includes('Added.')), 'New item adds the item');

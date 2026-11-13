@@ -59,7 +59,10 @@ export function AddSheet({
   };
 
   return (
-    <div className="scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="scrim" onMouseDown={(e) => {
+      // A stray click outside must not throw away something half-typed.
+      if (e.target === e.currentTarget && !(title.trim() || remember.trim())) onClose();
+    }}>
       <form
         className="sheet"
         data-stream={section?.stream_id}

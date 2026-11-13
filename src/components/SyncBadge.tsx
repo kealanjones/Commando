@@ -28,6 +28,15 @@ export function SyncBadge() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.failed?.op.id, push]);
 
+  // Changes this device could not keep a copy of: say so, once, loudly.
+  useEffect(() => {
+    if (!state.unstored) return;
+    push({
+      message: 'This device could not store your last change (its storage is full, or this is a private window). Keep the app open until "Saving" clears, or the change will be lost.',
+      tone: 'warn', duration: 0, actionLabel: 'Dismiss', replaceKey: 'unstored',
+    });
+  }, [state.unstored, push]);
+
   if (state.online && state.pending === 0) return null;
 
   const cls = !state.online ? 'sync sync--offline' : 'sync sync--pending';
