@@ -337,10 +337,13 @@ function Register({ email }: { email: string }) {
           sections={sections}
           onCreate={async ({ remember, ...input }) => {
             // The item first, and on its own: a note for the memory must
-            // never stand between an item and its being saved.
+            // never stand between an item and its being saved. What was
+            // typed for the memory is saved on the item as its note in the
+            // same write, so it is on the device before any request starts;
+            // it comes off only once the memory has it.
             let made: Task;
             try {
-              made = await create.mutateAsync(input);
+              made = await create.mutateAsync({ ...input, note: remember ?? null });
             } catch (e) {
               push({ message: `Not added: ${(e as Error).message}`, tone: 'warn', duration: 0, actionLabel: 'Dismiss' });
               return;
@@ -351,12 +354,11 @@ function Register({ email }: { email: string }) {
               const stream = streams.find((x) => x.id === input.stream_id);
               const note = stream ? await memoryEdit.projectNote(stream) : undefined;
               const out = await tell.mutateAsync({ text: remember, noteId: note?.id });
+              update.mutate({ id: made.id, patch: { note: null } });
               push({ message: `Remembered under ${out.notes.map((n) => n.title).join(' and ')}.` });
             } catch (e) {
-              // What was typed is not lost: it goes on the item as its note.
-              update.mutate({ id: made.id, patch: { note: remember } });
               push({
-                message: `The item was added. The memory could not take the note (${(e as Error).message}), so it is saved on the item instead.`,
+                message: `The item was added. The memory could not take the note (${(e as Error).message}), so it is kept on the item instead.`,
                 tone: 'warn', duration: 0, actionLabel: 'Dismiss',
               });
             }

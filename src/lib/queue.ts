@@ -117,9 +117,26 @@ export function describeOp(op: QueuedOp): string {
   return name ? `${what} "${name.length > 70 ? `${name.slice(0, 70)}…` : name}"` : what;
 }
 
-/** New items queued on this device and not yet on the server. */
+/**
+ * New items queued on this device and not yet on the server, as they stand
+ * now: every later queued change to one (an edit, a tick, a delete) is
+ * applied in order, so a restored item never shows an older self.
+ */
 export function pendingTaskInserts<T extends { id: string }>(): T[] {
-  return read().filter((o) => o.kind === 'insert').map((o) => (o as { row: unknown }).row as T);
+  const rows = new Map<string, Record<string, unknown>>();
+  for (const o of read()) {
+    if (o.kind === 'insert') {
+      rows.set(String(o.row.id), { ...o.row });
+    } else if (o.kind === 'update') {
+      const row = rows.get(o.taskId);
+      if (row) Object.assign(row, o.patch);
+    } else if (o.kind === 'patch' && o.table === 'tasks') {
+      for (const row of rows.values()) {
+        if (Object.entries(o.match).every(([k, v]) => row[k] === v)) Object.assign(row, o.patch);
+      }
+    }
+  }
+  return [...rows.values()] as unknown as T[];
 }
 
 export function enqueue(op: NewOp) {
