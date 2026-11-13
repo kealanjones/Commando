@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Close } from './icons';
 import { usePeople, useSections, useStreams, useTasks } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
+import { useAsk, type MemoryAnswer } from '@/data/memory';
+import { asQuestion } from '@/lib/memory';
 import { highlight, search } from '@/lib/search';
 import { pathOf } from '@/lib/tree';
 import type { Task } from '@/lib/types';
@@ -12,6 +14,9 @@ import type { Task } from '@/lib/types';
  * Runs over the already-cached task list, so it works with no signal and
  * returns as you type. Ranked rather than filtered — with 255 items a plain
  * substring match buries the thing you meant.
+ *
+ * Start with "?" and it is a question for the memory instead: Enter asks,
+ * and the answer comes back here, with the meetings it came from.
  */
 export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void; onClose: () => void }) {
   const [q, setQ] = useState('');
@@ -27,12 +32,25 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
   const listRef = useRef<HTMLUListElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
 
+  const question = asQuestion(q);
+  const asking = question !== null;
+  const ask = useAsk();
+  const [answer, setAnswer] = useState<{ to: string; reply: MemoryAnswer } | null>(null);
+  const [askError, setAskError] = useState<string | null>(null);
+
   const hits = useMemo(
-    () => search(q, tasks, sections, streams, people, links),
-    [q, tasks, sections, streams, people, links],
+    () => (asking ? [] : search(q, tasks, sections, streams, people, links)),
+    [asking, q, tasks, sections, streams, people, links],
   );
 
   useEffect(() => setCursor(0), [q]);
+
+  const put = async (to: string) => {
+    if (to.length < 3 || ask.isPending) return;
+    setAskError(null);
+    try { setAnswer({ to, reply: await ask.mutateAsync(to) }); }
+    catch (e) { setAnswer(null); setAskError((e as Error).message); }
+  };
 
   useEffect(() => {
     returnTo.current = document.activeElement as HTMLElement;
@@ -52,6 +70,7 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') { e.preventDefault(); onClose(); return; }
+    if (asking) { if (e.key === 'Enter') { e.preventDefault(); void put(question); } return; }
     if (e.key === 'ArrowDown') { e.preventDefault(); setCursor((n) => Math.min(n + 1, hits.length - 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setCursor((n) => Math.max(n - 1, 0)); }
     else if (e.key === 'Enter' && hits[cursor]) { e.preventDefault(); choose(hits[cursor].task); }
@@ -76,7 +95,7 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search titles, notes, sections, people…"
+            placeholder="Search, or start with ? to ask the memory"
             aria-label="Search"
             aria-controls="find-results"
             autoComplete="off"
@@ -85,13 +104,40 @@ export function Search({ onOpenTask, onClose }: { onOpenTask: (t: Task) => void;
           <button className="rowbtn" onClick={onClose} aria-label="Close search"><Close /></button>
         </div>
 
-        {q.trim() === '' ? (
+        {asking ? (
+          <div className="find__ask" aria-live="polite">
+            {ask.isPending ? (
+              <p className="find__asking">Asking the memory…</p>
+            ) : askError ? (
+              <p className="find__askerror" role="alert">{askError}</p>
+            ) : answer && answer.to === question ? (
+              <div className="find__answer">
+                {answer.reply.answer.split(/\n{2,}/).map((para, i) => <p key={i}>{para}</p>)}
+                {answer.reply.sources.length > 0 && (
+                  <p className="find__sources">
+                    From: {answer.reply.sources.map((s) => `${s.label} (${s.date})`).join(' · ')}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="find__askhint">
+                {question.length < 3
+                  ? 'Ask the memory anything: what was agreed, who said what, where a project stands.'
+                  : <>Press <kbd>↵</kbd> to ask the memory.</>}
+              </p>
+            )}
+          </div>
+        ) : q.trim() === '' ? (
           <div className="find__hint">
             <p>Search everything — task titles, your notes, the detail from the seed, section names, and who you are waiting on.</p>
+            <p>Start with <kbd>?</kbd> to ask the memory a question instead.</p>
           </div>
         ) : hits.length === 0 ? (
           <div className="find__hint">
             <p>Nothing matches <b>{q.trim()}</b>. Every word has to appear somewhere — try fewer.</p>
+            <button type="button" className="linkish" onClick={() => { const to = q.trim(); setQ(`? ${to}`); void put(to); }}>
+              Ask the memory instead
+            </button>
           </div>
         ) : (
           <>

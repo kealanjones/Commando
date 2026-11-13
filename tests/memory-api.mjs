@@ -2,7 +2,7 @@
  * The memory endpoint's guards, without an Anthropic key: everything up to
  * the model call is ordinary logic and worth proving.
  */
-const { default: handler, fallbackNow } = await import('../api/memory.ts');
+const { default: handler, fallbackNow, inLines } = await import('../api/memory.ts');
 
 const make = () => {
   const out = { code: 0, body: null };
@@ -34,6 +34,8 @@ out = await run({ method: 'POST', body: { action: 'rewrite-everything' } });
 ok(out.code === 400, `an unknown action is refused before anything else (${out.code})`);
 out = await run({ method: 'POST', body: { action: 'absorb', intake_id: 'x' } });
 ok(out.code === 401, `no session, no memory (${out.code})`);
+out = await run({ method: 'POST', body: { action: 'note', text: 'OrganOx close their budget mid-October.' } });
+ok(out.code === 401, `telling it something is an action it knows, and needs a session too (${out.code})`);
 
 const left = [
   { happened_on: '2026-09-01', text: 'One.' }, { happened_on: '2026-09-02', text: 'Two.' },
@@ -41,6 +43,14 @@ const left = [
 ];
 ok(fallbackNow(left) === 'Two. Three. Four.', 'when the model cannot rewrite a note, its "now" is built from the latest lines left');
 ok(fallbackNow([]) === '', 'and from nothing, nothing');
+
+const long = Array.from({ length: 40 }, (_, i) => `Sentence number ${i + 1} says something worth keeping about the sponsors.`).join(' ');
+const lines = inLines(long);
+ok(lines.length > 1 && lines.every((l) => l.length <= 600), `a long note becomes several lines, none over the limit (${lines.length})`);
+ok(lines.join(' ') === long, 'and nothing in it is lost or cut');
+ok(lines.slice(0, -1).every((l) => l.endsWith('.')), 'breaking at the ends of sentences');
+ok(inLines('x'.repeat(1300)).join('') === 'x'.repeat(1300), 'even one unbroken run is kept whole across lines');
+ok(inLines('  Short.  ').join() === 'Short.' && inLines('   ').length === 0, 'a short note is one line; nothing is none');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

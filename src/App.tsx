@@ -6,6 +6,7 @@ import { DeskBar, Index, PhoneBottom, PhoneTop } from '@/components/Chrome';
 import { Folio } from '@/components/Folio';
 import { TaskSheet, type SheetPatch } from '@/components/TaskSheet';
 import { AddSheet } from '@/components/AddSheet';
+import { TellSheet } from '@/components/Tell';
 import { Search } from '@/components/Search';
 import { useToast } from '@/components/Toasts';
 import { Today } from '@/routes/Today';
@@ -94,6 +95,8 @@ function Register({ email }: { email: string }) {
   /** Struck rows in their last moment on screen, folding shut. */
   const [leaving, setLeaving] = useState<ReadonlySet<string>>(new Set());
   const [searching, setSearching] = useState(false);
+  /** Telling the memory something, from anywhere. */
+  const [telling, setTelling] = useState(false);
 
   const selected = useMemo(
     () => (selectedId ? tasks.find((t) => t.id === selectedId) ?? null : null),
@@ -105,7 +108,12 @@ function Register({ email }: { email: string }) {
     return people.filter((p) => ids.has(p.id)).map((p) => p.name);
   }, [selected, links, people]);
 
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [location.pathname]);
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+    // A link followed from inside the item card (a memory note, say) must
+    // not leave the card covering the page it leads to.
+    setEditing(null);
+  }, [location.pathname]);
 
   // The page wears the realm, so which life is showing is ambient.
   const realm = useRealm();
@@ -188,8 +196,8 @@ function Register({ email }: { email: string }) {
     const onKey = (e: KeyboardEvent) => {
       // The receipt owns the keys while it is open, shortcuts and all.
       if (document.querySelector('.receipt')) return;
-      // So does Check out, which has its own.
-      if (document.querySelector('.fx')) return;
+      // So does Check out, which has its own, and the tell sheet.
+      if (document.querySelector('.fx, .tell')) return;
       const el = e.target as HTMLElement | null;
       const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'
         || el.tagName === 'SELECT' || el.isContentEditable);
@@ -201,6 +209,7 @@ function Register({ email }: { email: string }) {
       if (searching || adding || editing) return;
       if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setAdding(true); return; }
       if (e.key === 'c' || e.key === 'C') { e.preventDefault(); navigate('/checkout'); return; }
+      if (e.key === 't' || e.key === 'T') { e.preventDefault(); setTelling(true); return; }
       if (!wide) return;
 
       const rows = [...document.querySelectorAll<HTMLElement>('main [data-task]')];
@@ -328,9 +337,11 @@ function Register({ email }: { email: string }) {
             push({ message: 'Added.' });
           }}
           onIntake={() => { setAdding(false); navigate('/intake'); }}
+          onTell={() => { setAdding(false); setTelling(true); }}
           onClose={() => setAdding(false)}
         />
       )}
+      {telling && <TellSheet onClose={() => setTelling(false)} />}
       <Stamps />
     </LeavingContext.Provider>
     </SelectedContext.Provider>

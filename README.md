@@ -143,16 +143,31 @@ stayed with each thing, and what was voided.
 
 ### Memory
 
-Every meeting read in also feeds a **memory** of the work: a note per project,
-per person and per recurring topic, each with where things stand **now** and a
-dated **timeline**. Each meeting adds a few lines and refreshes the "now" of the
-notes it touched, so the memory grows with every meeting without ever being
-rewritten wholesale. Every line keeps the meeting it came from.
+Every meeting read in, and everything you tell it yourself, feeds a **memory**
+of the work: a note per project, per person and per topic, each with where
+things stand **now** and a dated **timeline**. Each meeting or note adds a few
+lines and refreshes the "now" of the notes it touched, so the memory grows
+without ever being rewritten wholesale. Every line says where it came from: a
+meeting, or added by hand.
+
+- **Tell it something** (**T** anywhere, the button on Memory, or from New
+  item): a fact, a decision, what someone said in a corridor. It files it under
+  the right notes and refreshes where things stand; name a note and it goes
+  there. If the model cannot be reached, a note you named still gets the line,
+  as written, through the offline queue.
+- **Areas of your own:** add a person or a topic on the Memory page to build
+  context on deliberately; rename it, or delete it and its lines.
+- **It comes to you.** An open item, a Check out card, a review card and a
+  brief each show what the memory knows that bears on them: the project's note,
+  the people on it, and any person or topic the words name. The name leads to
+  the whole note.
+- **Ask from anywhere:** start a search with **?** and Enter asks the memory;
+  the answer comes back in the search box.
 
 - **The reader uses it.** Each new meeting is read with what the memory already
   knows, so it files things better and understands shorthand.
-- **Ask it** on the Memory page ("What did we agree with OrganOx?"): answers come
-  from the memory and the open register, and name the meetings they rest on.
+- **Ask it** on the Memory page too ("What did we agree with OrganOx?"): answers
+  come from the memory and the open register, and name the meetings they rest on.
 - **Browse and correct it:** fix a "now", strike a wrong line.
 - **Export for Claude:** one Markdown file of the whole memory, to add to a
   Claude Project so everyday chats know the work too.
@@ -225,6 +240,7 @@ Unit suites run directly; browser suites need the demo build being served
 | `npm run test:paste` | Copy prompt → paste reply → triage |
 | `npm run test:find` | Search in the browser |
 | `npm run test:groups` | Areas in the browser: reading, filing, finding |
+| `npm run test:context-ui` | Building context in the browser: telling it things, your own areas, what it knows beside the work, asking from search |
 | `npm run test:focus` | Check out: choosing the pile, its order, dates and the clock |
 | `npm run test:focus-ui` | Check out in the browser: every decision, undo, a whole run and its receipt, a phone |
 | `npm run test:receipt` | The till roll: totals, returns and voids, subtotals, the roll's days, Code 39 |

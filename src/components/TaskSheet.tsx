@@ -1,3 +1,4 @@
+import { Knows } from './Knows';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { NewFocus } from './NewFocus';
 import { Close } from './icons';
@@ -255,6 +256,11 @@ export function TaskSheet({
               <p>{task.context}</p>
             </section>
           )}
+
+          <Knows
+            className="knows--card" streamId={task.stream_id}
+            text={`${task.title} ${task.context ?? ''} ${task.note ?? ''}`}
+          />
 
           <section className="card__block">
             <h3>

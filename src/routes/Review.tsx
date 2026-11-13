@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Close } from '@/components/icons';
+import { Knows } from '@/components/Knows';
 import { useToast } from '@/components/Toasts';
 import { usePeople, useSections, useStreams } from '@/data/store';
 import {
@@ -116,6 +117,11 @@ export function Review() {
 
         <h2 className="rv__title">{card.task.title}</h2>
         {card.task.context && <p className="rv__context">{card.task.context}</p>}
+        <Knows
+          className="knows--rv" streamId={card.task.stream_id} max={2}
+          people={card.waitingOn.map((id) => personName.get(id)).filter((n): n is string => Boolean(n))}
+          text={`${card.task.title} ${card.task.context ?? ''} ${card.task.note ?? ''}`}
+        />
 
         <div className="rv__meta">
           <span className="pill">{stream?.short ?? card.task.stream_id}</span>

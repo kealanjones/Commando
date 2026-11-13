@@ -88,6 +88,7 @@ jobs:
           npm run test:groups
           npm run test:organise
           npm run test:memory-ui
+          npm run test:context-ui
           npm run test:focus-ui
           npm run test:receipt-ui
 

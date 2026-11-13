@@ -10,6 +10,7 @@ export function AddSheet({
   defaultSectionId,
   onCreate,
   onIntake,
+  onTell,
   onClose,
 }: {
   streams: Stream[];
@@ -21,6 +22,8 @@ export function AddSheet({
   }) => void;
   /** Leave for meeting intake instead: several items from one record. */
   onIntake: () => void;
+  /** Not something to do, something to know: tell the memory instead. */
+  onTell: () => void;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState('');
@@ -110,9 +113,10 @@ export function AddSheet({
         </div>
 
         <div className="actions">
-          <button type="button" className="linkish actions__aside" onClick={onIntake}>
-            Paste meeting notes instead
-          </button>
+          <span className="actions__aside addsheet__instead">
+            <button type="button" className="linkish" onClick={onIntake}>Paste meeting notes instead</button>
+            <button type="button" className="linkish" onClick={onTell}>Tell the memory something</button>
+          </span>
           <button type="button" className="btn btn--ghost" onClick={onClose}>Cancel</button>
           <button type="submit" className="btn btn--primary">Add</button>
         </div>

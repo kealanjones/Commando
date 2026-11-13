@@ -13,6 +13,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { usePeople, useSections, useStreams, useTasks } from '@/data/store';
 import { useTaskPeople } from '@/data/review';
 import { useToast } from '@/components/Toasts';
+import { Knows } from '@/components/Knows';
 import { buildBrief, type Subject } from '@/lib/brief';
 import type { Task } from '@/lib/types';
 
@@ -116,6 +117,13 @@ export function Brief({ onOpenTask }: { onOpenTask: (task: Task) => void }) {
             ))}
           </div>
         </div>
+
+        {/* Background from the memory: on the page, not in the pasted text. */}
+        <Knows
+          className="knows--brief" heading="What the memory knows" max={2}
+          streamId={subject.kind === 'stream' ? subject.id : undefined}
+          people={subject.kind === 'person' ? [people.find((p) => p.id === subject.id)?.name ?? ''] : undefined}
+        />
 
         {brief.blocks.map((block) => (
           <section key={block.heading} className="brief__block">
