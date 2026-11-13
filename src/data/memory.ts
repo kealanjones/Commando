@@ -6,12 +6,13 @@
  * through /api/memory, which holds the API key. Hand edits go through the
  * offline queue like every other write.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { enqueue } from '@/lib/queue';
 import { DEMO, demoAnswer } from '@/lib/demo';
 import { missingTable } from '@/lib/dbError';
+import { noteKey, relevantNotes } from '@/lib/memory';
 import type { MemoryEntry, MemoryMeeting, MemoryNote } from '@/lib/types';
 
 export const memoryKeys = {
@@ -23,11 +24,19 @@ export const memoryKeys = {
 export interface MemorySource { intake_id: string; label: string; date: string }
 export interface MemoryAnswer { answer: string; sources: MemorySource[] }
 
+/** An error that remembers the status it came with; 0 is "never got there". */
+const failure = (message: string, status: number) => Object.assign(new Error(message), { status });
+/** The server or the model was out of reach, as against saying no. */
+const unreachable = (e: unknown) => {
+  const status = (e as { status?: number }).status;
+  return status === 0 || status === 429 || (typeof status === 'number' && status >= 500);
+};
+
 /** Calls /api/memory with the session's own token. */
 async function memoryApi<T>(body: Record<string, unknown>): Promise<T> {
   const { data: session } = await supabase.auth.getSession();
   const token = session.session?.access_token;
-  if (!token) throw new Error('Your session has expired. Sign in again.');
+  if (!token) throw failure('Your session has expired. Sign in again.', 401);
   let res: Response;
   try {
     res = await fetch('/api/memory', {
@@ -36,10 +45,10 @@ async function memoryApi<T>(body: Record<string, unknown>): Promise<T> {
       body: JSON.stringify(body),
     });
   } catch {
-    throw new Error('Could not reach the server. Check your connection and try again.');
+    throw failure('Could not reach the server. Check your connection and try again.', 0);
   }
   const payload = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
-  if (!res.ok) throw new Error(payload?.error ?? `The memory did not respond (${res.status}).`);
+  if (!res.ok) throw failure(payload?.error ?? `The memory did not respond (${res.status}).`, res.status);
   if (!payload) throw new Error('The server sent back nothing readable.');
   return payload;
 }
@@ -110,6 +119,79 @@ export function useAbsorb() {
   });
 }
 
+export interface Told {
+  /** The notes it went under. */
+  notes: { id: string; kind: MemoryNote['kind']; title: string }[];
+  entries: number;
+  /** True when it was saved exactly as written, with no model to file it. */
+  asWritten?: boolean;
+}
+
+/** The longest note saved as a single line when the model cannot file it. */
+const AS_WRITTEN_MAX = 2000;
+
+const uid = async () => (await supabase.auth.getSession()).data.session?.user.id ?? '';
+
+/**
+ * Tell the memory something you have learnt. It files it under the right
+ * notes and refreshes where things stand. Name a note and it goes there;
+ * if the model cannot be reached, a note you named still gets the line,
+ * exactly as written, through the offline queue.
+ */
+export function useTell() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ text, noteId }: { text: string; noteId?: string }): Promise<Told> => {
+      const told = text.trim();
+      const notes = qc.getQueryData<MemoryNote[]>(memoryKeys.notes) ?? [];
+      const direct = (target: MemoryNote, owner: string): Told => {
+        const now = new Date();
+        const entry: MemoryEntry = {
+          id: crypto.randomUUID(), note_id: target.id, intake_id: null,
+          happened_on: now.toISOString().slice(0, 10), text: told,
+        };
+        qc.setQueryData<MemoryEntry[]>(memoryKeys.entries, (old) => [...(old ?? []), entry]);
+        qc.setQueryData<MemoryNote[]>(memoryKeys.notes, (old) =>
+          (old ?? []).map((n) => (n.id === target.id ? { ...n, updated_at: now.toISOString() } : n)));
+        enqueue({ kind: 'add', table: 'memory_entries', row: { ...entry, owner_id: owner } });
+        return { notes: [{ id: target.id, kind: target.kind, title: target.title }], entries: 1, asWritten: true };
+      };
+
+      if (DEMO) {
+        // Fixture mode has no model: the named note, else the first one
+        // the words point at, else a topic of loose notes.
+        let target = notes.find((n) => n.id === noteId) ?? relevantNotes(notes, { text: told })[0];
+        if (!target) {
+          target = { id: 'demo-note-loose', kind: 'topic', key: 'loose-notes', title: 'Loose notes', now: '', updated_at: new Date().toISOString() };
+          const made = target;
+          qc.setQueryData<MemoryNote[]>(memoryKeys.notes, (old) => [...(old ?? []).filter((n) => n.id !== made.id), made]);
+        }
+        return { ...direct(target, ''), asWritten: false };
+      }
+
+      const target = noteId ? notes.find((n) => n.id === noteId) : undefined;
+      try {
+        return await memoryApi<Told>({ action: 'note', text: told, note_id: noteId });
+      } catch (e) {
+        // With somewhere to put it, and the model out of reach, it is never
+        // lost: saved as written. A refusal, or a note that has gone, is an
+        // answer and is shown; so is something too long to be one line.
+        if (!target || !unreachable(e) || told.length > AS_WRITTEN_MAX) throw e;
+        return direct(target, await uid());
+      }
+    },
+    onSuccess: (out) => { if (!out.asWritten) refresh(qc); },
+  });
+}
+
+/** The notes worth showing beside one item, a project or a person. */
+export function useRelevant(about: { streamId?: string | null; people?: string[]; text?: string }, max = 4): MemoryNote[] {
+  const { notes } = useMemory();
+  const people = (about.people ?? []).join('|');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => relevantNotes(notes, about, max), [notes, about.streamId, people, about.text, max]);
+}
+
 export function useAsk() {
   return useMutation({
     mutationFn: async (question: string): Promise<MemoryAnswer> => {
@@ -149,6 +231,41 @@ export function useMemoryEdits() {
       qc.setQueryData<MemoryNote[]>(memoryKeys.notes, (old) =>
         (old ?? []).map((n) => (n.id === id ? { ...n, now, updated_at: at } : n)));
       enqueue({ kind: 'patch', table: 'memory_notes', match: { id }, patch: { now, updated_at: at } });
+    },
+    /** A new area of your own: a person or a topic to build context on. */
+    async addNote(kind: 'person' | 'topic', title: string): Promise<MemoryNote> {
+      const t = title.trim().slice(0, 120);
+      const key = noteKey(kind, t);
+      if (!key) throw new Error('Give it a name.');
+      const at = new Date().toISOString();
+      const have = (qc.getQueryData<MemoryNote[]>(memoryKeys.notes) ?? []).find((n) => n.kind === kind && n.key === key && !n.deleted_at);
+      if (have) return have;
+      let note: MemoryNote = { id: crypto.randomUUID(), kind, key, title: t, now: '', updated_at: at };
+      if (!DEMO) {
+        // An upsert, so a note deleted earlier under the same name comes back
+        // rather than colliding with its own ghost.
+        const { data, error } = await supabase.from('memory_notes')
+          .upsert({ owner_id: await uid(), kind, key, title: t, now: '', updated_at: at, deleted_at: null }, { onConflict: 'owner_id,kind,key' })
+          .select('id,kind,key,title,now,updated_at').single();
+        if (error || !data) throw new Error(navigator.onLine ? 'That could not be added. Try again.' : 'You are offline. Add it when you are back.');
+        note = data as MemoryNote;
+      }
+      qc.setQueryData<MemoryNote[]>(memoryKeys.notes, (old) => [...(old ?? []).filter((n) => n.id !== note.id), note]);
+      return note;
+    },
+    rename(id: string, title: string) {
+      const t = title.trim().slice(0, 120);
+      if (!t) return;
+      qc.setQueryData<MemoryNote[]>(memoryKeys.notes, (old) => (old ?? []).map((n) => (n.id === id ? { ...n, title: t } : n)));
+      enqueue({ kind: 'patch', table: 'memory_notes', match: { id }, patch: { title: t } });
+    },
+    /** The note and everything under it. Meetings stay; so do other notes. */
+    removeNote(id: string) {
+      const at = new Date().toISOString();
+      qc.setQueryData<MemoryNote[]>(memoryKeys.notes, (old) => (old ?? []).filter((n) => n.id !== id));
+      qc.setQueryData<MemoryEntry[]>(memoryKeys.entries, (old) => (old ?? []).filter((e) => e.note_id !== id));
+      enqueue({ kind: 'patch', table: 'memory_entries', match: { note_id: id }, patch: { deleted_at: at } });
+      enqueue({ kind: 'patch', table: 'memory_notes', match: { id }, patch: { deleted_at: at } });
     },
     dropEntry(id: string) {
       qc.setQueryData<MemoryEntry[]>(memoryKeys.entries, (old) => (old ?? []).filter((e) => e.id !== id));

@@ -1,4 +1,4 @@
-import { byKind, exportMarkdown, memoryDigest, timeline } from '../src/lib/memory.ts';
+import { asQuestion, byKind, exportMarkdown, memoryDigest, noteKey, relevantNotes, timeline } from '../src/lib/memory.ts';
 import { parseProposals, buildPrompt } from '../src/lib/proposalFormat.ts';
 import { missingColumn, missingTable } from '../src/lib/dbError.ts';
 
@@ -60,6 +60,37 @@ ok(missingColumn({ code: 'PGRST204', message: "Could not find the 'memory_text' 
 ok(missingColumn({ code: '42703' }), 'as is Postgres\'s (42703)');
 ok(missingTable({ code: 'PGRST205' }) && missingTable({ code: '42P01' }), 'a missing table is recognised either way');
 ok(!missingTable({ message: 'Failed to fetch' }) && !missingTable({ code: 'PGRST301' }), 'being offline or signed out is not a missing table');
+
+// ── context beside the work ────────────────────────────────────────
+const know = [
+  { id: 'p1', kind: 'project', key: 'isodp', title: 'ISODP 2027', now: 'x', updated_at: '' },
+  { id: 'p2', kind: 'project', key: 'dir', title: 'Directorate', now: 'x', updated_at: '' },
+  { id: 'a', kind: 'person', key: 'anthony clarkson', title: 'Anthony Clarkson', now: 'x', updated_at: '' },
+  { id: 's', kind: 'person', key: 'suzanne', title: 'Suzanne', now: 'x', updated_at: '' },
+  { id: 'al', kind: 'person', key: 'al', title: 'Al', now: 'x', updated_at: '' },
+  { id: 't1', kind: 'topic', key: 'sponsor-payments', title: 'Sponsor payments', now: 'x', updated_at: '' },
+  { id: 't2', kind: 'topic', key: 'board', title: 'Board', now: 'x', updated_at: '' },
+  { id: 't3', kind: 'topic', key: 'old', title: 'Sponsor payments old', now: 'x', updated_at: '', deleted_at: '2026-01-01' },
+];
+const rel = (about, max) => relevantNotes(know, about, max).map((n) => n.id).join();
+ok(rel({ streamId: 'isodp' }) === 'p1', 'an item brings its project\'s note, and no other project\'s');
+ok(rel({ streamId: 'isodp', people: ['Anthony Clarkson'] }) === 'p1,a', 'and the note of whoever it waits on');
+ok(rel({ text: 'Send Anthony the short list' }) === 'a', 'a person is found by first name in the words');
+ok(rel({ text: 'Ask Suzanne how Kyoto took payments from each sponsor' }) === 's,t1', 'a topic by every distinctive word of its title, in any order');
+ok(rel({ text: 'Clarify the process for sponsor payments' }) === 't1', 'or by its title outright');
+ok(rel({ text: 'Also update the dashboard and call Alan' }) === '', 'short names and part-words do not match by accident');
+ok(rel({ text: 'Paper for the board' }) === 't2', 'a one-word topic needs the whole word');
+ok(rel({ streamId: 'isodp', people: ['Suzanne'], text: 'Anthony on sponsor payments for the board' }, 3) === 'p1,a,s',
+  'project first, then people, then topics, up to the limit');
+ok(rel({}) === '', 'nothing to go on brings nothing');
+
+ok(noteKey('topic', '  Sponsor payments (2027)! ') === 'sponsor-payments-2027', 'a topic is keyed by a slug of its name');
+ok(noteKey('person', '  Suzanne   Clarke ') === 'suzanne clarke', 'a person by their name in lower case');
+ok(noteKey('topic', '!!!') === '', 'a name with nothing in it makes no key');
+
+ok(asQuestion('? what did we agree') === 'what did we agree', 'search that starts with ? is a question');
+ok(asQuestion('  ?who owes me') === 'who owes me' && asQuestion('?') === '', 'with or without the space');
+ok(asQuestion('what? no') === null && asQuestion('') === null, 'a ? anywhere else is just a search');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -754,3 +754,34 @@ old days shift by a few hours; that is a problem for a future that has one.
 
 The barcode is a real Code 39 of the date rather than decoration, because a
 decorative barcode on a receipt is the kind of thing this app is not.
+
+
+## The memory learns from you, and comes to you
+
+Memory began as a by-product of meetings: read one in and it kept what was
+worth keeping. That left out most of what a person actually learns, which
+arrives in corridors, emails and phone calls, and it left the memory as a
+place you had to go to.
+
+So there is now a second way in and several ways out. **Tell it something**
+takes a sentence or a paragraph in your own words and files it the way a
+meeting is filed: under the notes it belongs to, with the "now" refreshed. It
+goes through the same writer as a meeting, with no meeting attached, so a
+hand-written line and a meeting's line sit on one timeline and are told apart
+only by where they say they came from. Where you name the note, it goes there
+whatever the model returns; and if the model cannot be reached at all, a named
+note still gets the line, as written, through the offline queue. A thing you
+bothered to write down is never lost to a timeout.
+
+You can also make a person or a topic yourself, because the areas worth
+building context on are not always the ones a meeting happens to surface.
+
+Going the other way, the memory is matched to the thing in front of you with
+no model at all: the item's project, the people it waits on, and any person
+or topic its words name. That is deliberately dumb. It runs on every row you
+open, offline, instantly, and a miss costs nothing because the note is one
+click away; a smarter match would cost a call each time and fail on a train.
+Asking is where the model earns its place, so that is reachable from search
+with a "?", wherever you are.
+
+No migration: 0012 already allowed a line with no meeting.

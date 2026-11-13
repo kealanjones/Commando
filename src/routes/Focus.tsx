@@ -5,7 +5,7 @@ import { Num } from '@/components/Motion';
 import { useToast } from '@/components/Toasts';
 import { useDay, usePeople, useSections, useSoftDelete, useStreams, useTasks, useUpdateTask } from '@/data/store';
 import { quickDates, useTaskPeople } from '@/data/review';
-import { useMemory } from '@/data/memory';
+import { Knows } from '@/components/Knows';
 import { usePrinter, useReceiptLines } from '@/data/receipt';
 import { ReceiptPaper } from '@/components/Progress';
 import { buildReceipt, linesFromTasks } from '@/lib/receipt';
@@ -250,7 +250,6 @@ function Run({ ids, tasks, streams, sections, today, onAgain, onClose }: {
   const { push } = useToast();
   const { data: people = [] } = usePeople();
   const { data: links = [] } = useTaskPeople();
-  const { notes: memory } = useMemory();
   const { print, unprint, missing: noRoll } = usePrinter();
   const { lines: roll } = useReceiptLines();
   /** The receipt lines this run has printed. */
@@ -482,7 +481,6 @@ function Run({ ids, tasks, streams, sections, today, onAgain, onClose }: {
             section={sections.find((s) => s.id === task.section_id)}
             parent={sections.find((s) => s.id === sections.find((x) => x.id === task.section_id)?.parent_id)}
             waiting={people.filter((p) => links.some((l) => l.task_id === task.id && l.person_id === p.id)).map((p) => p.name)}
-            memory={memory.find((m) => m.kind === 'project' && m.key === task.stream_id)?.now || null}
             staying={staying === null ? null : now - staying}
             editingNote={menu === 'note'}
             onSaveNote={actions.note}
@@ -572,12 +570,12 @@ function Small({ k, label, onClick, danger, disabled, pressed }: {
 // ── the card ───────────────────────────────────────────────────────
 
 function Card({
-  task, exit, today, stream, section, parent, waiting, memory, staying,
+  task, exit, today, stream, section, parent, waiting, staying,
   editingNote, onSaveNote, onCancelNote, onEditNote,
 }: {
   task: Task; exit: Exit | null; today: string;
   stream?: Stream; section?: Section; parent?: Section;
-  waiting: string[]; memory: string | null; staying: number | null;
+  waiting: string[]; staying: number | null;
   editingNote: boolean; onSaveNote: (text: string) => void; onCancelNote: () => void; onEditNote: () => void;
 }) {
   const due = dueLine(task.due, today);
@@ -651,12 +649,10 @@ function Card({
         )}
       </div>
 
-      {memory && (
-        <aside className="fx__memory" style={lift()}>
-          <span className="label">Where {stream?.short ?? 'this'} stands</span>
-          <p>{memory}</p>
-        </aside>
-      )}
+      <Knows
+        className="knows--fx" style={lift()} streamId={task.stream_id} people={waiting} max={4}
+        text={`${task.title} ${task.context ?? ''} ${task.note ?? ''}`}
+      />
 
       {staying !== null && (
         <div className="fx__staying">

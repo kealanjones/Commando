@@ -84,3 +84,53 @@ export function memoryDigest(notes: MemoryNote[], maxChars = 30_000): string {
   if (out.length > maxChars) out = `${out.slice(0, maxChars)}\n…`;
   return out;
 }
+
+/** The key a hand-made note is stored under: a person's name, or a topic slug. */
+export function noteKey(kind: MemoryNote['kind'], title: string): string {
+  const t = title.trim().toLowerCase();
+  if (kind === 'person') return t.replace(/\s+/g, ' ').slice(0, 80);
+  return t.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+}
+
+const wordy = (s: string) => ` ${s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()} `;
+
+/** Words too common to say a note is about something. */
+const COMMON = new Set(['with', 'from', 'that', 'this', 'have', 'will', 'into', 'about', 'meeting', 'project', 'work', 'team', 'plan', 'update', 'notes']);
+
+/**
+ * The notes worth showing beside something: its project's, the people on
+ * it, and any person or topic its words name. A person matches on their
+ * full name or first name; a topic on its whole title, or on every
+ * distinctive word of it. Project first, then people, then topics.
+ */
+export function relevantNotes(
+  notes: MemoryNote[],
+  about: { streamId?: string | null; people?: string[]; text?: string },
+  max = 4,
+): MemoryNote[] {
+  const text = wordy([about.text ?? '', ...(about.people ?? [])].join(' '));
+  const named = new Set((about.people ?? []).map((p) => p.trim().toLowerCase()));
+  const has = (phrase: string) => phrase.trim().length > 2 && text.includes(wordy(phrase));
+
+  const out: MemoryNote[] = [];
+  for (const n of notes) {
+    if (n.deleted_at) continue;
+    if (n.kind === 'project') {
+      if (about.streamId && n.key === about.streamId) out.push(n);
+    } else if (n.kind === 'person') {
+      const first = n.title.trim().split(/\s+/)[0] ?? '';
+      if (named.has(n.key) || named.has(n.title.trim().toLowerCase()) || has(n.title) || (first.length > 3 && has(first))) out.push(n);
+    } else {
+      const words = wordy(n.title).trim().split(' ').filter((w) => w.length > 3 && !COMMON.has(w));
+      if (has(n.title) || (words.length > 1 && words.every((w) => text.includes(` ${w}`)))) out.push(n);
+    }
+  }
+  const rank = { project: 0, person: 1, topic: 2 } as const;
+  return out.sort((a, b) => rank[a.kind] - rank[b.kind] || a.title.localeCompare(b.title)).slice(0, max);
+}
+
+/** A question typed into search: it starts with "?". Returns the question, or null. */
+export function asQuestion(q: string): string | null {
+  const m = q.match(/^\s*\?\s*(.*)$/s);
+  return m ? m[1].trim() : null;
+}

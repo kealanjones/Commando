@@ -34,6 +34,8 @@ out = await run({ method: 'POST', body: { action: 'rewrite-everything' } });
 ok(out.code === 400, `an unknown action is refused before anything else (${out.code})`);
 out = await run({ method: 'POST', body: { action: 'absorb', intake_id: 'x' } });
 ok(out.code === 401, `no session, no memory (${out.code})`);
+out = await run({ method: 'POST', body: { action: 'note', text: 'OrganOx close their budget mid-October.' } });
+ok(out.code === 401, `telling it something is an action it knows, and needs a session too (${out.code})`);
 
 const left = [
   { happened_on: '2026-09-01', text: 'One.' }, { happened_on: '2026-09-02', text: 'Two.' },

@@ -1944,8 +1944,6 @@ body:has(.fx) .toasts { bottom: calc(var(--safe-b) + 20px); }
 }
 .fx__addnote:hover { color: var(--ink); background-size: 100% 1px; }
 
-.fx__memory { background: var(--select); padding: 14px 16px; display: grid; gap: 5px; }
-.fx__memory p { margin: 0; font-size: 14.5px; line-height: 1.55; max-width: 66ch; }
 
 .fx__staying {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-top: 16px; border-top: 2px solid var(--rule);
@@ -2063,3 +2061,55 @@ body:has(.fx) .toasts { bottom: calc(var(--safe-b) + 20px); }
   [data-paper='notebook'] .fx__go { background: var(--desk); }
   .fx__peek { min-height: 0; }
 }
+
+/* ══ what the memory knows, beside the thing it bears on ══════════════ */
+.knows { display: grid; gap: 8px; min-width: 0; }
+.knows ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.knows li { background: var(--select); padding: 10px 12px; display: grid; gap: 3px; min-width: 0; }
+.knows__title {
+  justify-self: start; font-weight: 600; font-size: 13.5px;
+  background-image: linear-gradient(currentColor, currentColor); background-size: 0 1px; background-repeat: no-repeat; background-position: 0 100%;
+  transition: background-size var(--t-move) var(--ease);
+}
+.knows__title:hover, .knows__title:focus-visible { background-size: 100% 1px; }
+.knows li[data-kind='person'] .knows__title::before { content: '@ '; color: var(--pencil); font-weight: 400; }
+.knows li[data-kind='topic'] .knows__title::before { content: '# '; color: var(--pencil); font-weight: 400; }
+.knows p {
+  margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink);
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.knows--folio { padding: 16px 28px 20px; }
+.knows--card { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+.knows--rv { margin-top: 14px; }
+.knows--brief { padding: 14px 0; border-bottom: 1px solid var(--hair); }
+.knows--fx p { font-size: 14.5px; -webkit-line-clamp: 5; max-width: 66ch; }
+.knows--fx li { padding: 14px 16px; }
+[data-paper='notebook'] .knows li { background: var(--note); box-shadow: 0 1px 2px rgba(28, 35, 64, .12); }
+
+/* Telling it something. */
+.tell__text { min-height: 132px; font-size: 15px; line-height: 1.5; }
+.tell__hint { margin: 0; font-size: 13px; color: var(--pencil); }
+.tell__error { margin: 0 0 4px; font-size: 14px; color: var(--red); }
+.addsheet__instead { display: inline-flex; flex-wrap: wrap; gap: 4px 16px; }
+.mem__tell { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 14px; }
+.mem__tell .btn { flex: none; height: 44px; display: inline-flex; align-items: center; gap: 10px; }
+.mem__tell .mem__hint { margin: 0; }
+.mem__tell kbd { border-color: currentColor; color: inherit; opacity: .7; }
+.mem__new { display: flex; gap: 8px; margin-top: 14px; }
+.mem__new .input { flex: 1; min-width: 0; height: 40px; }
+.mem__new .btn { flex: none; height: 40px; }
+.mem__rename { width: 100%; height: 40px; margin: 4px 0 12px; }
+.mem__noteacts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 14px; }
+.mem__noteacts .btn { flex: none; height: 36px; }
+
+/* Asking from search. */
+.find__ask { padding: 18px 18px 22px; }
+.find__ask p { margin: 0 0 8px; font-size: 15px; line-height: 1.6; white-space: pre-line; }
+.find__ask p:last-child { margin-bottom: 0; }
+.find__askhint, .find__asking { color: var(--pencil); font-size: 14px !important; }
+.find__asking { animation: pulse 1.4s ease-in-out infinite; }
+.find__askerror { color: var(--red); font-size: 14px !important; }
+.find__answer { animation: rise var(--t-move) var(--ease) both; max-height: 60vh; overflow-y: auto; }
+.find__sources { font-family: var(--mono); font-size: 11.5px !important; letter-spacing: .04em; color: var(--pencil); margin-top: 12px !important; }
+.find__hint p + p { margin-top: 8px; }
+.find__hint .linkish { margin-top: 10px; padding-left: 0; }

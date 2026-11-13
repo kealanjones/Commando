@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useToast } from '@/components/Toasts';
+import { TellSheet } from '@/components/Tell';
 import {
   useAbsorb, useAsk, useEraseMemory, useForget, useMemory, useMemoryEdits, useRememberPast,
   type MemoryAnswer,
@@ -11,14 +13,23 @@ const shortDate = (iso: string) =>
   new Date(iso.length === 10 ? `${iso}T00:00:00` : iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 /**
- * Memory: what the meetings have taught it. Ask it things, read and
+ * Memory: what the meetings, and you, have taught it. Ask it things, tell
+ * it things, make an area of your own to build context on, read and
  * correct what it knows, take it to Claude.ai, forget a meeting, or erase
  * the lot.
  */
 export function Memory() {
   const { notes, entries, meetings, isLoading, missing, error, retry } = useMemory();
+  const [params, setParams] = useSearchParams();
   const [kind, setKind] = useState<MemoryNote['kind']>('project');
+  /** The tell sheet: open, and the note it is aimed at, if any. */
+  const [telling, setTelling] = useState<{ noteId?: string } | null>(null);
   const groups = useMemo(() => byKind(notes), [notes]);
+
+  // Arriving from "What it knows" beside an item: show that note, open.
+  const wanted = params.get('note');
+  const target = wanted ? notes.find((n) => n.id === wanted) : undefined;
+  useEffect(() => { if (target) setKind(target.kind); }, [target?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const meetingById = useMemo(() => new Map(meetings.map((m) => [m.id, m])), [meetings]);
   const remembered = meetings.filter((m) => m.in_memory && m.remembered_at).length;
 
@@ -56,11 +67,19 @@ export function Memory() {
         </span>
       </header>
       <p className="mem__lede">
-        Built from every meeting you read in: a note per project, person and recurring topic, each with
-        where things stand and a dated timeline. It grows with every meeting, and the meeting reader uses it.
+        Built from every meeting you read in and everything you tell it: a note per project, person and
+        topic, each with where things stand and a dated timeline. It shows up beside your items, and
+        answers from search when you start with <kbd>?</kbd>.
       </p>
 
       <Ask empty={!notes.length} />
+
+      <div className="mem__tell">
+        <button type="button" className="btn btn--primary" onClick={() => setTelling({})}>
+          Tell it something <kbd>T</kbd>
+        </button>
+        <span className="mem__hint">A fact, a decision, what someone said. It files it for you.</span>
+      </div>
 
       <Remember meetings={meetings} />
 
@@ -72,17 +91,26 @@ export function Memory() {
         ))}
       </div>
 
+      {kind !== 'project' && <NewArea kind={kind} />}
+
       {isLoading ? (
         <div className="skeleton" style={{ height: 120, marginTop: 16 }} />
       ) : groups[kind].length === 0 ? (
         <div className="empty">
           <h3>Nothing here yet</h3>
-          <p>Read a meeting in and this fills up.</p>
+          <p>{kind === 'project'
+            ? 'Read a meeting in, or tell it something about a project, and this fills up.'
+            : `Read a meeting in, tell it something, or add a ${kind} above to start building context.`}</p>
         </div>
       ) : (
         <ul className="mem__notes">
           {groups[kind].map((n) => (
-            <Note key={n.id} note={n} lines={timeline(entries, n.id)} meetingById={meetingById} />
+            <Note
+              key={n.id} note={n} lines={timeline(entries, n.id)} meetingById={meetingById}
+              startOpen={n.id === wanted}
+              onTell={() => setTelling({ noteId: n.id })}
+              onGone={() => { if (n.id === wanted) setParams({}, { replace: true }); }}
+            />
           ))}
         </ul>
       )}
@@ -90,7 +118,41 @@ export function Memory() {
       <Meetings meetings={meetings} />
 
       <Keep notes={notes} />
+
+      {telling && <TellSheet noteId={telling.noteId} onClose={() => setTelling(null)} />}
     </section>
+  );
+}
+
+/** An area of your own: a person or a topic to build context on. */
+function NewArea({ kind }: { kind: 'person' | 'topic' }) {
+  const edit = useMemoryEdits();
+  const { push } = useToast();
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const t = name.trim();
+    if (!t || busy) return;
+    setBusy(true);
+    try {
+      const made = await edit.addNote(kind, t);
+      setName('');
+      push({ message: `${made.title} added. Tell it something to start it off.` });
+    } catch (err) {
+      push({ message: (err as Error).message, tone: 'warn' });
+    } finally { setBusy(false); }
+  };
+  const what = kind === 'person' ? 'person' : 'topic';
+  return (
+    <form className="mem__new" onSubmit={add}>
+      <input
+        className="input" value={name} onChange={(e) => setName(e.target.value)} maxLength={120}
+        placeholder={kind === 'person' ? 'A person, e.g. Suzanne Clarke' : 'A topic, e.g. Sponsor payments'}
+        aria-label={`New ${what}`}
+      />
+      <button type="submit" className="btn btn--ghost" disabled={!name.trim() || busy}>Add {what}</button>
+    </form>
   );
 }
 
@@ -157,17 +219,26 @@ function Remember({ meetings }: { meetings: MemoryMeeting[] }) {
   );
 }
 
-function Note({ note, lines, meetingById }: {
+function Note({ note, lines, meetingById, startOpen, onTell, onGone }: {
   note: MemoryNote; lines: ReturnType<typeof timeline>; meetingById: Map<string, MemoryMeeting>;
+  startOpen: boolean; onTell: () => void; onGone: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
+  const [title, setTitle] = useState(note.title);
+  const [deleting, setDeleting] = useState(false);
+  const row = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    if (!startOpen) return;
+    setOpen(true);
+    row.current?.scrollIntoView({ block: 'center' });
+  }, [startOpen]);
   const [now, setNow] = useState(note.now);
   const [was, setWas] = useState(note.now);
   if (note.now !== was) { setWas(note.now); setNow(note.now); }
   const edit = useMemoryEdits();
 
   return (
-    <li className="mem__note" data-note={note.id}>
+    <li className="mem__note" data-note={note.id} ref={row}>
       <button type="button" className="mem__notehead" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <span className="mem__title">{note.title}</span>
         <span className="mem__meta">{lines.length} line{lines.length === 1 ? '' : 's'} · updated {shortDate(note.updated_at)}</span>
@@ -175,6 +246,14 @@ function Note({ note, lines, meetingById }: {
       {!open && note.now && <p className="mem__nowpeek">{note.now}</p>}
       {open && (
         <div className="mem__body">
+          {note.kind !== 'project' && (
+            <>
+              <label className="label" htmlFor={`title-${note.id}`}>Name</label>
+              <input id={`title-${note.id}`} className="input mem__rename" value={title} maxLength={120}
+                onChange={(e) => setTitle(e.target.value)}
+                onBlur={() => { if (title.trim() && title.trim() !== note.title) edit.rename(note.id, title); else setTitle(note.title); }} />
+            </>
+          )}
           <label className="label" htmlFor={`now-${note.id}`}>Now</label>
           <textarea id={`now-${note.id}`} className="textarea mem__now" value={now}
             onChange={(e) => setNow(e.target.value)}
@@ -194,6 +273,18 @@ function Note({ note, lines, meetingById }: {
               );
             })}
           </ol>
+          <div className="mem__noteacts">
+            <button type="button" className="btn btn--ghost" onClick={onTell}>Tell it something about {note.title}</button>
+            {deleting ? (
+              <span className="mem__confirm">
+                <span>Delete this note and its {lines.length} line{lines.length === 1 ? '' : 's'}?</span>
+                <button type="button" className="btn btn--primary" onClick={() => { edit.removeNote(note.id); onGone(); }}>Delete note</button>
+                <button type="button" className="btn btn--ghost" onClick={() => setDeleting(false)}>Keep</button>
+              </span>
+            ) : (
+              <button type="button" className="linkish mem__erase" onClick={() => setDeleting(true)}>Delete note…</button>
+            )}
+          </div>
         </div>
       )}
     </li>

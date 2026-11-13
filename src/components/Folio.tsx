@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { NewFocus } from './NewFocus';
+import { Knows } from './Knows';
 import { groupOf, leavesFor, pathOf } from '@/lib/tree';
 import { isoDay } from '@/lib/today';
 import type { Section, Stream, Task } from '@/lib/types';
@@ -242,6 +243,11 @@ function FolioFor({
           </dd>
         </div>
       </dl>
+
+      <Knows
+        className="knows--folio" streamId={task.stream_id} people={waitingOn}
+        text={`${task.title} ${task.context ?? ''} ${task.note ?? ''}`}
+      />
 
       <footer className="folio__foot">
         <button className="btn btn--primary" onClick={() => onToggle(task)}>
