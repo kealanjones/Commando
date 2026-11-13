@@ -108,7 +108,12 @@ function Register({ email }: { email: string }) {
     return people.filter((p) => ids.has(p.id)).map((p) => p.name);
   }, [selected, links, people]);
 
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [location.pathname]);
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+    // A link followed from inside the item card (a memory note, say) must
+    // not leave the card covering the page it leads to.
+    setEditing(null);
+  }, [location.pathname]);
 
   // The page wears the realm, so which life is showing is ambient.
   const realm = useRealm();

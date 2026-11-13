@@ -309,6 +309,25 @@ async function absorb(db: Db, client: Anthropic, owner: string, intakeId: string
 /** The longest thing that can be told to the memory in one go. */
 export const MAX_NOTE_CHARS = 8000;
 
+/**
+ * A long note as timeline lines of at most `max` characters, broken at
+ * sentence ends where it can, then at spaces, so nothing is cut off.
+ */
+export function inLines(text: string, max = 600): string[] {
+  const out: string[] = [];
+  let rest = text.trim();
+  while (rest.length > max) {
+    const head = rest.slice(0, max + 1);
+    const sentence = Math.max(head.lastIndexOf('. '), head.lastIndexOf('! '), head.lastIndexOf('? '), head.lastIndexOf('\n'));
+    const space = head.lastIndexOf(' ');
+    const cut = sentence > max * 0.4 ? sentence + 1 : space > max * 0.4 ? space : max;
+    out.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) out.push(rest);
+  return out;
+}
+
 /** Something the user has learnt, in their own words, filed where it belongs. */
 async function note(db: Db, client: Anthropic, owner: string, text: string | undefined, noteId: string | undefined, res: Res) {
   const told = (text ?? '').trim();
@@ -328,13 +347,16 @@ async function note(db: Db, client: Anthropic, owner: string, text: string | und
   // Where the user said it goes, it goes, whatever the model returned.
   const notes = [...out.notes];
   if (target && !notes.some((n) => n.kind === target.kind && n.key.trim().toLowerCase() === target.key.toLowerCase() && n.entries.length)) {
-    notes.push({ kind: target.kind, key: target.key, title: target.title, now: null, entries: [{ date: null, text: told.slice(0, 600) }] });
+    // In full: split into lines rather than cut off at one line's length.
+    notes.push({ kind: target.kind, key: target.key, title: target.title, now: null, entries: inLines(told).map((text) => ({ date: null, text })) });
   }
 
   const { added, failed, touched } = await file(db, owner, notes, {
     streams, memory, intakeId: null, date: today, now: new Date().toISOString(),
   });
-  if (failed) { res.status(502).json({ error: 'Part of that could not be saved to the memory. Check Memory before trying again.' }); return; }
+  // Not a 5xx: something may have been written, so the caller must not
+  // treat this as "never got there" and save the text a second time.
+  if (failed) { res.status(409).json({ error: 'Part of that could not be saved to the memory. Check Memory before trying again.' }); return; }
   if (!added) { res.status(422).json({ error: 'Nothing in that to keep. Say it with a little more detail.' }); return; }
   res.status(200).json({ entries: added, notes: touched.map((n) => ({ id: n.id, kind: n.kind, title: n.title })) });
 }

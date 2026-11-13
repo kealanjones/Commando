@@ -190,6 +190,12 @@ await phone.locator('.task__open', { hasText: 'Send Anthony the short priority s
 await settle(phone, 700);
 ok((await phone.locator('.knows--card .knows__title').first().textContent()) === 'ISODP 2027', 'on a phone the item card shows it too');
 await phone.screenshot({ path: `${out}/phone-knows.png` });
+await phone.locator('.knows--card .knows__title').first().click();
+await phone.waitForSelector('.mem');
+await settle(phone, 500);
+ok((await phone.locator('.card, .scrim').count()) === 0, 'following a note from the card closes the card');
+ok(await phone.evaluate(() => getComputedStyle(document.body).overflow !== 'hidden'), 'and gives the page back its scroll');
+ok(await phone.locator('.mem__note', { hasText: 'ISODP 2027' }).locator('.mem__timeline').isVisible(), 'with the note open underneath');
 await phone.goto(`${base}/memory`, { waitUntil: 'networkidle' });
 await phone.getByRole('button', { name: /^Tell it something/ }).click();
 await phone.getByRole('dialog', { name: 'Tell the memory something' }).waitFor();
