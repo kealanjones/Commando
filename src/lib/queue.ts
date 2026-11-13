@@ -37,8 +37,21 @@ export interface QueueState {
   failed: { op: QueuedOp; message: string } | null;
 }
 
+/** Writes the database refused for good. Kept, so nothing is lost with them. */
+const FAILED = 'register.failed.v1';
+type Failure = NonNullable<QueueState['failed']>;
+
+function readFailed(): Failure[] {
+  try { return JSON.parse(localStorage.getItem(FAILED) ?? '[]') as Failure[]; } catch { return []; }
+}
+function writeFailed(list: Failure[]) {
+  try { localStorage.setItem(FAILED, JSON.stringify(list.slice(-20))); } catch { /* still shown this session */ }
+}
+
 let listeners: Listener[] = [];
-let failed: QueueState['failed'] = null;
+// A failure from an earlier session is still a failure: it is shown again
+// until it is dismissed, not forgotten when the app closes.
+let failed: QueueState['failed'] = typeof localStorage === 'undefined' ? null : readFailed().at(-1) ?? null;
 let inFlight: Promise<void> | null = null;
 
 function read(): QueuedOp[] {
@@ -75,8 +88,23 @@ export function subscribeQueue(fn: Listener): () => void {
 }
 
 export function dismissFailure() {
-  failed = null;
+  const rest = readFailed().filter((f) => f.op.id !== failed?.op.id);
+  writeFailed(rest);
+  failed = rest.at(-1) ?? null;
   emit();
+}
+
+/** What a refused write was, in words: the item's title where it has one. */
+export function describeOp(op: QueuedOp): string {
+  const row = (op.kind === 'insert' || op.kind === 'add' ? op.row : op.patch) as Record<string, unknown>;
+  const name = typeof row.title === 'string' ? row.title : typeof row.text === 'string' ? row.text : '';
+  const what = op.kind === 'insert' ? 'New item' : op.kind === 'add' ? 'New entry' : 'A change';
+  return name ? `${what} "${name.length > 70 ? `${name.slice(0, 70)}…` : name}"` : what;
+}
+
+/** New items queued on this device and not yet on the server. */
+export function pendingTaskInserts<T extends { id: string }>(): T[] {
+  return read().filter((o) => o.kind === 'insert').map((o) => (o as { row: unknown }).row as T);
 }
 
 export function enqueue(op: NewOp) {
@@ -130,7 +158,10 @@ export function flush(): Promise<void> {
   // One drain at a time; a caller arriving mid-drain waits for that one,
   // which keeps going until the queue is empty or a write fails.
   if (inFlight) return inFlight;
-  inFlight = drain({ read, write, emit }, send, (op, message) => { failed = { op, message }; }, permanent)
+  inFlight = drain({ read, write, emit }, send, (op, message) => {
+    failed = { op, message };
+    writeFailed([...readFailed(), failed]);
+  }, permanent)
     .finally(() => { inFlight = null; });
   return inFlight;
 }

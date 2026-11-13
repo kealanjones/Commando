@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { subscribeQueue, dismissFailure, type QueueState } from '@/lib/queue';
+import { describeOp, subscribeQueue, dismissFailure, type QueueState } from '@/lib/queue';
 import { useToast } from './Toasts';
 
 /**
@@ -18,13 +18,15 @@ export function SyncBadge() {
   useEffect(() => {
     if (!state.failed) return;
     push({
-      message: `A change could not be saved: ${state.failed.message}`,
+      message: `${describeOp(state.failed.op)} could not be saved: ${state.failed.message}`,
       actionLabel: 'Dismiss',
       onAction: dismissFailure,
       tone: 'warn',
       duration: 0,
     });
-  }, [state.failed, push]);
+  // Keyed by the write itself, so each refused write is announced once.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.failed?.op.id, push]);
 
   if (state.online && state.pending === 0) return null;
 

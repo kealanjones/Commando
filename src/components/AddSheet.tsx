@@ -10,7 +10,6 @@ export function AddSheet({
   defaultSectionId,
   onCreate,
   onIntake,
-  onTell,
   onClose,
 }: {
   streams: Stream[];
@@ -19,17 +18,18 @@ export function AddSheet({
   onCreate: (input: {
     title: string; section_id: string; stream_id: Task['stream_id'];
     do_now: boolean; due: string | null;
+    /** Something to tell the memory along with it, filed under its project. */
+    remember?: string;
   }) => void;
   /** Leave for meeting intake instead: several items from one record. */
   onIntake: () => void;
-  /** Not something to do, something to know: tell the memory instead. */
-  onTell: () => void;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState('');
   const [sectionId, setSectionId] = useState(defaultSectionId ?? sections[0]?.id ?? '');
   const [doNow, setDoNow] = useState(false);
   const [due, setDue] = useState('');
+  const [remember, setRemember] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
 
@@ -53,6 +53,7 @@ export function AddSheet({
     onCreate({
       title: t, section_id: section.id, stream_id: section.stream_id,
       do_now: doNow, due: due || null,
+      remember: remember.trim() || undefined,
     });
     onClose();
   };
@@ -107,16 +108,24 @@ export function AddSheet({
         </div>
 
         <div className="field">
+          <label htmlFor="add-remember">Tell the memory too <span className="field__opt">optional</span></label>
+          <textarea
+            id="add-remember" className="textarea addsheet__remember" value={remember}
+            onChange={(e) => setRemember(e.target.value)}
+            placeholder="Background worth keeping: who said what, what was agreed. Filed under this item's project."
+          />
+        </div>
+
+        <div className="field">
           <button type="button" className="toggle" aria-pressed={doNow} onClick={() => setDoNow((v) => !v)}>
             Urgent<span className="toggle__knob" />
           </button>
         </div>
 
         <div className="actions">
-          <span className="actions__aside addsheet__instead">
-            <button type="button" className="linkish" onClick={onIntake}>Paste meeting notes instead</button>
-            <button type="button" className="linkish" onClick={onTell}>Tell the memory something</button>
-          </span>
+          <button type="button" className="linkish actions__aside" onClick={onIntake}>
+            Paste meeting notes instead
+          </button>
           <button type="button" className="btn btn--ghost" onClick={onClose}>Cancel</button>
           <button type="submit" className="btn btn--primary">Add</button>
         </div>

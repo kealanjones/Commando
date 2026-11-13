@@ -2090,7 +2090,8 @@ body:has(.fx) .toasts { bottom: calc(var(--safe-b) + 20px); }
 .tell__text { min-height: 132px; font-size: 15px; line-height: 1.5; }
 .tell__hint { margin: 0; font-size: 13px; color: var(--pencil); }
 .tell__error { margin: 0 0 4px; font-size: 14px; color: var(--red); }
-.addsheet__instead { display: inline-flex; flex-wrap: wrap; gap: 4px 16px; }
+.addsheet__remember { min-height: 72px; font-size: 14.5px; line-height: 1.5; }
+.field__opt { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--pencil); margin-left: 6px; }
 .mem__tell { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 14px; }
 .mem__tell .btn { flex: none; height: 44px; display: inline-flex; align-items: center; gap: 10px; }
 .mem__tell .mem__hint { margin: 0; }
